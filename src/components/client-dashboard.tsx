@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, Eye, CheckCircle, XCircle } from "lucide-react"
+import { LogOut, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { getCards } from "@/lib/CardApi"
 import { logoutUser } from "@/lib/AuthApi"
-import { Card as CardType, CardStatus } from "@/lib/types/card"
+import { getUser } from "@/lib/UserApi"
+import { Card as CardType} from "@/lib/types/card"
+import { UserProfile } from "@/lib/types/user"
 
 interface Props {
   boardId: string; // id do board do client
@@ -19,6 +21,7 @@ interface Props {
 
 export function ClientDashboard({ boardId }: Props) {
   const [cards, setCards] = useState<CardType[]>([])
+  const [user, setUser] = useState<any>({})
   const router = useRouter()
 
   console.log("Board ID:", boardId);
@@ -41,18 +44,21 @@ export function ClientDashboard({ boardId }: Props) {
       }
     };
 
+    const fetchUser = async () => {
+      try {
+        const user = await getUser();
+        console.log("Usuário logado:", user);
+        setUser(user);
+      } catch (error) {
+        console.error("Erro ao buscar usuário:", error);
+      }
+    };
+
     fetchCards();
+    fetchUser();
   }, [boardId]);
 
-  const handlePostAction = (cardId: number, action: "approve" | "reject") => {
-  setCards(
-    cards.map((card) =>
-      card.id === cardId
-        ? { ...card, status: action === "approve" ? "done" : "disapprove" } // usar os valores do CardStatus
-        : card,
-    ),
-  );
-};
+
 
     const getStatusLabel = (status: string) => {
       const labels = {
@@ -92,11 +98,18 @@ export function ClientDashboard({ boardId }: Props) {
             <div className="flex items-center gap-4">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Cliente" />
-                <AvatarFallback>CL</AvatarFallback>
+                <AvatarFallback>
+                  {user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")
+                        .toUpperCase()
+                    : "?"}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Área do Cliente</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">ID: {boardId}</p>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user.name}</h2>
               </div>
             </div>
 
@@ -134,8 +147,6 @@ export function ClientDashboard({ boardId }: Props) {
                   </div>
                 )}
 
-                <p className="text-gray-600 dark:text-gray-400">{card.description}</p>
-
                 <p className="text-sm text-gray-500">
                   Criado em: {new Date(card.created_at).toLocaleDateString("pt-BR")}
                 </p>
@@ -144,29 +155,14 @@ export function ClientDashboard({ boardId }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/client/${boardId}/card/${card.id}`)}
+                    onClick={() => {
+                      const cardId = card.id;
+                      router.push(`/client/${boardId}/card/${cardId}`)
+                    }}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalhes
                   </Button>
-
-                  {card.status === "in_progress" && (
-                    <>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handlePostAction(card.id, "approve")}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aprovar
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handlePostAction(card.id, "reject")}>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Reprovar
-                      </Button>
-                    </>
-                  )}
                 </div>
               </CardContent>
             </Card>

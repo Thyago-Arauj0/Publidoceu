@@ -5,7 +5,7 @@ import { getUser } from "./UserApi";
 
 type ApiError = { message?: string };
 
-const authFetch = async <T, R = AuthResponse>(
+const authFetchNoAuth = async <T, R = AuthResponse>(
   url: string,
   data: T
 ): Promise<R> => {
@@ -30,14 +30,16 @@ const authFetch = async <T, R = AuthResponse>(
 
 
 
-
-export const registerUser = (data: UserProfile) => {
-  authFetch<UserProfile, AuthResponse>(`${API_BASE_URL}/api/v1/auth/register/`, data);
-  return data.first_name
-}
+export const registerUser = async (data: UserProfile) => {
+  const result = await authFetchNoAuth<UserProfile, AuthResponse>(
+    `${API_BASE_URL}/api/v1/auth/register/`,
+    data
+  );
+  return result;
+};
 
 export const loginUser = async (credentials: { email: string; password: string }) => {
-  const result: AuthResponse = await authFetch<typeof credentials, AuthResponse>(
+  const result: AuthResponse = await authFetchNoAuth<typeof credentials, AuthResponse>(
     `${API_BASE_URL}/api/v1/auth/token/`,
     credentials
   );
@@ -45,10 +47,7 @@ export const loginUser = async (credentials: { email: string; password: string }
   Cookies.set("access_token", result.access, { expires: 7 });
   Cookies.set("refresh_token", result.refresh, { expires: 7 });
 
-  console.log("Login result:", result);
-
   const user = await getUser();
-  console.log("User data:", user);
 
   if(!user.is_active){
     throw new Error("Usuário inativo. Contate o administrador.");

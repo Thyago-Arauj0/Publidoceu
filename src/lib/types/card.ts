@@ -17,11 +17,11 @@ export interface Card {
   image?: string | null;
   status: CardStatus;
   is_active: boolean;
-  start_date?: string | null; // ISO string "YYYY-MM-DD"
-  due_date?: string | null;   // ISO string "YYYY-MM-DD"
-  created_at: string;          // ISO string
-  updated_at: string;          // ISO string
-  feedback?: Feedback;         // se incluir relação
+  start_date?: string | null; 
+  due_date?: string | null;   
+  created_at: string;          
+  updated_at: string;          
+  feedback?: Feedback;         
 }
 
 export interface Feedback {
