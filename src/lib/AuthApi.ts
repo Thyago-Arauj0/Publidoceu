@@ -69,4 +69,6 @@ export const loginUser = async (credentials: { email: string; password: string }
 export const logoutUser = async () =>{
   Cookies.remove("access_token");
   Cookies.remove("refresh_token");
+  Cookies.remove("isAdmin");
+  Cookies.remove("userId");
 }

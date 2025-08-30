@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { loginUser } from "@/lib/AuthApi"
+import Cookies from "js-cookie"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -35,9 +36,12 @@ export function LoginForm() {
     try {
         if (result.userType === "admin") {
           router.push("/dashboard")
+          Cookies.set("isAdmin", "true")
         }else if(result.userType === "client"){
           const clientId = `${result.user.id}`
           router.push(`/client/${clientId}`)
+          Cookies.set("isAdmin", "false")
+          Cookies.set("userId", clientId)
         }
     } catch (err) {
       setError("Erro ao fazer login. Tente novamente.")
