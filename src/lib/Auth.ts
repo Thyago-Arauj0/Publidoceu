@@ -78,15 +78,24 @@ export const authFetch = async <R>(
       const errorData = await response.json();
       console.error("Erro da API:", errorData);
 
-      if (errorData.detail) {
+     if (errorData.detail) {
         message = errorData.detail;
       } else {
-        // Pega a primeira mensagem de erro do serializer
-        const firstKey = Object.keys(errorData)[0];
-        if (firstKey) {
-          message = `${firstKey}: ${errorData[firstKey]}`;
+        // Transforma todos os erros em string legível
+        const flatError = Object.entries(errorData)
+          .map(([key, value]) => {
+            if (typeof value === "object") {
+              return `${key}: ${JSON.stringify(value)}`;
+            }
+            return `${key}: ${value}`;
+          })
+          .join(" | ");
+
+        if (flatError) {
+          message = flatError;
         }
       }
+
     } catch {
       console.error("Erro ao parsear resposta de erro");
     // mantém a mensagem genérica

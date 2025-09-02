@@ -8,8 +8,9 @@ export interface UserProfile {
   created_at: string;       // ISO datetime
   updated_at: string;       // ISO datetime
   is_active: boolean;       // Está ativo
-  is_staff: boolean;        // Moderador
-  is_superuser: boolean;    // Superusuário
+  is_staff?: boolean;        // Moderador
+  is_superuser?: boolean;    // Superusuário
+  profile?: Profile | null; // Perfil relacionado (ou pode ser só o id)
 }
 
 

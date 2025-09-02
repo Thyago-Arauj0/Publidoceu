@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,50 +13,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { getUsers, createUser, updateUser } from "@/lib/UserApi"
+import { getCards } from "@/lib/CardApi"
+import { UserProfile } from "@/lib/types/user"
 
-interface Client {
-  id: string
-  name: string
-  email: string
-  phone: string
+
+export interface Client extends UserProfile {
+  phone?: string
   password?: string
-  status: "active" | "inactive"
-  postsCount: number
-  createdAt: string
+  postsCount?: number
 }
 
-const mockClients: Client[] = [
-  {
-    id: "2",
-    name: "João Silva",
-    email: "joao@lojaabc.com",
-    phone: "(11) 99999-9999",
-    status: "active",
-    postsCount: 5,
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    email: "maria@empresaxyz.com",
-    phone: "(11) 88888-8888",
-    status: "active",
-    postsCount: 3,
-    createdAt: "2024-01-08",
-  },
-  {
-    id: "2",
-    name: "Pedro Costa",
-    email: "pedro@coachdef.com",
-    phone: "(11) 77777-7777",
-    status: "inactive",
-    postsCount: 1,
-    createdAt: "2024-01-05",
-  },
-]
 
 export function ClientManagement() {
-  const [clients, setClients] = useState<Client[]>(mockClients)
+  const [clients, setClients] = useState<Client[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [formData, setFormData] = useState({
@@ -64,65 +34,179 @@ export function ClientManagement() {
     email: "",
     phone: "",
     password: "",
+    is_active: true
   })
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const formatWhatsapp = (phone: string) => {
+    if (!phone) return null;
+
+    let digits = phone.replace(/\D/g, ""); // remove tudo que não é número
+    if (digits.length === 11) {
+      return `+55${digits}`; // adiciona DDD + país
+    }
+    if (digits.length === 13 && digits.startsWith("55")) {
+      return `+${digits}`; // já tem o código do país
+    }
+    return `+${digits}`; // fallback
+  }
+
+
+  useEffect(() => {
+    async function fetchClients() {
+      try {
+        const users = await getUsers()
+
+        const formattedClients = await Promise.all(
+          users.map(async (user: UserProfile) => ({
+            ...user,
+            postsCount: await fetchPostsCount(user.id), 
+            phone: user.profile?.whatsapp || "",
+            password: "",
+            is_active: user.is_active,
+            created_at: user.created_at
+              ? new Date(user.created_at).toISOString().split("T")[0]
+              : new Date().toISOString().split("T")[0],
+          }))
+        );
+        setClients(formattedClients)
+      } catch (error) {
+        console.error("Failed to fetch clients:", error)
+        setClients([])
+      }
+    }
+
+    async function fetchPostsCount(boardId: number | string) {
+      const id = boardId.toString();
+      try {
+        const cards = await getCards(`${id}`)
+        return cards.length
+      } catch (error) {
+        console.error("Failed to fetch posts count:", error)
+        return 0
+      } 
+    }
+
+    fetchClients()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.phone) {
+     console.log("handleSubmit chamado"); 
+
+    if (!formData.name || !formData.email) {
       return
     }
-
     if (editingClient) {
-      // Update existing client
-      setClients(clients.map((client) => (client.id === editingClient.id ? { ...client, ...formData } : client)))
-      setEditingClient(null)
-    } else {
-      // Create new client
-      const newClient: Client = {
-        id: `client-${Date.now()}`,
-        ...formData,
-        status: "active",
-        postsCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
+      try {
+        const updatedUser = await updateUser(
+          editingClient.id,
+          formData.name,
+          formData.email,
+          formData.password,
+          { whatsapp: formatWhatsapp(formData.phone) },
+          editingClient.is_active,
+          null,
+          null
+        )
+        setClients(
+          clients.map((client) =>
+            client.id === editingClient.id ? { ...client, ...updatedUser, phone: formData.phone } : client,
+          ),
+        )
+        setEditingClient(null)
+      } catch (error) {
+        console.error("Failed to update user:", error)
       }
-      setClients([...clients, newClient])
+    } else {
+      console.log("Creating new user");
+      try {
+        const newUser = await createUser(
+          formData.name,
+          formData.email,
+          formData.password,
+          null,
+          null
+        )
+      const newClient: Client = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: formData.phone,
+        password: formData.password,
+        is_active: true, // padrão ativo
+        postsCount: 0,
+        created_at: newUser.created_at,
+        updated_at: newUser.updated_at,
+      };
+        setClients([...clients, newClient])
+      } catch (error) {
+        console.error("Failed to create user:", error)
+      }
     }
 
-    // Reset form
-    setFormData({ name: "", email: "", phone: "", password: "" })
+    setFormData({ name: "", email: "", phone: "", password: "", is_active: false })
     setIsCreateModalOpen(false)
   }
+
 
   const handleEdit = (client: Client) => {
     setEditingClient(client)
     setFormData({
       name: client.name,
       email: client.email,
-      phone: client.phone,
+      phone: client.phone || "",
       password: client.password || "",
+      is_active: client.is_active 
     })
     setIsCreateModalOpen(true)
   }
 
-  const handleDelete = (clientId: string) => {
+  const handleDelete = (clientId: string | number) => {
     setClients(clients.filter((client) => client.id !== clientId))
   }
 
-  const toggleStatus = (clientId: string) => {
-    setClients(
-      clients.map((client) =>
-        client.id === clientId ? { ...client, status: client.status === "active" ? "inactive" : "active" } : client,
-      ),
-    )
-  }
+  const toggleis_active = async (clientId: string | number) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
 
+    const updatedClient = { ...client, is_active: !client.is_active };
+    
+    try {
+      await updateUser(
+        client.id,
+        updatedClient.name,
+        updatedClient.email,
+        updatedClient.password || "",
+        { whatsapp: client.phone || null },
+        updatedClient.is_active, // Novo status
+        updatedClient.first_name || null,
+        updatedClient.last_name || null
+      );
+      
+      // Atualiza o estado local
+      setClients(
+        clients.map(c => 
+          c.id === clientId 
+            ? { ...c, is_active: !c.is_active } 
+            : c
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update client status:", error);
+    }
+  };
+
+
+
+ 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", password: "" })
+    setFormData({ name: "", email: "", phone: "", password: "", is_active: false })
     setEditingClient(null)
     setIsCreateModalOpen(false)
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -173,15 +257,17 @@ export function ClientManagement() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input
-                      id="phone"
-                      placeholder="(11) 99999-9999"
-                      value={formData.phone}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                    />
-                  </div>
+                  {editingClient && (
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Telefone</Label>
+                        <Input
+                          id="phone"
+                          placeholder="(11) 99999-9999"
+                          value={formData.phone}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                        />
+                      </div>
+                    ) }
 
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha de acesso</Label>
@@ -238,10 +324,10 @@ export function ClientManagement() {
 
                   <div className="flex items-center gap-2">
                     <Badge
-                      variant={client.status === "active" ? "default" : "secondary"}
-                      className={client.status === "active" ? "bg-green-100 text-green-800" : ""}
+                      variant={client.is_active === true ? "default" : "secondary"}
+                      className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
                     >
-                      {client.status === "active" ? "Ativo" : "Inativo"}
+                      {client.is_active === true ? "Ativo" : "Inativo"}
                     </Badge>
 
                     <DropdownMenu>
@@ -255,10 +341,11 @@ export function ClientManagement() {
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleStatus(client.id)}>
+                        <DropdownMenuItem onClick={() => toggleis_active(client.id)}>
                           <User className="mr-2 h-4 w-4" />
-                          {client.status === "active" ? "Desativar" : "Ativar"}
+                          {client.is_active ? "Desativar" : "Ativar"}
                         </DropdownMenuItem>
+
                         <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(client.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Excluir
@@ -285,7 +372,7 @@ export function ClientManagement() {
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-sm text-gray-500">{client.postsCount} posts</span>
                   <span className="text-sm text-gray-500">
-                    Desde {new Date(client.createdAt).toLocaleDateString("pt-BR")}
+                    Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
 

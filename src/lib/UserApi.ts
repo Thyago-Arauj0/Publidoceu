@@ -42,12 +42,47 @@ export const getUsers = async (): Promise<UserProfile[]> => {
 export const createUser = async (
   name: string,
   email: string,
-  password: string,
-  first_name?: string,
-  last_name?: string
+  password?: string,
+  first_name?: string | null,
+  last_name?: string | null
 ): Promise<UserProfile> => {
-  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/`, {
+
+
+  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/register/`, {
     method: "POST",
-    body: JSON.stringify({ name, email, password, first_name, last_name }),
-  });
+    body: JSON.stringify({
+      name,
+      email,
+      password: password || null,
+      first_name: first_name ?? null,
+      last_name: last_name ?? null,
+    }),
+  })
+}
+
+
+export const updateUser = async (
+  id: number | string,
+  name: string, 
+  email: string,
+  password?: string,
+  profile: {
+    whatsapp?: string | null;
+  } | null = null,
+  is_active?: boolean,
+  first_name?: string | null,
+  last_name?: string | null
+): Promise<UserProfile> => {
+  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      name,
+      email,
+      password: password || null,
+      profile: profile || { whatsapp: null },
+      is_active,
+      first_name: first_name ?? null,
+      last_name: last_name ?? null,
+    }),
+  })
 }
