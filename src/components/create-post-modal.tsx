@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,28 +11,36 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Upload, X } from "lucide-react"
 import Image from "next/image"
+import { getUsers } from "@/lib/UserApi"
+import { UserProfile } from "@/lib/types/user"
+import { Card, CardStatus } from "@/lib/types/card"
+import { createCard } from "@/lib/CardApi"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
 }
 
-// Mock clients data
-const mockClients = [
-  { id: "client-123", name: "Loja ABC" },
-  { id: "client-456", name: "Empresa XYZ" },
-  { id: "client-789", name: "Coach DEF" },
-  { id: "client-101", name: "Restaurante Gourmet" },
-]
+
 
 export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
   const [open, setOpen] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    clientId: "",
-    image: "",
-  })
+  const [formData, setFormData] = useState({ title: "", description: "", clientId: "", image: "", status:"",  due_date: "" })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [users, setUsers] = useState<UserProfile[]>([])
+
+  useEffect(() => {
+    // Fetch users from the API (currently not used in the form)
+    const fetchUsers = async () => {
+      try {
+        const users = await getUsers()
+        setUsers(users)
+        console.log("Fetched users:", users)
+      } catch (error) {
+        console.error("Error fetching users:", error)
+      }
+    }
+    fetchUsers()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,23 +49,31 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
       return
     }
 
-    const selectedClient = mockClients.find((client) => client.id === formData.clientId)
+    // const selectedClient = users.find((client) => client.id === formData.clientId)
 
     const newPost = {
-      id: Date.now().toString(),
       title: formData.title,
       description: formData.description,
-      client: selectedClient?.name || "",
       clientId: formData.clientId,
-      status: "ideias",
-      createdAt: new Date().toISOString().split("T")[0],
-      image: imagePreview || undefined,
+      status: formData.status || "todo",
+      due_date: formData.due_date,
+      image: imagePreview || "https://storage.googleapis.com/star-lab/blog/OGs/image-not-found.png",
+      feedback: {},
     }
 
-    onCreatePost(newPost)
+    console.log("Creating post:", newPost)
+
+    createCard(newPost.clientId, newPost.title, newPost.image || "", newPost.description,  newPost.status, newPost.due_date, newPost.feedback) 
+      .then((createdCard) => {
+        console.log("Card criado com sucesso:", createdCard)
+        onCreatePost(createdCard)
+      })
+      .catch((error) => {
+        console.error("Erro ao criar o card:", error)
+      })
 
     // Reset form
-    setFormData({ title: "", description: "", clientId: "", image: "" })
+    setFormData({ title: "", description: "", clientId: "", image: "", status:"", due_date: "" })
     setImagePreview(null)
     setOpen(false)
   }
@@ -126,13 +142,43 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                {mockClients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
+                {users.map((client) => (
+                  <SelectItem key={client.id} value={String(client.id)}>
                     {client.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value: CardStatus) =>
+                setFormData((prev) => ({ ...prev, status: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todo">A Fazer</SelectItem>
+                <SelectItem value="in_progress">Em Progresso</SelectItem>
+                <SelectItem value="review">Em Revisão</SelectItem>
+                <SelectItem value="done">Concluído</SelectItem>
+                <SelectItem value="disapprove">Reprovado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="due_date">Data de Vencimento</Label>
+            <Input
+              id="due_date"
+              type="date"
+              value={formData.due_date}
+              onChange={(e) => setFormData((prev) => ({ ...prev, due_date: e.target.value }))}
+              required
+            />
           </div>
 
           <div className="space-y-2">

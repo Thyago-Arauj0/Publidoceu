@@ -32,3 +32,22 @@ export const getUser = async (): Promise<UserProfile> => {
   console.log("Profile data:", data);
   return data;
 };
+
+export const getUsers = async (): Promise<UserProfile[]> => {
+  return authFetch<UserProfile[]>(`${API_BASE_URL}/api/v1/auth/account/`, {
+    method: "GET",
+  });
+}
+
+export const createUser = async (
+  name: string,
+  email: string,
+  password: string,
+  first_name?: string,
+  last_name?: string
+): Promise<UserProfile> => {
+  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/`, {
+    method: "POST",
+    body: JSON.stringify({ name, email, password, first_name, last_name }),
+  });
+}

@@ -1,95 +1,134 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { KanbanColumn } from "@/components/kanban-column"
-import { PostCard } from "@/components/post-card"
+import { KanbanCard } from "@/components/kanban-card"
+import { getCards, updateCardStatus, deleteCard} from "@/lib/CardApi"
+import { Card, CardStatus } from "@/lib/types/card"
 
-// Mock data - in real app, this would come from API
-const initialMockPosts = [
-  {
-    id: "1",
-    title: "Post sobre Black Friday",
-    description: "Promoção especial para Black Friday com 50% de desconto",
-    client: "Loja ABC",
-    clientId: "client-123",
-    status: "ideias",
-    createdAt: "2024-01-15",
-    image: "/black-friday-sale-crowd.png",
-  },
-  {
-    id: "2",
-    title: "Campanha de Natal",
-    description: "Posts temáticos para a campanha de Natal",
-    client: "Empresa XYZ",
-    clientId: "client-456",
-    status: "em-aprovacao",
-    createdAt: "2024-01-14",
-    image: "/festive-market-campaign.png",
-  },
-  {
-    id: "3",
-    title: "Lançamento de Produto",
-    description: "Anúncio do novo produto da linha premium",
-    client: "Loja ABC",
-    clientId: "client-123",
-    status: "aprovadas",
-    createdAt: "2024-01-13",
-    image: "/product-launch-excitement.png",
-  },
-  {
-    id: "4",
-    title: "Post Motivacional",
-    description: "Conteúdo motivacional para segunda-feira",
-    client: "Coach DEF",
-    clientId: "client-789",
-    status: "reprovadas",
-    createdAt: "2024-01-12",
-    image: "/motivational-monday.png",
-  },
-]
-
-const columns = [
-  { id: "ideias", title: "Ideias", color: "bg-blue-100 dark:bg-blue-900" },
-  { id: "em-aprovacao", title: "Em Aprovação", color: "bg-yellow-100 dark:bg-yellow-900" },
-  { id: "aprovadas", title: "Aprovadas", color: "bg-green-100 dark:bg-green-900" },
-  { id: "reprovadas", title: "Reprovadas", color: "bg-red-100 dark:bg-red-900" },
-]
 
 interface KanbanBoardProps {
-  newPosts: any[]
+  newPosts: Card[],
+  boardId: string
+
 }
 
-export function KanbanBoard({ newPosts }: KanbanBoardProps) {
-  const [posts, setPosts] = useState([...initialMockPosts, ...newPosts])
+export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
+  const [cards, setCards] = useState<Card[]>([])
+  const [activeStatus, setActiveStatus] = useState<CardStatus>("todo")
+  const statusList: CardStatus[] = ["todo", "in_progress", "review", "done", "disapprove"]
+  const bId = boardId
 
   useEffect(() => {
-    setPosts((prev) => [...initialMockPosts, ...newPosts])
+    const fetchCards = async () => {
+      const fetchedCards: Card[] = await getCards(bId)
+      console.log("Fetched cards from API:", fetchedCards)
+
+      // junta os novos posts (se existirem) com os do backend
+      setCards([
+        ...fetchedCards,
+        ...newPosts.filter(np => !fetchedCards.some(fc => fc.id === np.id))
+      ])
+
+    }
+
+    fetchCards()
   }, [newPosts])
 
-  const getPostsByStatus = (status: string) => {
-    return posts.filter((post) => post.status === status)
+  const handleDelete = (boardId: number, cardId: number) => {
+    if (confirm("Tem certeza que deseja excluir este card?")) {
+      const bId = boardId.toString()
+      const cId = cardId.toString()
+      deleteCard(bId, cId)
+        .then(() => {
+          console.log("Card excluído com sucesso")
+          // Atualiza o estado removendo o card
+          setCards(cards.filter(c => c.id !== cardId))
+        })
+        .catch((error) => {
+          console.error("Erro ao excluir o card:", error)
+        })
+    }
   }
 
-  const movePost = (postId: string, newStatus: string) => {
-    setPosts(posts.map((post) => (post.id === postId ? { ...post, status: newStatus } : post)))
+
+  const getCardsByStatus = (status: string) => {
+    return cards.filter((card) => card.status === status)
+  }
+
+
+  const moveCard = (cardId: number, newStatus: CardStatus) => {
+    setCards(cards.map(card => card.id === cardId ? { ...card, status: newStatus } : card))
+    
+      const bId = boardId.toString()
+      const cId = cardId.toString()
+
+    updateCardStatus(bId, cId, newStatus).catch(console.error)
+  }
+
+
+  const getStatusLabel = (status: string) => {
+    const labels = {
+      todo: "A Fazer",
+      in_progress: "Em Progresso",
+      review: "Em Revisão",
+      done: "Concluído",
+      disapprove: "Reprovado",
+      aprovadas: "Aprovado",
+      reprovadas: "Reprovado",
+    } as const
+
+    return labels[status as keyof typeof labels] || status
+  }
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      todo: "bg-gray-500 text-white",
+      in_progress: "bg-blue-500 text-white",
+      review: "bg-yellow-500 text-black",
+      done: "bg-green-500 text-white",
+      disapprove: "bg-red-500 text-white",
+      aprovadas: "bg-green-600 text-white",
+      reprovadas: "bg-red-600 text-white",
+    } as const
+
+    return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {columns.map((column) => (
-        <KanbanColumn
-          key={column.id}
-          title={column.title}
-          color={column.color}
-          count={getPostsByStatus(column.id).length}
-        >
-          <div className="space-y-3">
-            {getPostsByStatus(column.id).map((post) => (
-              <PostCard key={post.id} post={post} onMove={movePost} />
+ <div>
+      {/* Botões para navegar entre "páginas" */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {statusList.map(status => (
+          <button
+            key={status}
+            onClick={() => setActiveStatus(status)}
+            className={`px-4 py-2 rounded ${
+              activeStatus === status ? `${getStatusColor(activeStatus)}` : "bg-gray-200 text-gray-800"
+            }`}
+          >
+            {getStatusLabel(status)} ({getCardsByStatus(status).length})
+          </button>
+        ))}
+      </div>
+      
+
+      {/* Página atual */}
+      <div>
+        {getCardsByStatus(activeStatus).length === 0 ? (
+          <p className="text-gray-500">Nenhum card nesta categoria.</p>
+        ) : (
+          <div className="space-y-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {getCardsByStatus(activeStatus).map(card => (
+              <KanbanCard
+                key={card.id}
+                card={card}
+                onMove={(bId, cId, status) => moveCard(cId, status)}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
-        </KanbanColumn>
-      ))}
+        )}
+      </div>
     </div>
   )
 }

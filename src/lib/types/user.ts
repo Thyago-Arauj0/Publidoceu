@@ -1,5 +1,5 @@
 export interface UserProfile {
-  id: number;               // PK do usuário
+  id: number | string;               // PK do usuário
   name: string;             // Nome de usuário (único)
   email: string;            // Email (único)
   first_name?: string | null;   // Primeiro nome

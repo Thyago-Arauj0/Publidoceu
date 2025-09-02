@@ -19,7 +19,7 @@ interface Client {
   name: string
   email: string
   phone: string
-  company: string
+  password?: string
   status: "active" | "inactive"
   postsCount: number
   createdAt: string
@@ -27,31 +27,28 @@ interface Client {
 
 const mockClients: Client[] = [
   {
-    id: "client-123",
+    id: "2",
     name: "João Silva",
     email: "joao@lojaabc.com",
     phone: "(11) 99999-9999",
-    company: "Loja ABC",
     status: "active",
     postsCount: 5,
     createdAt: "2024-01-10",
   },
   {
-    id: "client-456",
+    id: "2",
     name: "Maria Santos",
     email: "maria@empresaxyz.com",
     phone: "(11) 88888-8888",
-    company: "Empresa XYZ",
     status: "active",
     postsCount: 3,
     createdAt: "2024-01-08",
   },
   {
-    id: "client-789",
+    id: "2",
     name: "Pedro Costa",
     email: "pedro@coachdef.com",
     phone: "(11) 77777-7777",
-    company: "Coach DEF",
     status: "inactive",
     postsCount: 1,
     createdAt: "2024-01-05",
@@ -66,14 +63,14 @@ export function ClientManagement() {
     name: "",
     email: "",
     phone: "",
-    company: "",
+    password: "",
   })
   const router = useRouter()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.company) {
+    if (!formData.name || !formData.email || !formData.phone) {
       return
     }
 
@@ -94,7 +91,7 @@ export function ClientManagement() {
     }
 
     // Reset form
-    setFormData({ name: "", email: "", phone: "", company: "" })
+    setFormData({ name: "", email: "", phone: "", password: "" })
     setIsCreateModalOpen(false)
   }
 
@@ -104,7 +101,7 @@ export function ClientManagement() {
       name: client.name,
       email: client.email,
       phone: client.phone,
-      company: client.company,
+      password: client.password || "",
     })
     setIsCreateModalOpen(true)
   }
@@ -122,7 +119,7 @@ export function ClientManagement() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", company: "" })
+    setFormData({ name: "", email: "", phone: "", password: "" })
     setEditingClient(null)
     setIsCreateModalOpen(false)
   }
@@ -154,10 +151,10 @@ export function ClientManagement() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
+                    <Label htmlFor="company">Empresa</Label>
                     <Input
-                      id="name"
-                      placeholder="Digite o nome completo..."
+                      id="company"
+                      placeholder="Nome da empresa..."
                       value={formData.name}
                       onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       required
@@ -187,15 +184,15 @@ export function ClientManagement() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="company">Empresa</Label>
+                    <Label htmlFor="password">Senha de acesso</Label>
                     <Input
-                      id="company"
-                      placeholder="Nome da empresa..."
-                      value={formData.company}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, company: e.target.value }))}
-                      required
+                      id="password"
+                      placeholder="data de nascimento"
+                      value={formData.password}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                     />
                   </div>
+
 
                   <div className="flex justify-end gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={resetForm}>
@@ -235,7 +232,7 @@ export function ClientManagement() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">{client.name}</CardTitle>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{client.company}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
                     </div>
                   </div>
 
@@ -296,7 +293,7 @@ export function ClientManagement() {
                   variant="outline"
                   size="sm"
                   className="w-full bg-transparent"
-                  onClick={() => router.push(`/client/${client.id}`)}
+                  onClick={() => router.push(`/clients/${client.id}`)}
                 >
                   Ver Área do Cliente
                 </Button>

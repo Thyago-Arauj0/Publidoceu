@@ -65,13 +65,41 @@ export const authFetch = async <R>(
       throw new Error("Erro após tentativa de refresh");
     }
 
+    if (retryResponse.status === 204 || retryResponse.headers.get("content-length") === "0") {
+      return "null" as unknown as R;
+    }
+    
     return retryResponse.json();
   }
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || "Erro na requisição autenticada");
+    let message = `Erro ${response.status}`;
+    try {
+      const errorData = await response.json();
+      console.error("Erro da API:", errorData);
+
+      if (errorData.detail) {
+        message = errorData.detail;
+      } else {
+        // Pega a primeira mensagem de erro do serializer
+        const firstKey = Object.keys(errorData)[0];
+        if (firstKey) {
+          message = `${firstKey}: ${errorData[firstKey]}`;
+        }
+      }
+    } catch {
+      console.error("Erro ao parsear resposta de erro");
+    // mantém a mensagem genérica
+    }
+
+    throw new Error(message);
   }
+
+    // se for status sem conteúdo, não tenta parsear
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return "null" as unknown as R;
+  }
+
 
   return response.json();
 };

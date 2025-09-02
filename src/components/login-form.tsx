@@ -31,7 +31,9 @@ export function LoginForm() {
       setIsLoading(false)
     return}
     const result = await loginUser({ email, password })
-    console.log("Login successful:", result)
+
+    console.log("ID do usuário:", result.userType, result.user.id)
+
 
     try {
         if (result.userType === "admin") {
@@ -39,9 +41,9 @@ export function LoginForm() {
           Cookies.set("isAdmin", "true")
         }else if(result.userType === "client"){
           const clientId = `${result.user.id}`
+          Cookies.set("isAdmin", "false", { expires: 7 })
+          Cookies.set("userId", clientId, { expires: 7 })
           router.push(`/client/${clientId}`)
-          Cookies.set("isAdmin", "false")
-          Cookies.set("userId", clientId)
         }
     } catch (err) {
       setError("Erro ao fazer login. Tente novamente.")
