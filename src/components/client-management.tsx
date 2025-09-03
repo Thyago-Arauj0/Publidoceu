@@ -19,7 +19,7 @@ import { UserProfile } from "@/lib/types/user"
 
 
 export interface Client extends UserProfile {
-  phone?: string
+  phone?: string | null
   password?: string
   postsCount?: number
 }
@@ -61,7 +61,7 @@ export function ClientManagement() {
           users.map(async (user: UserProfile) => ({
             ...user,
             postsCount: await fetchPostsCount(user.id), 
-            phone: user.profile?.whatsapp || "",
+            phone: user.profile?.whatsapp,
             password: "",
             is_active: user.is_active,
             created_at: user.created_at
@@ -178,11 +178,11 @@ export function ClientManagement() {
         client.id,
         updatedClient.name,
         updatedClient.email,
-        updatedClient.password || "",
-        { whatsapp: client.phone || null },
+        undefined, // Não alteramos a senha aqui
+        undefined,
         updatedClient.is_active, // Novo status
-        updatedClient.first_name || null,
-        updatedClient.last_name || null
+        undefined,
+        undefined
       );
       
       // Atualiza o estado local
@@ -197,8 +197,6 @@ export function ClientManagement() {
       console.error("Failed to update client status:", error);
     }
   };
-
-
 
  
   const resetForm = () => {

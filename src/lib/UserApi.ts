@@ -73,12 +73,14 @@ export const updateUser = async (
   first_name?: string | null,
   last_name?: string | null
 ): Promise<UserProfile> => {
+
+
   return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
     method: "PATCH",
     body: JSON.stringify({
       name,
       email,
-      password: password || null,
+      password,
       profile: profile || { whatsapp: null },
       is_active,
       first_name: first_name ?? null,

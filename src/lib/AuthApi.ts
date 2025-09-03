@@ -59,6 +59,10 @@ export const loginUser = async (credentials: { email: string; password: string }
     throw new Error("Erro ao obter dados do usuário.");
   }
 
+  if(!user.is_active){
+    throw new Error("Usuário inativo. Contate o administrador.");
+  }
+
   return {
     userType: user.is_superuser ? "admin" : "client",
     user

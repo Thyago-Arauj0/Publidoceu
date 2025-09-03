@@ -29,24 +29,24 @@ export function LoginForm() {
     if (!email || !password) {
       setError("Por favor, preencha todos os campos")
       setIsLoading(false)
-    return}
-    const result = await loginUser({ email, password })
-
-    console.log("ID do usuário:", result.userType, result.user.id)
-
+      return
+    }
 
     try {
+        const result = await loginUser({ email, password })
+
         if (result.userType === "admin") {
           router.push("/dashboard")
-          Cookies.set("isAdmin", "true")
+          Cookies.set("isAdmin", "true", { expires: 7 })
         }else if(result.userType === "client"){
           const clientId = `${result.user.id}`
           Cookies.set("isAdmin", "false", { expires: 7 })
           Cookies.set("userId", clientId, { expires: 7 })
           router.push(`/client/${clientId}`)
         }
-    } catch (err) {
-      setError("Erro ao fazer login. Tente novamente.")
+    } catch (err: any) {
+       console.error("Erro no login:", err.message);
+       setError(err.message); 
     } finally {
       setIsLoading(false)
     }
