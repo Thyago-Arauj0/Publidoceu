@@ -34,7 +34,6 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
       try {
         const users = await getUsers()
         setUsers(users)
-        console.log("Fetched users:", users)
       } catch (error) {
         console.error("Error fetching users:", error)
       }
@@ -61,11 +60,9 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
       feedback: {},
     }
 
-    console.log("Creating post:", newPost)
 
     createCard(newPost.clientId, newPost.title, newPost.image || "", newPost.description,  newPost.status, newPost.due_date, newPost.feedback) 
       .then((createdCard) => {
-        console.log("Card criado com sucesso:", createdCard)
         onCreatePost(createdCard)
       })
       .catch((error) => {

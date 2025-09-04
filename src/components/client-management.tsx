@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, ArrowLeft } from "lucide-react"
+import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getUsers, createUser, updateUser } from "@/lib/UserApi"
+import { getUsers, createUser, updateUser, deleteUser } from "@/lib/UserApi"
 import { getCards } from "@/lib/CardApi"
 import { UserProfile } from "@/lib/types/user"
+import { logoutUser } from "@/lib/AuthApi"
 
 
 export interface Client extends UserProfile {
@@ -93,8 +94,6 @@ export function ClientManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-     console.log("handleSubmit chamado"); 
-
     if (!formData.name || !formData.email) {
       return
     }
@@ -120,7 +119,6 @@ export function ClientManagement() {
         console.error("Failed to update user:", error)
       }
     } else {
-      console.log("Creating new user");
       try {
         const newUser = await createUser(
           formData.name,
@@ -163,9 +161,15 @@ export function ClientManagement() {
     setIsCreateModalOpen(true)
   }
 
-  const handleDelete = (clientId: string | number) => {
-    setClients(clients.filter((client) => client.id !== clientId))
+  const handleDelete = async (clientId: string | number) => {
+    try {
+      await deleteUser(clientId)
+      setClients(clients.filter((client) => client.id !== clientId))
+    } catch (error) {
+      console.error("Failed to delete user:", error)
+    }
   }
+
 
   const toggleis_active = async (clientId: string | number) => {
     const client = clients.find(c => c.id === clientId);
@@ -179,7 +183,7 @@ export function ClientManagement() {
         updatedClient.name,
         updatedClient.email,
         undefined, // Não alteramos a senha aqui
-        undefined,
+        { whatsapp: client.profile?.whatsapp ?? null }, 
         updatedClient.is_active, // Novo status
         undefined,
         undefined
@@ -198,6 +202,12 @@ export function ClientManagement() {
     }
   };
 
+  
+  const handleLogout =  async() => {
+    await logoutUser()
+    router.push("/login")
+  }
+
  
   const resetForm = () => {
     setFormData({ name: "", email: "", phone: "", password: "", is_active: false })
@@ -212,14 +222,6 @@ export function ClientManagement() {
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => router.push("/dashboard")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Button>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gerenciamento de Clientes</h2>
-            </div>
-
             <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm}>
@@ -287,6 +289,11 @@ export function ClientManagement() {
                 </form>
               </DialogContent>
             </Dialog>
+
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
           </div>
         </div>
       </header>
@@ -294,7 +301,7 @@ export function ClientManagement() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Clientes</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard - Gerenciamento de Clientes</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Gerencie todos os seus clientes e suas informações</p>
         </div>
 

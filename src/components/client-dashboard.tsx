@@ -12,7 +12,7 @@ import { getCards } from "@/lib/CardApi"
 import { logoutUser } from "@/lib/AuthApi"
 import { getUser } from "@/lib/UserApi"
 import { Card as CardType} from "@/lib/types/card"
-import { UserProfile } from "@/lib/types/user"
+
 
 interface Props {
   boardId: string; // id do board do client
@@ -24,9 +24,6 @@ export function ClientDashboard({ boardId }: Props) {
   const [user, setUser] = useState<any>({})
   const router = useRouter()
 
-  console.log("Board ID:", boardId);
-
-
   const handleLogout =  async() => {
     await logoutUser()
     router.push("/login")
@@ -36,7 +33,6 @@ export function ClientDashboard({ boardId }: Props) {
     const fetchCards = async () => {
       try {
         const data: CardType[] = await getCards(boardId);
-        console.log("Card data:", data);
         setCards(data);
       } catch (error) {
         console.error("Erro ao buscar cards:", error);
@@ -47,7 +43,6 @@ export function ClientDashboard({ boardId }: Props) {
     const fetchUser = async () => {
       try {
         const user = await getUser();
-        console.log("Usuário logado:", user);
         setUser(user);
       } catch (error) {
         console.error("Erro ao buscar usuário:", error);

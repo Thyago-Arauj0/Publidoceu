@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Settings, LogOut, Users } from "lucide-react"
+import { Bell, Settings, LogOut, Users, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { CreatePostModal } from "@/components/create-post-modal"
 
@@ -30,13 +30,18 @@ export function DashboardHeader({ onCreatePost }: DashboardHeaderProps) {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Social Media Manager</h2>
+              <Button variant="ghost" onClick={() => router.push("/dashboard")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Dashboard</h2>
           </div>
+
 
           <div className="flex items-center gap-4">
             <CreatePostModal onCreatePost={onCreatePost} />
 
-            <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
+            {/* <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
               <Users className="h-4 w-4 mr-2" />
               Gerenciar Clientes
             </Button>
@@ -72,7 +77,7 @@ export function DashboardHeader({ onCreatePost }: DashboardHeaderProps) {
                   <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </div>
       </div>

@@ -11,25 +11,25 @@ interface JwtPayload {
   iat: number;
 }
 
-export const getUser = async (): Promise<UserProfile> => {
-  // 🔑 O token só é necessário aqui para decodificar o user_id
-  const token = Cookies.get("access_token");
-  if (!token) {
-    throw new Error("Usuário não autenticado");
+export const getUser = async (id?: string | number): Promise<UserProfile> => {
+  let userId = id;
+
+  // Se não foi passado id, tenta pegar do token
+  if (!userId) {
+    const token = Cookies.get("access_token");
+    if (!token) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const decoded = jwtDecode<JwtPayload>(token);
+    userId = decoded.user_id;
   }
 
-  const decoded = jwtDecode<JwtPayload>(token);
-  const id = decoded.user_id;
-
-  console.log("ID do usuário logado:", id);
-
-  // ✅ Agora usando authFetch (com refresh automático se precisar)
   const data = await authFetch<UserProfile>(
-    `${API_BASE_URL}/api/v1/auth/account/${id}/`,
+    `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
     { method: "GET" }
   );
 
-  console.log("Profile data:", data);
   return data;
 };
 
@@ -38,6 +38,8 @@ export const getUsers = async (): Promise<UserProfile[]> => {
     method: "GET",
   });
 }
+
+
 
 export const createUser = async (
   name: string,
@@ -86,5 +88,11 @@ export const updateUser = async (
       first_name: first_name ?? null,
       last_name: last_name ?? null,
     }),
+  })
+}
+
+export const deleteUser = async (id: number | string): Promise<void> => {
+  await authFetch<void>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    method: "DELETE",
   })
 }

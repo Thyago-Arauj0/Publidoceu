@@ -5,8 +5,11 @@ import { getCard } from "@/lib/CardApi"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CalendarDays, Clock, MessageSquare, User } from "lucide-react"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User } from "lucide-react"
 import { Card as CardType } from "@/lib/types/card"
+import { getUser } from "@/lib/UserApi"
+import { Button } from "./ui/button"
+import { useRouter } from "next/navigation"
 
 interface CardDetailsProps {
   boardId: string
@@ -16,6 +19,8 @@ interface CardDetailsProps {
 export default function CardDetails({ boardId, cardId }: CardDetailsProps) {
 
 const [cardData, setCardData] = useState<CardType>({} as CardType)
+const [user, setUser] = useState<string>('')
+const router = useRouter()
 
 useEffect(() => {
     const bId = boardId 
@@ -24,7 +29,6 @@ useEffect(() => {
     const fetchCard = async () => {
       try {
         const data: CardType = await getCard(bId, cId);
-        console.log("Card data:", data);
         setCardData(data);
       } catch (error) {
         console.error("Erro ao buscar card:", error);
@@ -32,9 +36,34 @@ useEffect(() => {
       }
     };
 
+    const fetchUser = async () => {
+      try {
+        const data = await getUser(bId);
+        setUser(data.name);
+      } catch (error) {
+        console.error("Erro ao buscar usuário:", error);
+      }
+    };
+
+
     fetchCard();
+    fetchUser()
 }, [])
 
+
+  const getStatusLabel = (status: string) => {
+    const labels = {
+      todo: "A Fazer",
+      in_progress: "Em Progresso",
+      review: "Em Revisão",
+      done: "Concluído",
+      disapprove: "Reprovado",
+      aprovadas: "Aprovado",
+      reprovadas: "Reprovado",
+    } as const
+
+    return labels[status as keyof typeof labels] || status
+  }
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -45,11 +74,10 @@ useEffect(() => {
       disapprove: "bg-red-500 text-white",
       aprovadas: "bg-green-600 text-white",
       reprovadas: "bg-red-600 text-white",
-    } as const;
+    } as const
 
-    return colors[status as keyof typeof colors] || "bg-gray-500 text-white";
-  };
-
+    return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
+  }
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -62,51 +90,66 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-background">
+
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+              <Button variant="ghost" onClick={() => router.push(`/clients/${boardId}/`)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Voltar</h2> */}
+          </div>
+        </div>
+      </div>
+    </header>
+
+
+
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Detalhes do Card</h1>
-          <p className="text-muted-foreground mt-2">Informações completas sobre o item selecionado</p>
+          <h1 className="text-3xl font-bold text-foreground">Detalhes</h1>
+          <p className="text-muted-foreground mt-2">Informações completas sobre o card selecionado</p>
         </div>
 
         <div className="space-y-6">
           <Card>
             <CardHeader>
+              <div>
+                  <div className="flex items-center justify-end space-x-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>{user}</span>
+                  </div>
+                  <br />
+                  <img
+                    src={cardData.image || "/placeholder.svg"}
+                    alt="Card illustration"
+                    className="w-full  rounded-lg border"
+                  />
+              </div>
               <div className="flex items-start justify-between">
+
                 <div className="space-y-2">
                   <CardTitle className="text-2xl">{cardData.title}</CardTitle>
-                  <Badge className={getStatusColor(cardData?.status)}>
-                     {cardData?.status || "Carregando..."}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <h3>Status:</h3>
+                    <Badge className={getStatusColor(cardData?.status)}>
+                        {getStatusLabel(cardData?.status) || "Carregando..."}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Responsável</span>
-                </div>
+
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
-                <Avatar>
-                  {/* <AvatarImage src={cardData.usuario.avatar || "/placeholder.svg"} alt={cardData.usuario.name} /> */}
-                  <AvatarFallback>
-                    {cardData.board}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
 
               <div>
                 <h3 className="font-semibold mb-2">Descrição</h3>
                 <p className="text-muted-foreground leading-relaxed">{cardData.description}</p>
               </div>
 
-              <div>
-                <h3 className="font-semibold mb-2">Imagem</h3>
-                <img
-                  src={cardData.image || "/placeholder.svg"}
-                  alt="Card illustration"
-                  className="w-full max-w-md rounded-lg border"
-                />
-              </div>
+
             </CardContent>
           </Card>
 

@@ -21,7 +21,6 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
   useEffect(() => {
     const fetchCards = async () => {
       const fetchedCards: Card[] = await getCards(bId)
-      console.log("Fetched cards from API:", fetchedCards)
 
       // junta os novos posts (se existirem) com os do backend
       setCards([
@@ -40,7 +39,6 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
       const cId = cardId.toString()
       deleteCard(bId, cId)
         .then(() => {
-          console.log("Card excluído com sucesso")
           // Atualiza o estado removendo o card
           setCards(cards.filter(c => c.id !== cardId))
         })

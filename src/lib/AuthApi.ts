@@ -75,4 +75,6 @@ export const logoutUser = async () =>{
   Cookies.remove("refresh_token");
   Cookies.remove("isAdmin");
   Cookies.remove("userId");
+  Cookies.remove("csrftoken")
+  Cookies.remove("sessionid")
 }

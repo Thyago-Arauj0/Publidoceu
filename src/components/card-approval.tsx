@@ -30,7 +30,6 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
     const fetchCard = async () => {
       try {
         const data: CardType = await getCard(boardId, cardId);
-        console.log("Card data:", data);
         setCard(data);
       } catch (error) {
         console.error("Erro ao buscar card:", error);
@@ -46,7 +45,6 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
     if (!feedback.trim()) return;
     setIsSubmitting(true);
     try {
-      console.log("Submitting feedback:", feedback);
       await addFeedback(boardId, cardId, feedback);
       setCard((prev) => ({ ...prev, feedback: { id: prev.feedback?.id || 0, card: prev.id, text: feedback } }));
       setFeedback("");
