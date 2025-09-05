@@ -9,101 +9,164 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Upload, X } from "lucide-react"
+import { Plus, Upload, X, Edit } from "lucide-react"
 import Image from "next/image"
-import { getUsers } from "@/lib/UserApi"
+import { getUser } from "@/lib/UserApi"
 import { UserProfile } from "@/lib/types/user"
-import { Card, CardStatus } from "@/lib/types/card"
-import { createCard } from "@/lib/CardApi"
+import { CardStatus, Card } from "@/lib/types/card"
+import { createCard, updateCard } from "@/lib/CardApi"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
+  onUpdatePost?: (post: any) => void
+  boardId: number | string
+  editingCard?: Card | null
+  isEditing?: boolean
 }
 
-
-
-export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
+export function CreatePostModal({ 
+  onCreatePost, 
+  onUpdatePost, 
+  boardId, 
+  editingCard = null, 
+  isEditing = false 
+}: CreatePostModalProps) {
   const [open, setOpen] = useState(false)
-  const [formData, setFormData] = useState({ title: "", description: "", clientId: "", image: "", status:"",  due_date: "" })
+  const [formData, setFormData] = useState({ 
+    title: "", 
+    description: "", 
+    board: 0, 
+    image: "", 
+    status: "" as CardStatus, 
+    due_date: "" 
+  })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [users, setUsers] = useState<UserProfile[]>([])
+  const [user, setUser] = useState<UserProfile>()
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Fetch users from the API (currently not used in the form)
-    const fetchUsers = async () => {
+    const fetchUser = async () => {
       try {
-        const users = await getUsers()
-        setUsers(users)
+        const user = await getUser(boardId)
+        setUser(user)
       } catch (error) {
-        console.error("Error fetching users:", error)
+        console.error("Error fetching user:", error)
       }
     }
-    fetchUsers()
-  }, [])
+    fetchUser()
+  }, [boardId])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Reset form when modal opens/closes or editingCard changes
+  useEffect(() => {
+    if (open && isEditing && editingCard) {
+      // Pre-fill form with editing card data
+      setFormData({
+        title: editingCard.title || "",
+        description: editingCard.description || "",
+        board: editingCard.board,
+        image: editingCard.image || "",
+        status: editingCard.status || "todo",
+        due_date: editingCard.due_date || ""
+      })
+      setImagePreview(editingCard.image || null)
+    } else if (!open) {
+      // Reset form when modal closes
+      setFormData({ 
+        title: "", 
+        description: "", 
+        board: 0, 
+        image: "", 
+        status: "todo", 
+        due_date: "" 
+      })
+      setImagePreview(null)
+    }
+  }, [open, isEditing, editingCard])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!formData.title || !formData.description || !formData.clientId) {
+    if (!formData.title || !formData.description) {
       return
     }
 
-    // const selectedClient = users.find((client) => client.id === formData.clientId)
+    const clientId = user?.id || formData.board
+    if (!clientId) {
+      console.error("Nenhum clientId encontrado, não é possível criar/atualizar post.")
+      return
+    }
 
-    const newPost = {
+    const postData = {
       title: formData.title,
       description: formData.description,
-      clientId: formData.clientId,
+      board: String(clientId),
       status: formData.status || "todo",
       due_date: formData.due_date,
-      image: imagePreview || "https://storage.googleapis.com/star-lab/blog/OGs/image-not-found.png",
-      feedback: {},
+      feedback: editingCard?.feedback || {},
     }
 
+    const form = new FormData()
+    Object.entries(postData).forEach(([key, value]) => {
+      form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value))
+    })
+    if (file) form.append("image_upload", file)
 
-    createCard(newPost.clientId, newPost.title, newPost.image || "", newPost.description,  newPost.status, newPost.due_date, newPost.feedback) 
-      .then((createdCard) => {
+
+    try {
+      if (isEditing && editingCard) {
+        const updatedCard = await updateCard(form, String(editingCard.id))
+        if (onUpdatePost) onUpdatePost(updatedCard)
+      } else {
+        const createdCard = await createCard(form)
         onCreatePost(createdCard)
-      })
-      .catch((error) => {
-        console.error("Erro ao criar o card:", error)
-      })
-
-    // Reset form
-    setFormData({ title: "", description: "", clientId: "", image: "", status:"", due_date: "" })
-    setImagePreview(null)
-    setOpen(false)
-  }
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        setImagePreview(result)
-        setFormData((prev) => ({ ...prev, image: result }))
       }
-      reader.readAsDataURL(file)
+
+      // Reset form and close modal
+      setFormData({ title: "", description: "", board: 0, image: "", status: "todo", due_date: "" })
+      setImagePreview(null)
+      setOpen(false)
+    } catch (error) {
+      console.error("Erro ao processar o card:", error)
     }
   }
+
 
   const removeImage = () => {
     setImagePreview(null)
     setFormData((prev) => ({ ...prev, image: "" }))
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      setFile(selectedFile);
+
+      // Para preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        setImagePreview(result)
+      }
+      reader.readAsDataURL(selectedFile)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Post
-        </Button>
+        {isEditing ? (
+          <Button className="bg-white text-foreground font-normal shadow-none px-2 py-1.5">
+            Editar
+          </Button>
+        ) : (
+          <Button variant="default" size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Post
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Criar Novo Post</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Post" : "Criar Novo Post"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -129,44 +192,30 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="client">Cliente</Label>
-            <Select
-              value={formData.clientId}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, clientId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((client) => (
-                  <SelectItem key={client.id} value={String(client.id)}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: CardStatus) =>
-                setFormData((prev) => ({ ...prev, status: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todo">A Fazer</SelectItem>
-                <SelectItem value="in_progress">Em Progresso</SelectItem>
-                <SelectItem value="review">Em Revisão</SelectItem>
-                <SelectItem value="done">Concluído</SelectItem>
-                <SelectItem value="disapprove">Reprovado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!isEditing ? (
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value: CardStatus) =>
+                  setFormData((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">A Fazer</SelectItem>
+                  <SelectItem value="in_progress">Em Progresso</SelectItem>
+                  <SelectItem value="review">Em Revisão</SelectItem>
+                  <SelectItem value="done">Concluído</SelectItem>
+                  <SelectItem value="disapprove">Reprovado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ): null}
+
+          
           <div className="space-y-2">
             <Label htmlFor="due_date">Data de Vencimento</Label>
             <Input
@@ -184,7 +233,7 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
               <Input id="image" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()}>
                 <Upload className="h-4 w-4 mr-2" />
-                Escolher Imagem
+                {imagePreview ? "Alterar Imagem" : "Escolher Imagem"}
               </Button>
             </div>
 
@@ -208,7 +257,9 @@ export function CreatePostModal({ onCreatePost }: CreatePostModalProps) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Criar Post</Button>
+            <Button type="submit">
+              {isEditing ? "Atualizar Post" : "Criar Post"}
+            </Button>
           </div>
         </form>
       </DialogContent>

@@ -15,10 +15,11 @@ import { useRouter } from "next/navigation"
 import { CreatePostModal } from "@/components/create-post-modal"
 
 interface DashboardHeaderProps {
-  onCreatePost: (post: any) => void
+  onCreatePost: (post: any) => void,
+  boardId: string
 }
 
-export function DashboardHeader({ onCreatePost }: DashboardHeaderProps) {
+export function DashboardHeader({ onCreatePost, boardId }: DashboardHeaderProps) {
   const router = useRouter()
 
   const handleLogout = () => {
@@ -39,7 +40,7 @@ export function DashboardHeader({ onCreatePost }: DashboardHeaderProps) {
 
 
           <div className="flex items-center gap-4">
-            <CreatePostModal onCreatePost={onCreatePost} />
+            <CreatePostModal onCreatePost={onCreatePost} boardId={boardId}/>
 
             {/* <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
               <Users className="h-4 w-4 mr-2" />

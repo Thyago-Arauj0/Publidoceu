@@ -39,20 +39,21 @@ export const addFeedback = async (
   });
 };
 
-export const createCard = async (
-  boardId: string,
-  title: string, 
-  image: string,
-  description: string, 
-  status: string,
-  due_date: string,
-  feedback: {}
-): Promise<Card> => {
-  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
+export const createCard = async (form: FormData): Promise<Card> => {
+  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
     method: "POST",
-    body: JSON.stringify({ title, image, description, status, due_date, feedback }),
+    body: form, 
   });
 }
+
+
+export const updateCard = async (form: FormData, cardId: string): Promise<Card> => {
+  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
+    method: "PATCH",
+    body: form, 
+  });
+}
+
 
 export const deleteCard = async (boardId: string, cardId: string): Promise<string> => {
   await authFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {

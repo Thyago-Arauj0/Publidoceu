@@ -9,7 +9,6 @@ import { Card, CardStatus } from "@/lib/types/card"
 interface KanbanBoardProps {
   newPosts: Card[],
   boardId: string
-
 }
 
 export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
@@ -21,15 +20,12 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
   useEffect(() => {
     const fetchCards = async () => {
       const fetchedCards: Card[] = await getCards(bId)
-
-      // junta os novos posts (se existirem) com os do backend
       setCards([
         ...fetchedCards,
         ...newPosts.filter(np => !fetchedCards.some(fc => fc.id === np.id))
       ])
 
     }
-
     fetchCards()
   }, [newPosts])
 
@@ -48,6 +44,12 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
     }
   }
 
+  const handleUpdateCard = (updatedCard: Card) => {
+    setCards(prevCards =>
+      prevCards.map(card => (card.id === updatedCard.id ? updatedCard : card))
+    )
+  }
+
 
   const getCardsByStatus = (status: string) => {
     return cards.filter((card) => card.status === status)
@@ -56,10 +58,8 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
 
   const moveCard = (cardId: number, newStatus: CardStatus) => {
     setCards(cards.map(card => card.id === cardId ? { ...card, status: newStatus } : card))
-    
-      const bId = boardId.toString()
-      const cId = cardId.toString()
-
+    const bId = boardId.toString()
+    const cId = cardId.toString()
     updateCardStatus(bId, cId, newStatus).catch(console.error)
   }
 
@@ -122,6 +122,7 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
                 card={card}
                 onMove={(bId, cId, status) => moveCard(cId, status)}
                 onDelete={handleDelete}
+                onUpdateCard={handleUpdateCard} 
               />
             ))}
           </div>

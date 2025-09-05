@@ -22,7 +22,7 @@ export default function ClientsPage({ params }: PostApprovalPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <DashboardHeader onCreatePost={handleCreatePost} />
+      <DashboardHeader onCreatePost={handleCreatePost} boardId={boardId} />
       <main className="container mx-auto px-4 py-6">
 
         <KanbanBoard newPosts={newPosts} boardId={boardId} />

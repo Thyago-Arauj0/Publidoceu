@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Calendar } from "lucide-react"
 import Link from "next/link"
+import { CreatePostModal } from "./create-post-modal"
 
 interface KanbanCardProps {
   card: CardType
   onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
   onDelete: (boardId: number, cardId: number) => void
+  onUpdateCard?: (updateCard: CardType ) => void
 }
 
 
@@ -18,7 +20,7 @@ interface KanbanCardProps {
     label,
   }))
 
-export function KanbanCard({ card, onMove, onDelete }: KanbanCardProps) {
+export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
   const getStatusColor = (status: CardStatus) => {
     switch (status) {
       case "todo":
@@ -37,8 +39,6 @@ export function KanbanCard({ card, onMove, onDelete }: KanbanCardProps) {
   }
 
 
-
-
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow">
       <CardHeader className="pb-3 flex items-start justify-between">
@@ -55,18 +55,22 @@ export function KanbanCard({ card, onMove, onDelete }: KanbanCardProps) {
                Ver detalhes
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Editar</DropdownMenuItem>
+            <CreatePostModal
+              onCreatePost={() => {}}
+              onUpdatePost={(updatedCard: any) => {
+                 if (onUpdateCard) onUpdateCard(updatedCard)
+              }}
+              boardId={card.board}
+              editingCard={card}
+              isEditing={true}
+            />
+            {/* <DropdownMenuItem>Editar</DropdownMenuItem> */}
             <DropdownMenuItem  onClick={() => onDelete(card.board, card.id)} className="text-red-600">Excluir</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {/* {card.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-            {card.description}
-          </p>
-        )} */}
 
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Calendar className="h-3 w-3" />

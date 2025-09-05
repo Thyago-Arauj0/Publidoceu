@@ -39,26 +39,38 @@ export const authFetch = async <R>(
     token = await refreshAccessToken();
   }
 
+  // Define headers
+  const headers: HeadersInit = {
+    ...options.headers,
+    "Authorization": `Bearer ${token}`,
+  }
+
+  // ⚡ Se o body não for FormData, adiciona Content-Type JSON
+  if (!(options.body instanceof FormData)) {
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      ...options.headers,
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
+    headers,
   });
 
   // Se o token expirou, tenta refresh e refaz a requisição
   if (response.status === 401 || response.status === 403) {
     token = await refreshAccessToken();
 
+    const retryHeaders: HeadersInit = {
+      ...options.headers,
+      "Authorization": `Bearer ${token}`,
+    }
+
+    if (!(options.body instanceof FormData)) {
+      (retryHeaders as Record<string, string>)["Content-Type"] = "application/json";
+    }
+
     const retryResponse = await fetch(url, {
       ...options,
-      headers: {
-        ...options.headers,
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
+      headers: retryHeaders,
     });
 
     if (!retryResponse.ok) {
@@ -68,7 +80,7 @@ export const authFetch = async <R>(
     if (retryResponse.status === 204 || retryResponse.headers.get("content-length") === "0") {
       return "null" as unknown as R;
     }
-    
+
     return retryResponse.json();
   }
 
@@ -78,37 +90,24 @@ export const authFetch = async <R>(
       const errorData = await response.json();
       console.error("Erro da API:", errorData);
 
-     if (errorData.detail) {
+      if (errorData.detail) {
         message = errorData.detail;
       } else {
-        // Transforma todos os erros em string legível
         const flatError = Object.entries(errorData)
-          .map(([key, value]) => {
-            if (typeof value === "object") {
-              return `${key}: ${JSON.stringify(value)}`;
-            }
-            return `${key}: ${value}`;
-          })
+          .map(([key, value]) => typeof value === "object" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`)
           .join(" | ");
-
-        if (flatError) {
-          message = flatError;
-        }
+        if (flatError) message = flatError;
       }
-
     } catch {
       console.error("Erro ao parsear resposta de erro");
-    // mantém a mensagem genérica
     }
 
     throw new Error(message);
   }
 
-    // se for status sem conteúdo, não tenta parsear
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     return "null" as unknown as R;
   }
-
 
   return response.json();
 };

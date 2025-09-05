@@ -65,12 +65,14 @@ export function ClientManagement() {
             phone: user.profile?.whatsapp,
             password: "",
             is_active: user.is_active,
+            is_superuser: user.is_superuser,
             created_at: user.created_at
               ? new Date(user.created_at).toISOString().split("T")[0]
               : new Date().toISOString().split("T")[0],
           }))
         );
         setClients(formattedClients)
+        console.log(formattedClients)
       } catch (error) {
         console.error("Failed to fetch clients:", error)
         setClients([])
@@ -229,7 +231,7 @@ export function ClientManagement() {
                   Novo Cliente
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px]" aria-describedby={undefined}>
                 <DialogHeader>
                   <DialogTitle>{editingClient ? "Editar Cliente" : "Cadastrar Novo Cliente"}</DialogTitle>
                 </DialogHeader>
@@ -306,91 +308,93 @@ export function ClientManagement() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {clients.map((client) => (
-            <Card key={client.id} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
-                      <AvatarFallback>
-                        {client.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{client.name}</CardTitle>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+          {clients.map((client, index) => (
+            !client.is_superuser ? (
+              <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
+                        <AvatarFallback>
+                          {client.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-lg">{client.name}</CardTitle>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={client.is_active === true ? "default" : "secondary"}
+                        className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
+                      >
+                        {client.is_active === true ? "Ativo" : "Inativo"}
+                      </Badge>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(client)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleis_active(client.id)}>
+                            <User className="mr-2 h-4 w-4" />
+                            {client.is_active ? "Desativar" : "Ativar"}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(client.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
+                </CardHeader>
 
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant={client.is_active === true ? "default" : "secondary"}
-                      className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
-                    >
-                      {client.is_active === true ? "Ativo" : "Inativo"}
-                    </Badge>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(client)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleis_active(client.id)}>
-                          <User className="mr-2 h-4 w-4" />
-                          {client.is_active ? "Desativar" : "Ativar"}
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(client.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Mail className="h-4 w-4" />
-                  <span>{client.email}</span>
-                </div>
-
-                {client.phone && (
+                <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Phone className="h-4 w-4" />
-                    <span>{client.phone}</span>
+                    <Mail className="h-4 w-4" />
+                    <span>{client.email}</span>
                   </div>
-                )}
 
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm text-gray-500">{client.postsCount} posts</span>
-                  <span className="text-sm text-gray-500">
-                    Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
+                  {client.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Phone className="h-4 w-4" />
+                      <span>{client.phone}</span>
+                    </div>
+                  )}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full bg-transparent"
-                  onClick={() => router.push(`/clients/${client.id}`)}
-                >
-                  Ver Área do Cliente
-                </Button>
-              </CardContent>
-            </Card>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-gray-500">{client.postsCount} posts</span>
+                    <span className="text-sm text-gray-500">
+                      Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-transparent"
+                    onClick={() => router.push(`/clients/${client.id}`)}
+                  >
+                    Ver Área do Cliente
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null
           ))}
         </div>
 
