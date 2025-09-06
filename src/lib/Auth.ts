@@ -28,50 +28,37 @@ export const refreshAccessToken = async (): Promise<string> => {
   return newAccess;
 };
 
-
-export const authFetch = async <R>(
-  url: string,
-  options: RequestInit = {}
-): Promise<R> => {
+export const authFetch = async <R>(url: string, options: RequestInit = {}): Promise<R> => {
   let token = Cookies.get("access_token");
 
   if (!token) {
     token = await refreshAccessToken();
   }
 
-  // Define headers
   const headers: HeadersInit = {
     ...options.headers,
-    "Authorization": `Bearer ${token}`,
-  }
+    Authorization: `Bearer ${token}`,
+  };
 
-  // ⚡ Se o body não for FormData, adiciona Content-Type JSON
   if (!(options.body instanceof FormData)) {
     (headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const response = await fetch(url, { ...options, headers });
 
-  // Se o token expirou, tenta refresh e refaz a requisição
   if (response.status === 401 || response.status === 403) {
     token = await refreshAccessToken();
 
     const retryHeaders: HeadersInit = {
       ...options.headers,
-      "Authorization": `Bearer ${token}`,
-    }
+      Authorization: `Bearer ${token}`,
+    };
 
     if (!(options.body instanceof FormData)) {
       (retryHeaders as Record<string, string>)["Content-Type"] = "application/json";
     }
 
-    const retryResponse = await fetch(url, {
-      ...options,
-      headers: retryHeaders,
-    });
+    const retryResponse = await fetch(url, { ...options, headers: retryHeaders });
 
     if (!retryResponse.ok) {
       throw new Error("Erro após tentativa de refresh");
@@ -81,26 +68,29 @@ export const authFetch = async <R>(
       return "null" as unknown as R;
     }
 
-    return retryResponse.json();
+    const contentType = retryResponse.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return retryResponse.json();
+    } else {
+      return (await retryResponse.text()) as unknown as R;
+    }
   }
 
   if (!response.ok) {
     let message = `Erro ${response.status}`;
     try {
       const errorData = await response.json();
-      console.error("Erro da API:", errorData);
-
       if (errorData.detail) {
         message = errorData.detail;
       } else {
         const flatError = Object.entries(errorData)
-          .map(([key, value]) => typeof value === "object" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`)
+          .map(([key, value]) =>
+            typeof value === "object" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`
+          )
           .join(" | ");
         if (flatError) message = flatError;
       }
-    } catch {
-      console.error("Erro ao parsear resposta de erro");
-    }
+    } catch {}
 
     throw new Error(message);
   }
@@ -109,5 +99,10 @@ export const authFetch = async <R>(
     return "null" as unknown as R;
   }
 
-  return response.json();
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return response.json();
+  } else {
+    return (await response.text()) as unknown as R;
+  }
 };

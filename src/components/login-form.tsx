@@ -33,6 +33,7 @@ export function LoginForm() {
     }
 
     try {
+
         const result = await loginUser({ email, password })
 
         if (result.userType === "admin") {
@@ -100,7 +101,7 @@ export function LoginForm() {
             </Alert>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full cursor-pointer disabled:cursor-not-allowed" disabled={isLoading}>
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
