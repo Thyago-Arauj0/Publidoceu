@@ -100,7 +100,7 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
           <button
             key={status}
             onClick={() => setActiveStatus(status)}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded cursor-pointer ${
               activeStatus === status ? `${getStatusColor(activeStatus)}` : "bg-gray-200 text-gray-800"
             }`}
           >
@@ -111,11 +111,11 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
       
 
       {/* Página atual */}
-      <div>
+      <div className="mt-10">
         {getCardsByStatus(activeStatus).length === 0 ? (
           <p className="text-gray-500">Nenhum card nesta categoria.</p>
         ) : (
-          <div className="space-y-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-3 grid grid-cols-1 md:grid-cols-4 gap-4">
             {getCardsByStatus(activeStatus).map(card => (
               <KanbanCard
                 key={card.id}

@@ -17,10 +17,8 @@ interface PostApprovalProps {
   cardId: string
 }
 
-
 export function PostApproval({ boardId, cardId }: PostApprovalProps) {
   const [card, setCard] = useState<CardType>({} as CardType)
-  
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -41,7 +39,6 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
   }, [boardId]);
 
   const handleFeedbackSubmit = async () => {
-
     if (!feedback.trim()) return;
     setIsSubmitting(true);
     try {
@@ -54,7 +51,6 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
       setIsSubmitting(false);
     }
   }
-
 
   const handleApproval = async (action: "approve" | "reject") => {
     setIsSubmitting(true);
@@ -70,8 +66,6 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
     }
   };
 
-
-
   const getStatusLabel = (status: string) => {
     const labels = {
       todo: "A Fazer",
@@ -86,73 +80,84 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
     return labels[status as keyof typeof labels] || status;
   };
 
-
   const getStatusColor = (status: string) => {
     const colors = {
-      todo: "bg-gray-500 text-white",
-      in_progress: "bg-blue-500 text-white",
-      review: "bg-yellow-500 text-black",
-      done: "bg-green-500 text-white",
-      disapprove: "bg-red-500 text-white",
-      aprovadas: "bg-green-600 text-white",
-      reprovadas: "bg-red-600 text-white",
+      todo: "bg-gray-100 text-gray-700 border border-gray-300",
+      in_progress: "bg-blue-100 text-blue-700 border border-blue-300",
+      review: "bg-amber-100 text-amber-700 border border-amber-300",
+      done: "bg-green-100 text-green-700 border border-green-300",
+      disapprove: "bg-red-100 text-red-700 border border-red-300",
+      aprovadas: "bg-green-100 text-green-700 border border-green-300",
+      reprovadas: "bg-red-100 text-red-700 border border-red-300",
     } as const;
 
-    return colors[status as keyof typeof colors] || "bg-gray-500 text-white";
+    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-700 border border-gray-300";
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.push(`/client/${boardId}`)}>
+            <Button 
+              variant="ghost" 
+              onClick={() => router.push(`/client/${boardId}`)}
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Aprovação de Post</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Revise e aprove o conteúdo</p>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Revise e aprove o conteúdo
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="grid gap-6 lg:grid-cols-3">
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="grid gap-8 lg:grid-cols-3">
           {/* Post Preview */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-2xl">{card.title}</CardTitle>
-                  <Badge className={getStatusColor(card.status)}>{getStatusLabel(card.status)}</Badge>
-                </div>
-              </CardHeader>
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
+              <div className="flex items-start justify-between mb-6">
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{card.title}</h1>
+                <Badge className={`${getStatusColor(card.status)} rounded-full px-3 py-1 text-xs font-medium`}>
+                  {getStatusLabel(card.status)}
+                </Badge>
+              </div>
 
-              <CardContent className="space-y-6">
-                {card.image && (
-                  <div className="relative h-64 w-full rounded-lg overflow-hidden">
-                    <Image src={card.image || "/placeholder.svg"} alt={card.title} fill className="object-cover" />
-                  </div>
+              <div className="space-y-6">
+          
+               {card.image && /\.(mp4|webm|ogg)(\?.*)?$/i.test(card.image) ? (
+                  <video
+                    src={card.image}
+                    controls
+                    className="w-full rounded-lg max-h-[90vh] shadow-none border-none"
+                  />
+                ) : (
+                  <img
+                    src={card.image || "/placeholder.svg"}
+                    alt={card.title} 
+                    className="w-full rounded-lg border-none max-h-[90vh] shadow-none"
+                  />
                 )}
 
                 <div>
-                  <h3 className="font-semibold mb-2">Descrição:</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{card.description}</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Descrição</h3>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{card.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-6 text-sm">
                   <div>
-                    <span className="font-semibold">Data de Criação:</span>
+                    <span className="font-medium text-gray-900 dark:text-white block mb-1">Data de Criação</span>
                     <p className="text-gray-600 dark:text-gray-400">
-                      {new Date(card.created_at).toLocaleDateString("pt-BR")}
+                      {card.created_at ? new Date(card.created_at).toLocaleDateString("pt-BR") : "-"}
                     </p>
                   </div>
                   <div>
-                    <span className="font-semibold">Agendado para:</span>
+                    <span className="font-medium text-gray-900 dark:text-white block mb-1">Agendado para</span>
                     <p className="text-gray-600 dark:text-gray-400">
                       {card.due_date 
                         ? new Date(card.due_date).toLocaleDateString("pt-BR") 
@@ -160,59 +165,62 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                     </p>
                   </div>
                 </div>
-                <div>
-                  <span className="font-semibold">Feedback:</span>
-                  {card.feedback?.text && (
-                    <p className="mt-2 text-gray-600 dark:text-gray-300">
+                
+                {card.feedback?.text && (
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <span className="font-medium text-gray-900 dark:text-white block mb-2">Feedback</span>
+                    <p className="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                       {card.feedback.text}
                     </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Approval Actions */}
+          {/* Sidebar - Approval Actions */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Feedback (Opcional)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {/* Feedback Section */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageSquare className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                <h2 className="font-semibold text-gray-900 dark:text-white">Feedback</h2>
+                <span className="text-xs text-gray-500 ml-2">(Opcional)</span>
+              </div>
+              
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="feedback">Deixe um comentário sobre o post:</Label>
+                  <Label htmlFor="feedback" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Deixe um comentário
+                  </Label>
                   <Textarea
-                    className="my-2"
                     id="feedback"
                     placeholder="Adicione suas observações, sugestões ou comentários..."
                     value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)} // <- aqui estava faltando
+                    onChange={(e) => setFeedback(e.target.value)}
                     rows={4}
+                    className="resize-none border-gray-300 dark:border-gray-700 focus:border-gray-400 dark:focus:border-gray-600"
                   />
 
                   <Button
                     onClick={handleFeedbackSubmit}
                     disabled={isSubmitting || !feedback.trim()}
-                    className="mt-1"
+                    className="mt-3 w-full bg-[#d35429] hover:bg-[#ac421f] transition-colors"
                   >
                     {isSubmitting ? "Enviando..." : "Enviar Feedback"}
                   </Button>
-                  
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Ações</CardTitle>
-              </CardHeader>
+            {/* Actions Section */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Ações</h2>
+              
               {card.status === "done" || card.status === "disapprove" ? (
-                <CardContent className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge className={`${getStatusColor(card.status)} rounded-lg text-lg`}>
+                    <Badge className={`${getStatusColor(card.status)} rounded-full px-3 py-1 text-sm`}>
                       {card.status === "done" ? "Aprovado" : "Reprovado"}
                     </Badge>
 
@@ -220,58 +228,58 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => setIsEditing(!isEditing)}
+                      className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
-                      {isEditing ? "Cancelar" : "Editar"}
+                      {isEditing ? "Cancelar" : "Alterar"}
                     </Button>
                   </div>
 
                   {isEditing && (
-                    <div className="space-y-2">
+                    <div className="space-y-3 pt-2">
                       <Button
                         onClick={() => handleApproval("approve")}
                         disabled={isSubmitting}
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full bg-green-600 hover:bg-green-700 transition-colors"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         {isSubmitting ? "Processando..." : "Aprovar Post"}
                       </Button>
 
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         onClick={() => handleApproval("reject")}
                         disabled={isSubmitting}
-                        className="w-full"
+                        className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
                       >
                         <XCircle className="h-4 w-4 mr-2" />
                         {isSubmitting ? "Processando..." : "Reprovar Post"}
                       </Button>
                     </div>
                   )}
-                </CardContent>
-
+                </div>
               ) : (
-                <CardContent className="space-y-3">
+                <div className="space-y-3">
                   <Button
                     onClick={() => handleApproval("approve")}
                     disabled={isSubmitting}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full bg-green-600 hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     {isSubmitting ? "Processando..." : "Aprovar Post"}
                   </Button>
 
                   <Button
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => handleApproval("reject")}
                     disabled={isSubmitting}
-                    className="w-full"
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     {isSubmitting ? "Processando..." : "Reprovar Post"}
                   </Button>
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </div>
           </div>
         </div>
       </main>

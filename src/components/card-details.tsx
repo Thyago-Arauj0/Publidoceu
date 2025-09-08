@@ -10,6 +10,7 @@ import { Card as CardType } from "@/lib/types/card"
 import { getUser } from "@/lib/UserApi"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
+import Footer from "./footer"
 
 interface CardDetailsProps {
   boardId: string
@@ -91,97 +92,112 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-background">
 
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => router.push(`/clients/${boardId}/`)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Button>
-              {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Voltar</h2> */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => router.push(`/clients/${boardId}/`)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+                {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Voltar</h2> */}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
+      <main className="container mx-auto px-4 py-6 max-w-4xl min-h-screen">
+        <Card className="flex items-start justify-between border-none shadow-none">
+          <CardContent className="space-y-2">
+            <CardTitle className="text-2xl font-bold text-[#1e3a5f]">
+              {cardData.title}
+            </CardTitle>
 
+            <div className="flex gap-2 items-center">
+              <h3 className="text-[#941c26] font-medium">Status:</h3>
+              <Badge
+                className={`${getStatusColor(
+                  cardData?.status
+                )} bg-[#d35429] text-white px-3 py-1 rounded-full`}
+              >
+                {getStatusLabel(cardData?.status) || "Carregando..."}
+              </Badge>
+            </div>
 
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Detalhes</h1>
-          <p className="text-muted-foreground mt-2">Informações completas sobre o card selecionado</p>
-        </div>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <h3 className="text-[#1e3a5f] font-medium">Cliente:</h3>
+              <User className="h-4 w-4 text-[#d35429]" />
+              <span className="text-[#941c26] font-semibold">{user}</span>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="border-none shadow-none rounded-xl">
             <CardHeader>
               <div>
-                  <div className="flex items-center justify-end space-x-2 text-sm text-muted-foreground">
-                      <User className="h-4 w-4" />
-                      <span>{user}</span>
-                  </div>
-                  <br />
+                {cardData.image && /\.(mp4|webm|ogg)(\?.*)?$/i.test(cardData.image) ? (
+                  <video
+                    src={cardData.image}
+                    controls
+                    className="w-full rounded-lg max-h-[90vh] shadow-none border-none"
+                  />
+                ) : (
                   <img
                     src={cardData.image || "/placeholder.svg"}
                     alt="Card illustration"
-                    className="w-full  rounded-lg border"
+                    className="w-full rounded-lg border-none max-h-[90vh] shadow-none"
                   />
-              </div>
-              <div className="flex items-start justify-between">
-
-                <div className="space-y-2">
-                  <CardTitle className="text-2xl">{cardData.title}</CardTitle>
-                  <div className="flex gap-2">
-                    <h3>Status:</h3>
-                    <Badge className={getStatusColor(cardData?.status)}>
-                        {getStatusLabel(cardData?.status) || "Carregando..."}
-                    </Badge>
-                  </div>
-                </div>
-
+                )}
               </div>
             </CardHeader>
+
             <CardContent className="space-y-4">
-
               <div>
-                <h3 className="font-semibold mb-2">Descrição</h3>
-                <p className="text-muted-foreground leading-relaxed">{cardData.description}</p>
+                <h3 className="font-semibold mb-2 text-[#1e3a5f]">Descrição</h3>
+                <p className="text-[#1e3a5f]/80 leading-relaxed">
+                  {cardData.description}
+                </p>
               </div>
-
-
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-none shadow-none rounded-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5" />
+              <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
+                <Clock className="h-5 w-5 text-[#d35429]" />
                 <span>Cronograma</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Data de Criação</p>
-                  <p className="flex items-center space-x-2">
-                    <CalendarDays className="h-4 w-4" />
+                  <p className="text-sm font-medium text-[#941c26]">
+                    Data de Criação
+                  </p>
+                  <p className="flex items-center space-x-2 text-[#1e3a5f]">
+                    <CalendarDays className="h-4 w-4 text-[#d35429]" />
                     <span>{formatDate(cardData.created_at)}</span>
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Última Atualização</p>
-                  <p className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
+                  <p className="text-sm font-medium text-[#941c26]">
+                    Última Atualização
+                  </p>
+                  <p className="flex items-center space-x-2 text-[#1e3a5f]">
+                    <Clock className="h-4 w-4 text-[#d35429]" />
                     <span>{formatDate(cardData.updated_at)}</span>
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Data de Vencimento</p>
-                  <p className="flex items-center space-x-2">
-                    <CalendarDays className="h-4 w-4" />
-                    <span>{cardData.due_date 
-                        ? new Date(cardData.due_date).toLocaleDateString("pt-BR") 
+                  <p className="text-sm font-medium text-[#941c26]">
+                    Data de Vencimento
+                  </p>
+                  <p className="flex items-center space-x-2 text-[#1e3a5f]">
+                    <CalendarDays className="h-4 w-4 text-[#d35429]" />
+                    <span>
+                      {cardData.due_date
+                        ? new Date(cardData.due_date).toLocaleDateString("pt-BR")
                         : "Sem data"}
                     </span>
                   </p>
@@ -190,24 +206,28 @@ useEffect(() => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-none shadow-none rounded-xl">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5" />
+              <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
+                <MessageSquare className="h-5 w-5 text-[#d35429]" />
+                <span>Feedback</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                  <div className="border-l-2 border-primary pl-4 py-2">
-                    {cardData.feedback?.text && (
-                    <p className="text-muted-foreground">{cardData.feedback?.text}</p>
-                    )}
-                  </div>
+                <div className="border-l-4 border-[#941c26] pl-4 py-2 bg-white rounded-md">
+                  {cardData.feedback?.text && (
+                    <p className="text-[#1e3a5f]/80">{cardData.feedback?.text}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </main>
+
+      <Footer/>
+
     </div>
   )
 }

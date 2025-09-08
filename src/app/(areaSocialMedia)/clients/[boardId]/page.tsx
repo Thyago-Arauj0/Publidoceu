@@ -4,6 +4,7 @@ import React from "react"
 import { useState } from "react"
 import { KanbanBoard } from "@/components/kanban-board"
 import { DashboardHeader } from "@/components/dashboard-header"
+import Footer from "@/components/footer"
 
 interface PostApprovalPageProps {
   params: Promise<{ boardId: string }>
@@ -21,12 +22,13 @@ export default function ClientsPage({ params }: PostApprovalPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <DashboardHeader onCreatePost={handleCreatePost} boardId={boardId} />
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 min-h-screen">
 
         <KanbanBoard newPosts={newPosts} boardId={boardId} />
       </main>
+      <Footer/>
     </div>
   )
 }

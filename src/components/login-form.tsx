@@ -54,10 +54,10 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full ">
+      {/* <CardHeader>
         <CardTitle className="text-2xl text-center">Login</CardTitle>
-      </CardHeader>
+      </CardHeader> */}
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -101,7 +101,7 @@ export function LoginForm() {
             </Alert>
           )}
 
-          <Button type="submit" className="w-full cursor-pointer disabled:cursor-not-allowed" disabled={isLoading}>
+          <Button type="submit" className="w-full cursor-pointer disabled:cursor-not-allowed bg-[#d35429] hover:bg-[#aa3f1c]" disabled={isLoading}>
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

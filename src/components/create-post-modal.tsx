@@ -108,7 +108,7 @@ export function CreatePostModal({
     Object.entries(postData).forEach(([key, value]) => {
       form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value))
     })
-    if (file) form.append("image_upload", file)
+    if (file) form.append("file_upload", file)
 
 
     try {
@@ -135,7 +135,7 @@ export function CreatePostModal({
     setFormData((prev) => ({ ...prev, image: "" }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile);
@@ -154,17 +154,19 @@ export function CreatePostModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEditing ? (
-          <Button className="bg-white text-foreground font-normal shadow-none px-2 py-1.5">
+          <Button className="bg-white hover:bg-gray-100 w-full flex justify-start cursor-pointer text-foreground font-normal shadow-none px-2 py-1.5">
+            <span>
             Editar
+            </span>
           </Button>
         ) : (
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" className="cursor-pointer bg-[#d35429] hover:bg-[#833a21] font-bold">
             <Plus className="h-4 w-4 mr-2" />
             Novo Post
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Post" : "Criar Novo Post"}</DialogTitle>
         </DialogHeader>
@@ -228,18 +230,22 @@ export function CreatePostModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Imagem (opcional)</Label>
+            <Label htmlFor="image">Imagem/video (opcional)</Label>
             <div className="flex items-center gap-2">
-              <Input id="image" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <Input id="image" type="file"  accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
               <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()}>
                 <Upload className="h-4 w-4 mr-2" />
-                {imagePreview ? "Alterar Imagem" : "Escolher Imagem"}
+                {imagePreview ? "Alterar" : "Escolher"}
               </Button>
             </div>
 
             {imagePreview && (
               <div className="relative w-full h-32 rounded-md overflow-hidden border">
-                <Image src={imagePreview || "/placeholder.svg"} alt="Preview" fill className="object-cover" />
+                {file?.type.startsWith("image/") ? (
+                  <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                ) : (
+                  <video src={imagePreview} controls className="w-full h-full object-contain" />
+                )}
                 <Button
                   type="button"
                   variant="destructive"
@@ -253,11 +259,11 @@ export function CreatePostModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex justify-center gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="bg-red-500 w-1/2 text-white hover:text-white cursor-pointer hover:bg-red-800">
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="bg-green-600 w-1/2 hover:bg-green-900 cursor-pointer">
               {isEditing ? "Atualizar Post" : "Criar Post"}
             </Button>
           </div>

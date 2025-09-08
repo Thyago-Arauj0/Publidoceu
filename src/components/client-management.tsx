@@ -17,6 +17,7 @@ import { getUsers, createUser, updateUser, deleteUser } from "@/lib/UserApi"
 import { getCards } from "@/lib/CardApi"
 import { UserProfile } from "@/lib/types/user"
 import { logoutUser } from "@/lib/AuthApi"
+import Footer from "./footer"
 
 
 export interface Client extends UserProfile {
@@ -219,14 +220,14 @@ export function ClientManagement() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetForm}>
+                <Button onClick={resetForm} className="cursor-pointer bg-[#d35429] hover:bg-[#83341a] font-bold">
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Cliente
                 </Button>
@@ -283,10 +284,10 @@ export function ClientManagement() {
 
 
                   <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={resetForm}>
+                    <Button type="button" variant="outline" onClick={resetForm} className="bg-red-500 w-1/2 text-white hover:text-white cursor-pointer hover:bg-red-800">
                       Cancelar
                     </Button>
-                    <Button type="submit">{editingClient ? "Atualizar" : "Cadastrar"}</Button>
+                    <Button type="submit" className="cursor-pointer bg-green-600 w-1/2 hover:bg-green-900">{editingClient ? "Atualizar" : "Cadastrar"}</Button>
                   </div>
                 </form>
               </DialogContent>
@@ -301,13 +302,14 @@ export function ClientManagement() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 min-h-screen">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard - Gerenciamento de Clientes</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gerenciamento de Clientes</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Gerencie todos os seus clientes e suas informações</p>
         </div>
+        <hr />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
           {clients.map((client, index) => (
             !client.is_superuser ? (
               <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
@@ -340,21 +342,21 @@ export function ClientManagement() {
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(client)}>
+                          <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleis_active(client.id)}>
+                          <DropdownMenuItem onClick={() => toggleis_active(client.id)} className="cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             {client.is_active ? "Desativar" : "Ativar"}
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(client.id)}>
+                          <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => handleDelete(client.id)} >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
                           </DropdownMenuItem>
@@ -387,7 +389,7 @@ export function ClientManagement() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full bg-transparent"
+                    className="w-full bg-transparent cursor-pointer py-5"
                     onClick={() => router.push(`/clients/${client.id}`)}
                   >
                     Ver Área do Cliente
@@ -408,6 +410,8 @@ export function ClientManagement() {
           </div>
         )}
       </main>
+
+      <Footer/>
     </div>
   )
 }
