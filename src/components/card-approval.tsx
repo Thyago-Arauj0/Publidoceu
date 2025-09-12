@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, XCircle, MessageSquare } from "lucide-react"
 import Image from "next/image"
-import { getCard, updateCardStatus, addFeedback } from "@/lib/CardApi"
-import { Card as CardType} from "@/lib/types/card"
+import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
+import { Card as CardType} from "@/lib/types/cardType"
 
 interface PostApprovalProps {
   boardId: string

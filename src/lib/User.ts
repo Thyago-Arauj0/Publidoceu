@@ -1,4 +1,4 @@
-import { UserProfile } from "./types/user";
+import { UserProfile } from "./types/userType";
 import { jwtDecode } from "jwt-decode";
 import { authFetch } from "./Auth";
 import Cookies from "js-cookie";

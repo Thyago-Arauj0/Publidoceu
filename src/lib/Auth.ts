@@ -1,6 +1,8 @@
 import Cookies from "js-cookie";
-
+import { AuthResponse } from "./types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
+type ApiError = { message?: string };
+
 
 export const refreshAccessToken = async (): Promise<string> => {
   const refreshToken = Cookies.get("refresh_token");
@@ -79,18 +81,16 @@ export const authFetch = async <R>(url: string, options: RequestInit = {}): Prom
   if (!response.ok) {
     let message = `Erro ${response.status}`;
     try {
-      const errorData = await response.json();
-      if (errorData.detail) {
-        message = errorData.detail;
-      } else {
-        const flatError = Object.entries(errorData)
-          .map(([key, value]) =>
-            typeof value === "object" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`
-          )
-          .join(" | ");
-        if (flatError) message = flatError;
-      }
-    } catch {}
+      const cloned = response.clone(); // 👈 clona a resposta
+      const errorData = await cloned.json();
+      console.error("Resposta de erro da API:", errorData);
+      message = errorData.detail || JSON.stringify(errorData);
+    } catch {
+      const cloned = response.clone();
+      const text = await cloned.text();
+      console.error("Erro não-JSON da API:", text);
+      message = text;
+    }
 
     throw new Error(message);
   }
@@ -106,3 +106,30 @@ export const authFetch = async <R>(url: string, options: RequestInit = {}): Prom
     return (await response.text()) as unknown as R;
   }
 };
+
+
+
+
+export const authFetchNoAuth = async <T, R = AuthResponse>(
+  url: string,
+  data: T
+): Promise<R> => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const responseData: R | ApiError = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      (responseData as ApiError).message ?? "Erro na requisição"
+    );
+  }
+
+  return responseData as R;
+};
+

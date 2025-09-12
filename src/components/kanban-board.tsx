@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { KanbanCard } from "@/components/kanban-card"
-import { getCards, updateCardStatus, deleteCard} from "@/lib/CardApi"
-import { Card, CardStatus } from "@/lib/types/card"
+import { getCards, updateCardStatus, deleteCard} from "@/lib/Card"
+import { Card, CardStatus } from "@/lib/types/cardType"
 
 
 interface KanbanBoardProps {

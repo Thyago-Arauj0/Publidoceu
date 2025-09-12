@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { getCard } from "@/lib/CardApi"
+import { getCard } from "@/lib/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowLeft, CalendarDays, Clock, MessageSquare, User } from "lucide-react"
-import { Card as CardType } from "@/lib/types/card"
-import { getUser } from "@/lib/UserApi"
+import { Card as CardType } from "@/lib/types/cardType"
+import { getUser } from "@/lib/User"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import Footer from "./footer"

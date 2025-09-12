@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Upload, X, Edit } from "lucide-react"
 import Image from "next/image"
-import { getUser } from "@/lib/UserApi"
-import { UserProfile } from "@/lib/types/user"
-import { CardStatus, Card } from "@/lib/types/card"
-import { createCard, updateCard } from "@/lib/CardApi"
+import { getUser } from "@/lib/User"
+import { UserProfile } from "@/lib/types/userType"
+import { CardStatus, Card } from "@/lib/types/cardType"
+import { createCard, updateCard } from "@/lib/Card"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void

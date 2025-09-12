@@ -1,33 +1,8 @@
-import {  UserProfile, AuthResponse } from "./types/user";
+import {  UserProfile, AuthResponse } from "./types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 import Cookies from "js-cookie";
-import { getUser } from "./UserApi";
-
-type ApiError = { message?: string };
-
-const authFetchNoAuth = async <T, R = AuthResponse>(
-  url: string,
-  data: T
-): Promise<R> => {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  const responseData: R | ApiError = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      (responseData as ApiError).message ?? "Erro na requisição"
-    );
-  }
-
-  return responseData as R;
-};
-
+import { getUser } from "./User";
+import { authFetchNoAuth } from "./Auth";
 
 
 export const registerUser = async (data: UserProfile) => {
