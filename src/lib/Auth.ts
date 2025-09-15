@@ -126,7 +126,7 @@ export const authFetchNoAuth = async <T, R = AuthResponse>(
 
   if (!response.ok) {
     throw new Error(
-      (responseData as ApiError).message ?? "Erro na requisição"
+      (responseData as ApiError).message ?? "Erro na requisição: Usuário Inativo ou Credenciais incorretas."
     );
   }
 

@@ -362,7 +362,7 @@ export function ClientDashboard({ boardId }: Props) {
                       const cardId = card.id
                       router.push(`/client/${boardId}/card/${cardId}`)
                     }}
-                    className="w-full py-3 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
+                    className="w-full border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalhes

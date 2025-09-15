@@ -43,7 +43,8 @@ export function CreatePostModal({
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile>()
   const [file, setFile] = useState<File | null>(null);
-
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -120,12 +121,16 @@ export function CreatePostModal({
         onCreatePost(createdCard)
       }
 
-      // Reset form and close modal
       setFormData({ title: "", description: "", board: 0, image: "", status: "todo", due_date: "" })
       setImagePreview(null)
       setOpen(false)
-    } catch (error) {
-      console.error("Erro ao processar o card:", error)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+        } else {
+        setError("Erro ao criar post")
+      }
+      setIsErrorModalOpen(true)
     }
   }
 
@@ -151,6 +156,7 @@ export function CreatePostModal({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEditing ? (
@@ -233,15 +239,16 @@ export function CreatePostModal({
             <Label htmlFor="image">Imagem/video (opcional)</Label>
             <div className="flex items-center gap-2">
               <Input id="image" type="file"  accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
-              <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()}>
+              <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()} className="cursor-pointer">
                 <Upload className="h-4 w-4 mr-2" />
                 {imagePreview ? "Alterar" : "Escolher"}
               </Button>
             </div>
 
-            {imagePreview && (
+           {imagePreview && (
               <div className="relative w-full h-32 rounded-md overflow-hidden border">
-                {file?.type.startsWith("image/") ? (
+                {imagePreview.startsWith("data:image/") || 
+                (editingCard?.image && editingCard.image.startsWith("http") && !editingCard.image.match(/\.(mp4|webm|ogg)$/i)) ? (
                   <Image src={imagePreview} alt="Preview" fill className="object-cover" />
                 ) : (
                   <video src={imagePreview} controls className="w-full h-full object-contain" />
@@ -250,7 +257,7 @@ export function CreatePostModal({
                   type="button"
                   variant="destructive"
                   size="sm"
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 right-2 cursor-pointer"
                   onClick={removeImage}
                 >
                   <X className="h-3 w-3" />
@@ -270,5 +277,17 @@ export function CreatePostModal({
         </form>
       </DialogContent>
     </Dialog>
+    <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Erro</DialogTitle>
+        </DialogHeader>
+        <p className="text-red-600 mt-2">{error}</p>
+        <div className="flex justify-end mt-4">
+          <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

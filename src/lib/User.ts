@@ -49,7 +49,6 @@ export const createUser = async (
   last_name?: string | null
 ): Promise<UserProfile> => {
 
-
   return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/register/`, {
     method: "POST",
     body: JSON.stringify({

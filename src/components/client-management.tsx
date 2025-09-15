@@ -81,6 +81,7 @@ export function ClientManagement() {
             postsCount: await fetchPostsCount(user.id), 
             phone: user.profile?.whatsapp,
             password: "",
+            author: user.author,
             is_active: user.is_active,
             is_superuser: user.is_superuser,
             created_at: user.created_at
@@ -162,17 +163,17 @@ export function ClientManagement() {
           null,
           null
         )
-      const newClient: Client = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: formData.phone,
-        password: formData.password,
-        is_active: true, // padrão ativo
-        postsCount: 0,
-        created_at: newUser.created_at,
-        updated_at: newUser.updated_at,
-      };
+        const newClient: Client = {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: formData.phone,
+          password: formData.password,
+          is_active: true, // padrão ativo
+          postsCount: 0,
+          created_at: newUser.created_at,
+          updated_at: newUser.updated_at,
+        };
         setClients([...clients, newClient])
         setReload((prev) => !prev);
       } catch (error: unknown) {
@@ -355,7 +356,7 @@ export function ClientManagement() {
           ) : clients.length <= 1 ? (
             <div className="col-span-full text-center py-12">
               <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
-              <Button className="mt-4" onClick={() => setIsCreateModalOpen(true)}>
+              <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Cadastrar Primeiro Cliente
               </Button>
@@ -378,7 +379,7 @@ export function ClientManagement() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{client.name}</CardTitle>
+                        <CardTitle className="text-lg">{client.name} - {client.author}</CardTitle>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
                       </div>
                     </div>
@@ -461,7 +462,7 @@ export function ClientManagement() {
           </DialogHeader>
           <p className="text-red-600 mt-2">{error}</p>
           <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)}>Fechar</Button>
+            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
           </div>
         </DialogContent>
       </Dialog>

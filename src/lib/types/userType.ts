@@ -11,6 +11,7 @@ export interface UserProfile {
   is_staff?: boolean;        // Moderador
   is_superuser?: boolean;    // Superusuário
   profile?: Profile | null; // Perfil relacionado (ou pode ser só o id)
+  author?: string
 }
 
 

@@ -12,6 +12,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { loginUser } from "@/lib/AuthService"
 import Cookies from "js-cookie"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -19,6 +25,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,15 +52,20 @@ export function LoginForm() {
           Cookies.set("userId", clientId, { expires: 7 })
           router.push(`/client/${clientId}`)
         }
-    } catch (err: any) {
-       console.error("Erro no login:", err.message);
-       setError(err.message); 
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+        setError(error.message)
+          } else {
+        setError("Erro ao logar usuário")
+        }
+       setIsErrorModalOpen(true)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
+    <>
     <Card className="w-full ">
       {/* <CardHeader>
         <CardTitle className="text-2xl text-center">Login</CardTitle>
@@ -87,7 +99,7 @@ export function LoginForm() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -116,6 +128,21 @@ export function LoginForm() {
           </Button>
         </form>
       </CardContent>
+
+
     </Card>
+
+      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Erro</DialogTitle>
+          </DialogHeader>
+          <p className="text-red-600 mt-2">{error}</p>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
