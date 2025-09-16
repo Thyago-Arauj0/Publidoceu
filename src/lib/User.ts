@@ -48,18 +48,37 @@ export const createUser = async (
   first_name?: string | null,
   last_name?: string | null
 ): Promise<UserProfile> => {
+  try {
+    const response = await authFetch<UserProfile>(
+      `${API_BASE_URL}/api/v1/auth/register/`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          email,
+          password: password || null,
+          first_name: first_name ?? null,
+          last_name: last_name ?? null,
+        }),
+      }
+    );
 
-  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/register/`, {
-    method: "POST",
-    body: JSON.stringify({
-      name,
-      email,
-      password: password || null,
-      first_name: first_name ?? null,
-      last_name: last_name ?? null,
-    }),
-  })
+    return response;
+  }catch (err: any) {
+  const message = err?.message || "";
+
+  if (message.includes("unique") || message.includes("email")) {
+    throw new Error("Este e-mail já está cadastrado. Tente outro.");
+  }
+
+  if (message.includes("password")) {
+    throw new Error("A senha não é válida. Verifique e tente novamente.");
+  }
+
+  throw new Error("Erro ao criar usuário. Verifique os dados e tente novamente.");
 }
+
+};
 
 
 export const updateUser = async (
@@ -75,19 +94,35 @@ export const updateUser = async (
   last_name?: string | null
 ): Promise<UserProfile> => {
 
+   try {
+    const response = await authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        profile: profile || { whatsapp: null },
+        is_active,
+        first_name: first_name ?? null,
+        last_name: last_name ?? null,
+      }),
+    })
 
-  return authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      name,
-      email,
-      password,
-      profile: profile || { whatsapp: null },
-      is_active,
-      first_name: first_name ?? null,
-      last_name: last_name ?? null,
-    }),
-  })
+    return response;
+    }catch (err: any) {
+    const message = err?.message || "";
+
+    if (message.includes("unique") || message.includes("email")) {
+      throw new Error("Este e-mail já está cadastrado. Tente outro.");
+    }
+
+    if (message.includes("password")) {
+      throw new Error("A senha não é válida. Verifique e tente novamente.");
+    }
+
+    throw new Error("Erro ao criar usuário. Verifique os dados e tente novamente.");
+  }
+
 }
 
 export const deleteUser = async (id: number | string): Promise<void> => {

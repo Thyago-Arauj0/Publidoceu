@@ -19,7 +19,6 @@ import { UserProfile } from "@/lib/types/userType"
 import { logoutUser } from "@/lib/AuthService"
 import Footer from "./footer"
 
-
 export interface Client extends UserProfile {
   phone?: string | null
   password?: string
@@ -74,6 +73,8 @@ export function ClientManagement() {
       setLoading(true) 
       try {
         const users = await getUsers()
+
+        console.log(users)
 
         const formattedClients = await Promise.all(
           users.map(async (user: UserProfile) => ({
@@ -315,7 +316,7 @@ export function ClientManagement() {
                     <Label htmlFor="password">Senha de acesso</Label>
                     <Input
                       id="password"
-                      placeholder="data de nascimento"
+                      placeholder="Ano de nascimento"
                       value={formData.password}
                       onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                     />
@@ -379,7 +380,7 @@ export function ClientManagement() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{client.name} - {client.author}</CardTitle>
+                        <CardTitle className="text-lg">{client.name}</CardTitle>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
                       </div>
                     </div>

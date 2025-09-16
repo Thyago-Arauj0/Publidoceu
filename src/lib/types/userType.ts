@@ -11,9 +11,14 @@ export interface UserProfile {
   is_staff?: boolean;        // Moderador
   is_superuser?: boolean;    // Superusuário
   profile?: Profile | null; // Perfil relacionado (ou pode ser só o id)
-  author?: string
+  author?: string;  
 }
 
+// export interface Author {
+//   id: string | number;
+//   name: string;
+//   email: string;
+// }
 
 export interface Profile {
   id: number;               // PK do perfil

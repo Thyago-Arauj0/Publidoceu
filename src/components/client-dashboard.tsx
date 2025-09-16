@@ -12,6 +12,7 @@ import { getCards } from "@/lib/Card"
 import { logoutUser } from "@/lib/AuthService"
 import { getUser } from "@/lib/User"
 import { Card as CardType} from "@/lib/types/cardType"
+import NotificationsDropdown from "./notification-dropdown"
 import Footer from "./footer"
 
 interface Props {
@@ -232,6 +233,8 @@ export function ClientDashboard({ boardId }: Props) {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
               </div>
             </div>
+
+            <NotificationsDropdown></NotificationsDropdown>
 
             <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
               <LogOut className="h-4 w-4 mr-2" />

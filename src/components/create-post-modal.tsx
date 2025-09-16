@@ -45,6 +45,9 @@ export function CreatePostModal({
   const [file, setFile] = useState<File | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+   const [loading, setLoading] = useState(false)
+
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -86,6 +89,8 @@ export function CreatePostModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true) 
+
     if (!formData.title || !formData.description) {
       return
     }
@@ -120,10 +125,10 @@ export function CreatePostModal({
         const createdCard = await createCard(form)
         onCreatePost(createdCard)
       }
+      setOpen(false)
 
       setFormData({ title: "", description: "", board: 0, image: "", status: "todo", due_date: "" })
       setImagePreview(null)
-      setOpen(false)
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message)
@@ -131,6 +136,8 @@ export function CreatePostModal({
         setError("Erro ao criar post")
       }
       setIsErrorModalOpen(true)
+    }finally{
+      setLoading(false)
     }
   }
 
@@ -172,111 +179,118 @@ export function CreatePostModal({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Post" : "Criar Novo Post"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título do Post</Label>
-            <Input
-              id="title"
-              placeholder="Digite o título do post..."
-              value={formData.title}
-              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              required
-            />
-          </div>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Post" : "Criar Novo Post"}</DialogTitle>
+          </DialogHeader>
+          {loading ? (
+              <div className="col-span-full flex justify-center py-20 items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              </div>
+            ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Título do Post</Label>
+                <Input
+                  id="title"
+                  placeholder="Digite o título do post..."
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              placeholder="Descreva o conteúdo do post..."
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              rows={4}
-              required
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Descreva o conteúdo do post..."
+                  value={formData.description}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  required
+                />
+              </div>
 
-          {!isEditing ? (
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: CardStatus) =>
-                  setFormData((prev) => ({ ...prev, status: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todo">A Fazer</SelectItem>
-                  <SelectItem value="in_progress">Em Progresso</SelectItem>
-                  <SelectItem value="review">Em Revisão</SelectItem>
-                  <SelectItem value="done">Concluído</SelectItem>
-                  <SelectItem value="disapprove">Reprovado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ): null}
+              {!isEditing ? (
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: CardStatus) =>
+                      setFormData((prev) => ({ ...prev, status: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todo">A Fazer</SelectItem>
+                      <SelectItem value="in_progress">Em Progresso</SelectItem>
+                      <SelectItem value="review">Em Revisão</SelectItem>
+                      <SelectItem value="done">Concluído</SelectItem>
+                      <SelectItem value="disapprove">Reprovado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ): null}
 
-          
-          <div className="space-y-2">
-            <Label htmlFor="due_date">Data de Vencimento</Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => setFormData((prev) => ({ ...prev, due_date: e.target.value }))}
-              required
-            />
-          </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="due_date">Data de Vencimento</Label>
+                <Input
+                  id="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, due_date: e.target.value }))}
+                  required
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="image">Imagem/video (opcional)</Label>
-            <div className="flex items-center gap-2">
-              <Input id="image" type="file"  accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
-              <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()} className="cursor-pointer">
-                <Upload className="h-4 w-4 mr-2" />
-                {imagePreview ? "Alterar" : "Escolher"}
-              </Button>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="image">Imagem/video (opcional)</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="image" type="file"  accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
+                  <Button type="button" variant="outline" onClick={() => document.getElementById("image")?.click()} className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    {imagePreview ? "Alterar" : "Escolher"}
+                  </Button>
+                </div>
 
-           {imagePreview && (
-              <div className="relative w-full h-32 rounded-md overflow-hidden border">
-                {imagePreview.startsWith("data:image/") || 
-                (editingCard?.image && editingCard.image.startsWith("http") && !editingCard.image.match(/\.(mp4|webm|ogg)$/i)) ? (
-                  <Image src={imagePreview} alt="Preview" fill className="object-cover" />
-                ) : (
-                  <video src={imagePreview} controls className="w-full h-full object-contain" />
+              {imagePreview && (
+                  <div className="relative w-full h-32 rounded-md overflow-hidden border">
+                    {imagePreview.startsWith("data:image/") || 
+                    (editingCard?.image && editingCard.image.startsWith("http") && !editingCard.image.match(/\.(mp4|webm|ogg)$/i)) ? (
+                      <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <video src={imagePreview} controls className="w-full h-full object-contain" />
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 cursor-pointer"
+                      onClick={removeImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2 cursor-pointer"
-                  onClick={removeImage}
-                >
-                  <X className="h-3 w-3" />
+              </div>
+
+              <div className="flex justify-center gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="bg-red-500 w-1/2 text-white hover:text-white cursor-pointer hover:bg-red-800">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-green-600 w-1/2 hover:bg-green-900 cursor-pointer">
+                  {isEditing ? "Atualizar Post" : "Criar Post"}
                 </Button>
               </div>
+            </form>
             )}
-          </div>
-
-          <div className="flex justify-center gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="bg-red-500 w-1/2 text-white hover:text-white cursor-pointer hover:bg-red-800">
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-green-600 w-1/2 hover:bg-green-900 cursor-pointer">
-              {isEditing ? "Atualizar Post" : "Criar Post"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
+        </DialogContent>
     </Dialog>
+
     <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
