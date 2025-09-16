@@ -56,10 +56,8 @@ export function CreatePostModal({
     fetchUser()
   }, [boardId])
 
-  // Reset form when modal opens/closes or editingCard changes
   useEffect(() => {
     if (open && isEditing && editingCard) {
-      // Pre-fill form with editing card data
       setFormData({
         title: editingCard.title || "",
         description: editingCard.description || "",
@@ -70,7 +68,6 @@ export function CreatePostModal({
       })
       setImagePreview(editingCard.image || null)
     } else if (!open) {
-      // Reset form when modal closes
       setFormData({ 
         title: "", 
         description: "", 
@@ -105,25 +102,32 @@ export function CreatePostModal({
     }
 
     const form = new FormData()
+
     Object.entries(postData).forEach(([key, value]) => {
       form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value))
     })
+
     if (file) form.append("file_upload", file)
 
 
     try {
+
       if (isEditing && editingCard) {
+
         const updatedCard = await updateCard(form, String(editingCard.id))
         if (onUpdatePost) onUpdatePost(updatedCard)
+
       } else {
+
         const createdCard = await createCard(form)
         onCreatePost(createdCard)
+
       }
 
-      // Reset form and close modal
       setFormData({ title: "", description: "", board: 0, image: "", status: "todo", due_date: "" })
       setImagePreview(null)
       setOpen(false)
+
     } catch (error) {
       console.error("Erro ao processar o card:", error)
     }

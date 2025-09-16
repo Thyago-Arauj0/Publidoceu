@@ -43,14 +43,14 @@ export function ClientManagement() {
   const formatWhatsapp = (phone: string) => {
     if (!phone) return null;
 
-    let digits = phone.replace(/\D/g, ""); // remove tudo que não é número
+    let digits = phone.replace(/\D/g, "");
     if (digits.length === 11) {
-      return `+55${digits}`; // adiciona DDD + país
+      return `+55${digits}`;
     }
     if (digits.length === 13 && digits.startsWith("55")) {
-      return `+${digits}`; // já tem o código do país
+      return `+${digits}`;
     }
-    return `+${digits}`; // fallback
+    return `+${digits}`;
   }
 
 
@@ -73,7 +73,6 @@ export function ClientManagement() {
           }))
         );
         setClients(formattedClients)
-        console.log(formattedClients)
       } catch (error) {
         console.error("Failed to fetch clients:", error)
         setClients([])
