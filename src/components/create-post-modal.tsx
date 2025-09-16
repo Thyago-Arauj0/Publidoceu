@@ -12,14 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Upload, X, Edit } from "lucide-react"
 import Image from "next/image"
 import { getUser } from "@/lib/User"
+import { getBoards } from "@/lib/Board"
 import { UserProfile } from "@/lib/types/userType"
 import { CardStatus, Card } from "@/lib/types/cardType"
 import { createCard, updateCard } from "@/lib/Card"
+import { Board } from "@/lib/types/boardType"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
   onUpdatePost?: (post: any) => void
-  boardId: number | string
+  userId: number | string
   editingCard?: Card | null
   isEditing?: boolean
 }
@@ -27,7 +29,7 @@ interface CreatePostModalProps {
 export function CreatePostModal({ 
   onCreatePost, 
   onUpdatePost, 
-  boardId, 
+  userId, 
   editingCard = null, 
   isEditing = false 
 }: CreatePostModalProps) {
@@ -42,23 +44,47 @@ export function CreatePostModal({
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile>()
+  const [boards, setBoards] = useState<Board[]>([])
   const [file, setFile] = useState<File | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-   const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
+  console.log("userId", userId)
+
+
+  useEffect(() => {
+      const fetchBoard = async () => {
+        try {
+          const boards = await getBoards()
+          setBoards(boards)
+        } catch (error) {
+          setError(error instanceof Error ? error.message : "BoardId não encontrado")
+          setIsErrorModalOpen(true)
+        }
+      }
+      fetchBoard()
+    }, [])
+  
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await getUser(boardId)
+        const user = await getUser(userId)
+        console.log(user)
         setUser(user)
       } catch (error) {
-        console.error("Error fetching user:", error)
+         if (error instanceof Error) {
+          setError(error.message)
+            } else {
+          setError("Usuario não encontrado")
+          }
+         setIsErrorModalOpen(true)
       }
     }
+
     fetchUser()
-  }, [boardId])
+  }, [userId])
 
   // Reset form when modal opens/closes or editingCard changes
   useEffect(() => {
@@ -95,8 +121,17 @@ export function CreatePostModal({
       return
     }
 
-    const clientId = user?.id || formData.board
-    if (!clientId) {
+    const board = boards?.find(board => board.customer === user?.id)
+    console.log("customer", board?.customer)
+    console.log(user?.id)
+    
+    if(board) {
+      formData.board = board.id
+    } else {
+      console.error("Nenhum board correspondente encontrado para este cliente.")
+      return
+    }
+    if (!user?.id) {
       console.error("Nenhum clientId encontrado, não é possível criar/atualizar post.")
       return
     }
@@ -104,7 +139,7 @@ export function CreatePostModal({
     const postData = {
       title: formData.title,
       description: formData.description,
-      board: String(clientId),
+      board: formData.board,
       status: formData.status || "todo",
       due_date: formData.due_date,
       feedback: editingCard?.feedback || {},

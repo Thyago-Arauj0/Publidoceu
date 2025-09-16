@@ -6,9 +6,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Calendar } from "lucide-react"
 import Link from "next/link"
 import { CreatePostModal } from "./create-post-modal"
+import { Board } from "@/lib/types/boardType"
 
 interface KanbanCardProps {
   card: CardType
+  board: Board
   onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
   onDelete: (boardId: number, cardId: number) => void
   onUpdateCard?: (updateCard: CardType ) => void
@@ -20,7 +22,7 @@ interface KanbanCardProps {
     label,
   }))
 
-export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
+export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
   const getStatusColor = (status: CardStatus) => {
     switch (status) {
       case "todo":
@@ -38,7 +40,6 @@ export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardP
     }
   }
 
-
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow shadow-none">
       <CardHeader className="pb-3 flex items-start justify-between">
@@ -51,7 +52,7 @@ export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardP
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem className="cursor-pointer" >
-              <Link href={`/clients/${card.board}/cards/${card.id}`} className="w-full" >
+              <Link href={`/clients/${board.customer}/cards/${card.id}`} className="w-full" >
                Ver detalhes
               </Link>
             </DropdownMenuItem>
@@ -60,11 +61,11 @@ export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardP
               onUpdatePost={(updatedCard: any) => {
                  if (onUpdateCard) onUpdateCard(updatedCard)
               }}
-              boardId={card.board}
+              userId={String(board.customer)}
               editingCard={card}
               isEditing={true}
             />
-            <DropdownMenuItem  onClick={() => onDelete(card.board, card.id)} className="text-red-600 text-center cursor-pointer">Excluir</DropdownMenuItem>
+            <DropdownMenuItem  onClick={() => onDelete(board.id, card.id)} className="text-red-600 text-center cursor-pointer">Excluir</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -92,7 +93,7 @@ export function KanbanCard({ card, onMove, onDelete, onUpdateCard }: KanbanCardP
               {statusOptions
                 .filter((opt) => opt.value !== card.status)
                 .map((opt) => (
-                  <DropdownMenuItem key={opt.value} onClick={() => onMove(card.board, card.id, opt.value)} className="cursor-pointer">
+                  <DropdownMenuItem key={opt.value} onClick={() => onMove(board.id, card.id, opt.value)} className="cursor-pointer">
                     {opt.label}
                   </DropdownMenuItem>
                 ))}

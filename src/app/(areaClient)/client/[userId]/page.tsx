@@ -2,10 +2,10 @@ import { ClientDashboard } from "@/components/client-dashboard"
 
 interface ClientPageProps {
   params: {
-    boardId: string
+    userId: string
   }
 }
 
 export default function ClientPage({ params }: ClientPageProps) {
-  return <ClientDashboard boardId={params.boardId} />
+  return <ClientDashboard userId={params.userId} />
 }

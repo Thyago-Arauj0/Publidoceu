@@ -7,13 +7,13 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import Footer from "@/components/footer"
 
 interface PostApprovalPageProps {
-  params: Promise<{ boardId: string }>
+  params: Promise<{ userId: string }>
 }
 
 
 export default function ClientsPage({ params }: PostApprovalPageProps) {
 
-  const { boardId } = React.use(params)
+  const { userId } = React.use(params)
 
   const [newPosts, setNewPosts] = useState<any[]>([])
 
@@ -23,10 +23,10 @@ export default function ClientsPage({ params }: PostApprovalPageProps) {
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
-      <DashboardHeader onCreatePost={handleCreatePost} boardId={boardId} />
+      <DashboardHeader onCreatePost={handleCreatePost} userId={userId} />
       <main className="container mx-auto px-4 py-6 min-h-screen">
 
-        <KanbanBoard newPosts={newPosts} boardId={boardId} />
+        <KanbanBoard newPosts={newPosts} userId={userId} />
       </main>
       <Footer/>
     </div>

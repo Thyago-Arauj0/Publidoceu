@@ -7,15 +7,12 @@ import { CreatePostModal } from "@/components/create-post-modal"
 
 interface DashboardHeaderProps {
   onCreatePost: (post: any) => void,
-  boardId: string
+  userId: string
 }
 
-export function DashboardHeader({ onCreatePost, boardId }: DashboardHeaderProps) {
+export function DashboardHeader({ onCreatePost, userId }: DashboardHeaderProps) {
   const router = useRouter()
 
-  const handleLogout = () => {
-    router.push("/login")
-  }
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -30,7 +27,7 @@ export function DashboardHeader({ onCreatePost, boardId }: DashboardHeaderProps)
 
 
           <div className="flex items-center gap-4">
-            <CreatePostModal onCreatePost={onCreatePost} boardId={boardId}/>
+            <CreatePostModal onCreatePost={onCreatePost} userId={userId}/>
           </div>
         </div>
       </div>

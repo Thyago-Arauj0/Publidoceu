@@ -61,3 +61,5 @@ export const deleteCard = async (boardId: string, cardId: string): Promise<strin
   });
   return ({ message: "Card deletado com sucesso." }).message;
 }
+
+

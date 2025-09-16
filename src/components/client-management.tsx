@@ -18,6 +18,8 @@ import { getCards } from "@/lib/Card"
 import { UserProfile } from "@/lib/types/userType"
 import { logoutUser } from "@/lib/AuthService"
 import Footer from "./footer"
+import { getBoards } from "@/lib/Board"
+import { Board } from "@/lib/types/boardType"
 
 export interface Client extends UserProfile {
   phone?: string | null
@@ -41,6 +43,7 @@ export function ClientManagement() {
   const [reload, setReload] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false)
+  const [boards, setBoards] = useState<Board[]>()
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
@@ -66,20 +69,32 @@ export function ClientManagement() {
   const openConfirmModal = (client: Client, action: "delete" | "toggle") => {
     setConfirmModal({ isOpen: true, action, client })
   }
-
+  
+  useEffect(() => {
+    const fetchBoard = async () => {
+      try {
+        const boards = await getBoards()
+        setBoards(boards)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "BoardId não encontrado")
+        setIsErrorModalOpen(true)
+      }
+    }
+    fetchBoard()
+  }, [])
 
   useEffect(() => {
+    if (!boards) return
+
     async function fetchClients() {
       setLoading(true) 
       try {
         const users = await getUsers()
 
-        console.log(users)
-
         const formattedClients = await Promise.all(
           users.map(async (user: UserProfile) => ({
             ...user,
-            postsCount: await fetchPostsCount(user.id), 
+            postsCount: await fetchPostsCount(user.id),
             phone: user.profile?.whatsapp,
             password: "",
             author: user.author,
@@ -89,31 +104,38 @@ export function ClientManagement() {
               ? new Date(user.created_at).toISOString().split("T")[0]
               : new Date().toISOString().split("T")[0],
           }))
-        );
+        )
         setClients(formattedClients)
       } catch (error: unknown) {
-          if (error instanceof Error) {
+        if (error instanceof Error) {
           setError(error.message)
-            } else {
+        } else {
           setError("Erro ao buscar usuário")
-          }
-         setIsErrorModalOpen(true)
-         setClients([])
-      }finally{
+        }
+        setIsErrorModalOpen(true)
+        setClients([])
+      } finally {
         setLoading(false)
       }
-    }
+  }
 
-    async function fetchPostsCount(boardId: number | string) {
-      const id = boardId.toString();
+  async function fetchPostsCount(userId: number | string) {
+      if (!boards) return 0  
+      const board = boards.find(board => String(board.customer) === String(userId))
+
+      if (!board) {
+        console.error("Nenhum board correspondente encontrado para este cliente.")
+        return 0
+      }
+
       try {
-        const cards = await getCards(`${id}`)
+        const cards = await getCards(`${board.id}`)
         return cards.length
       } catch (error: unknown) {
         if (error instanceof Error) {
-        setError(error.message)
-          } else {
-        setError("Erro ao buscar número de cards")
+          setError(error.message)
+        } else {
+          setError("Erro ao buscar número de cards")
         }
         setIsErrorModalOpen(true)
         return 0
@@ -121,7 +143,8 @@ export function ClientManagement() {
     }
 
     fetchClients()
-  }, [reload])
+  }, [reload, boards])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

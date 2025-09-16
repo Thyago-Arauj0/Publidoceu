@@ -4,52 +4,81 @@ import { useState, useEffect } from "react"
 import { getCard } from "@/lib/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ArrowLeft, CalendarDays, Clock, MessageSquare, User } from "lucide-react"
 import { Card as CardType } from "@/lib/types/cardType"
 import { getUser } from "@/lib/User"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import Footer from "./footer"
+import { Board } from "@/lib/types/boardType"
+import { getBoards } from "@/lib/Board"
 
 interface CardDetailsProps {
-  boardId: string
+  userId: string
   cardId: string
 }
 
-export default function CardDetails({ boardId, cardId }: CardDetailsProps) {
+export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
 const [cardData, setCardData] = useState<CardType>({} as CardType)
 const [user, setUser] = useState<string>('')
+const [boards, setBoards] = useState<Board[]>([])
 const router = useRouter()
+const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
-    const bId = boardId 
-    const cId = cardId
-
-    const fetchCard = async () => {
+    const fetchBoard = async () => {
       try {
-        const data: CardType = await getCard(bId, cId);
-        setCardData(data);
+        const boards = await getBoards()
+        console.log("boards:", boards)
+        setBoards(boards)
       } catch (error) {
-        console.error("Erro ao buscar card:", error);
-        setCardData({} as CardType);
+        setError(error instanceof Error ? error.message : "BoardId não encontrado")
+        setIsErrorModalOpen(true)
       }
-    };
-
-    const fetchUser = async () => {
-      try {
-        const data = await getUser(bId);
-        setUser(data.name);
-      } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
-      }
-    };
+    }
+    fetchBoard()
+  }, [])
 
 
-    fetchCard();
-    fetchUser()
-}, [])
+useEffect(() => {
+  if (boards.length === 0) return; // espera boards carregarem
+
+  const fetchUser = async () => {
+    try {
+      const data = await getUser(userId);
+      setUser(data.name);
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+    }
+  };
+
+  const fetchCard = async () => {
+    const board = boards.find(board => String(board.customer) === String(userId));
+    console.log("board:", board);
+    console.log("customer:", board?.customer);
+    console.log("userId:", userId);
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
+
+    try {
+      const data: CardType = await getCard(board.id.toString(), cardId);
+      setCardData(data);
+    } catch (error) {
+      console.error("Erro ao buscar card:", error);
+      setCardData({} as CardType);
+    }
+  };
+
+  fetchUser();
+  fetchCard();
+}, [boards, userId, cardId]); // <- board depende de boards, então precisa ficar aqui
+
 
 
   const getStatusLabel = (status: string) => {
@@ -96,7 +125,7 @@ useEffect(() => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => router.push(`/clients/${boardId}/`)} className="cursor-pointer">
+                <Button variant="ghost" onClick={() => router.push(`/clients/${userId}/`)} className="cursor-pointer">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar
                 </Button>
@@ -227,6 +256,19 @@ useEffect(() => {
       </main>
 
       <Footer/>
+
+    <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Erro</DialogTitle>
+        </DialogHeader>
+        <p className="text-red-600 mt-2">{error}</p>
+        <div className="flex justify-end mt-4">
+          <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
 
     </div>
   )

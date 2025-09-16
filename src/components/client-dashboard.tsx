@@ -14,9 +14,12 @@ import { getUser } from "@/lib/User"
 import { Card as CardType} from "@/lib/types/cardType"
 import NotificationsDropdown from "./notification-dropdown"
 import Footer from "./footer"
+import { getBoard } from "@/lib/Board"
+import { Board } from "@/lib/types/boardType"
+import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 
 interface Props {
-  boardId: string;
+  userId: string;
 }
 
 interface Week {
@@ -25,46 +28,77 @@ interface Week {
   cards: CardType[];
 }
 
-export function ClientDashboard({ boardId }: Props) {
+export function ClientDashboard({ userId }: Props) {
   const [cards, setCards] = useState<CardType[]>([])
   const [filteredCards, setFilteredCards] = useState<CardType[]>([])
   const [user, setUser] = useState<any>({})
   const [currentWeek, setCurrentWeek] = useState<number>(0)
   const [weeks, setWeeks] = useState<Week[]>([])
   const [showAll, setShowAll] = useState<boolean>(false)
+  const [boards, setBoards] = useState<Board[]>([])
   const router = useRouter()
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout =  async() => {
     await logoutUser()
     router.push("/login")
   }
 
-  useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        const data: CardType[] = await getCards(boardId);
-        setCards(data);
-        
-        // Organizar cards por semana
-        organizeCardsByWeek(data);
-      } catch (error) {
-        console.error("Erro ao buscar cards:", error);
-        setCards([]);
+useEffect(() => {
+  const fetchBoard = async () => {
+    try {
+      const fetchedBoards = await getBoard();
+      if (fetchedBoards && fetchedBoards.length > 0) {
+        setBoards(fetchedBoards);
+      } else {
+        console.error("Nenhum board encontrado");
+        setError("Nenhum board disponível");
+        setIsErrorModalOpen(true);
       }
-    };
+    } catch (error) {
+      console.error("Erro ao buscar boards:", error);
+      setError("Erro ao carregar boards");
+      setIsErrorModalOpen(true);
+    }
+  };
+  fetchBoard();
+}, []);
 
-    const fetchUser = async () => {
-      try {
-        const user = await getUser();
-        setUser(user);
-      } catch (error) {
-        console.error("Erro ao buscar usuário:", error);
-      }
-    };
+useEffect(() => {
+  console.log("Boards atualizados:", boards);
+  
+  if (!boards || boards.length === 0) {
+    console.log("Aguardando boards...");
+    return;
+  }
 
-    fetchCards();
-    fetchUser();
-  }, [boardId]);
+  const board = boards[0];
+  console.log("Board selecionado:", board);
+   console.log("Board id:", board.id);
+
+  const fetchData = async () => {
+    try {
+      // Fetch user
+      const userData = await getUser(userId);
+      console.log("Dados do usuário:", userData);
+      setUser(userData);
+
+      // Fetch cards
+       console.log("Board id:", board.id);
+      const cardsData = await getCards(String(board.id));
+      console.log("Cards recebidos:", cardsData);
+      setCards(cardsData);
+      organizeCardsByWeek(cardsData);
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      setError("Erro ao carregar dados");
+      setIsErrorModalOpen(true);
+    }
+  };
+
+  fetchData();
+}, [boards, userId]);
 
   // Função para organizar os cards por semana
   const organizeCardsByWeek = (cards: CardType[]) => {
@@ -229,7 +263,7 @@ export function ClientDashboard({ boardId }: Props) {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user.name}</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.name || "Carregando..."}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
               </div>
             </div>
@@ -363,7 +397,7 @@ export function ClientDashboard({ boardId }: Props) {
                     size="sm"
                     onClick={() => {
                       const cardId = card.id
-                      router.push(`/client/${boardId}/card/${cardId}`)
+                      router.push(`/client/${userId}/card/${cardId}`)
                     }}
                     className="w-full border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
                   >
@@ -396,6 +430,20 @@ export function ClientDashboard({ boardId }: Props) {
       </main>
 
       <Footer/>
+
+    <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Erro</DialogTitle>
+        </DialogHeader>
+        <p className="text-red-600 mt-2">{error}</p>
+        <div className="flex justify-end mt-4">
+          <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+
     </div>
   )
 }
