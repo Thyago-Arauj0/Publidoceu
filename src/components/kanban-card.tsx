@@ -1,4 +1,4 @@
-import { Card as CardType, CardStatus, STATUS_LABELS_PT, } from "@/lib/types/card"
+import { Card as CardType, CardStatus, STATUS_LABELS_PT, } from "@/lib/types/cardType"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

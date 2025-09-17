@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, XCircle, MessageSquare } from "lucide-react"
 import Image from "next/image"
-import { getCard, updateCardStatus, addFeedback } from "@/lib/CardApi"
-import { Card as CardType} from "@/lib/types/card"
+import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
+import { Card as CardType} from "@/lib/types/cardType"
 
 interface PostApprovalProps {
   boardId: string
@@ -103,7 +103,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
             <Button 
               variant="ghost" 
               onClick={() => router.push(`/client/${boardId}`)}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
@@ -205,7 +205,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                   <Button
                     onClick={handleFeedbackSubmit}
                     disabled={isSubmitting || !feedback.trim()}
-                    className="mt-3 w-full bg-[#d35429] hover:bg-[#ac421f] transition-colors"
+                    className="mt-3 w-full bg-[#d35429] hover:bg-[#ac421f] transition-colors cursor-pointer"
                   >
                     {isSubmitting ? "Enviando..." : "Enviar Feedback"}
                   </Button>
@@ -228,7 +228,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => setIsEditing(!isEditing)}
-                      className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                     >
                       {isEditing ? "Cancelar" : "Alterar"}
                     </Button>
@@ -239,7 +239,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                       <Button
                         onClick={() => handleApproval("approve")}
                         disabled={isSubmitting}
-                        className="w-full bg-green-600 hover:bg-green-700 transition-colors"
+                        className="w-full bg-green-600 hover:bg-green-700 transition-colors cursor-pointer"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         {isSubmitting ? "Processando..." : "Aprovar Post"}
@@ -249,7 +249,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                         variant="outline"
                         onClick={() => handleApproval("reject")}
                         disabled={isSubmitting}
-                        className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
                       >
                         <XCircle className="h-4 w-4 mr-2" />
                         {isSubmitting ? "Processando..." : "Reprovar Post"}
@@ -262,7 +262,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                   <Button
                     onClick={() => handleApproval("approve")}
                     disabled={isSubmitting}
-                    className="w-full bg-green-600 hover:bg-green-700 transition-colors"
+                    className="w-full bg-green-600 hover:bg-green-700 transition-colors cursor-pointer"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     {isSubmitting ? "Processando..." : "Aprovar Post"}
@@ -272,7 +272,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
                     variant="outline"
                     onClick={() => handleApproval("reject")}
                     disabled={isSubmitting}
-                    className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                    className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     {isSubmitting ? "Processando..." : "Reprovar Post"}

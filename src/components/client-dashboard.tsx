@@ -8,10 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LogOut, Eye, ChevronLeft, ChevronRight, Calendar, Grid } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { getCards } from "@/lib/CardApi"
-import { logoutUser } from "@/lib/AuthApi"
-import { getUser } from "@/lib/UserApi"
-import { Card as CardType} from "@/lib/types/card"
+import { getCards } from "@/lib/Card"
+import { logoutUser } from "@/lib/AuthService"
+import { getUser } from "@/lib/User"
+import { Card as CardType} from "@/lib/types/cardType"
+import NotificationsDropdown from "./notification-dropdown"
 import Footer from "./footer"
 
 interface Props {
@@ -233,6 +234,8 @@ export function ClientDashboard({ boardId }: Props) {
               </div>
             </div>
 
+            <NotificationsDropdown></NotificationsDropdown>
+
             <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -362,7 +365,7 @@ export function ClientDashboard({ boardId }: Props) {
                       const cardId = card.id
                       router.push(`/client/${boardId}/card/${cardId}`)
                     }}
-                    className="w-full py-3 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
+                    className="w-full border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalhes

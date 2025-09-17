@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { KanbanCard } from "@/components/kanban-card"
-import { getCards, updateCardStatus, deleteCard} from "@/lib/CardApi"
-import { Card, CardStatus } from "@/lib/types/card"
-
+import { getCards, updateCardStatus, deleteCard} from "@/lib/Card"
+import { Card, CardStatus } from "@/lib/types/cardType"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface KanbanBoardProps {
   newPosts: Card[],
@@ -15,7 +16,12 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
   const [cards, setCards] = useState<Card[]>([])
   const [activeStatus, setActiveStatus] = useState<CardStatus>("todo")
   const statusList: CardStatus[] = ["todo", "in_progress", "review", "done", "disapprove"]
+   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    card?: Card
+  }>({ isOpen: false })
   const bId = boardId
+
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -29,18 +35,19 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
     fetchCards()
   }, [newPosts])
 
-  const handleDelete = (boardId: number, cardId: number) => {
-    if (confirm("Tem certeza que deseja excluir este card?")) {
-      const bId = boardId.toString()
-      const cId = cardId.toString()
-      deleteCard(bId, cId)
-        .then(() => {
-          // Atualiza o estado removendo o card
-          setCards(cards.filter(c => c.id !== cardId))
-        })
-        .catch((error) => {
-          console.error("Erro ao excluir o card:", error)
-        })
+  const openDeleteModal = (card: Card) => {
+    setConfirmModal({ isOpen: true, card })
+  }
+
+
+  const handleDelete = async (boardId: number, cardId: number) => {
+    if (!cardId) return
+    try {
+      await deleteCard(boardId.toString(), cardId.toString())
+      setCards(prev => prev.filter(c => c.id !== cardId))
+      setConfirmModal({ isOpen: false }) // Fecha o modal apenas depois da exclusão
+    } catch (error) {
+      console.error("Erro ao excluir o card:", error)
     }
   }
 
@@ -121,13 +128,46 @@ export function KanbanBoard({ newPosts, boardId }: KanbanBoardProps) {
                 key={card.id}
                 card={card}
                 onMove={(bId, cId, status) => moveCard(cId, status)}
-                onDelete={handleDelete}
+                onDelete={() => openDeleteModal(card)} 
                 onUpdateCard={handleUpdateCard} 
               />
             ))}
           </div>
         )}
       </div>
+
+    <Dialog
+      open={confirmModal.isOpen}
+      onOpenChange={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
+    >
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Confirmar exclusão</DialogTitle>
+        </DialogHeader>
+        <p className="mt-2 text-gray-700">
+          Tem certeza que deseja excluir {confirmModal.card?.title}? Esta ação não pode ser desfeita.
+        </p>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button
+            variant="outline"
+            onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            className="bg-gray-200 hover:bg-gray-300 cursor-pointer"
+          >
+            Cancelar
+          </Button>
+          <Button
+              className="bg-red-600 hover:bg-red-800 text-white cursor-pointer"
+              onClick={() => {
+                if (confirmModal.card) handleDelete(Number(boardId), confirmModal.card.id)
+              }}
+            >
+              Excluir
+            </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+
     </div>
   )
 }

@@ -13,12 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getUsers, createUser, updateUser, deleteUser } from "@/lib/UserApi"
-import { getCards } from "@/lib/CardApi"
-import { UserProfile } from "@/lib/types/user"
-import { logoutUser } from "@/lib/AuthApi"
+import { getUsers, createUser, updateUser, deleteUser } from "@/lib/User"
+import { getCards } from "@/lib/Card"
+import { UserProfile } from "@/lib/types/userType"
+import { logoutUser } from "@/lib/AuthService"
 import Footer from "./footer"
-
 
 export interface Client extends UserProfile {
   phone?: string | null
@@ -36,8 +35,19 @@ export function ClientManagement() {
     email: "",
     phone: "",
     password: "",
+    created_at: "",
     is_active: true
   })
+  const [reload, setReload] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    action: "delete" | "toggle"
+    client?: Client
+  }>({ isOpen: false, action: "delete", client: undefined })
+
   const router = useRouter()
 
   const formatWhatsapp = (phone: string) => {
@@ -53,11 +63,18 @@ export function ClientManagement() {
     return `+${digits}`;
   }
 
+  const openConfirmModal = (client: Client, action: "delete" | "toggle") => {
+    setConfirmModal({ isOpen: true, action, client })
+  }
+
 
   useEffect(() => {
     async function fetchClients() {
+      setLoading(true) 
       try {
         const users = await getUsers()
+
+        console.log(users)
 
         const formattedClients = await Promise.all(
           users.map(async (user: UserProfile) => ({
@@ -65,6 +82,7 @@ export function ClientManagement() {
             postsCount: await fetchPostsCount(user.id), 
             phone: user.profile?.whatsapp,
             password: "",
+            author: user.author,
             is_active: user.is_active,
             is_superuser: user.is_superuser,
             created_at: user.created_at
@@ -73,9 +91,17 @@ export function ClientManagement() {
           }))
         );
         setClients(formattedClients)
-      } catch (error) {
-        console.error("Failed to fetch clients:", error)
-        setClients([])
+
+      } catch (error: unknown) {
+          if (error instanceof Error) {
+          setError(error.message)
+            } else {
+          setError("Erro ao buscar usuário")
+          }
+         setIsErrorModalOpen(true)
+         setClients([])
+      }finally{
+        setLoading(false)
       }
     }
 
@@ -84,14 +110,19 @@ export function ClientManagement() {
       try {
         const cards = await getCards(`${id}`)
         return cards.length
-      } catch (error) {
-        console.error("Failed to fetch posts count:", error)
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+        setError(error.message)
+          } else {
+        setError("Erro ao buscar número de cards")
+        }
+        setIsErrorModalOpen(true)
         return 0
       } 
     }
 
     fetchClients()
-  }, [])
+  }, [reload])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,8 +148,13 @@ export function ClientManagement() {
           ),
         )
         setEditingClient(null)
-      } catch (error) {
-        console.error("Failed to update user:", error)
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+        setError(error.message)
+          } else {
+        setError("Erro ao editar usuário")
+        }
+        setIsErrorModalOpen(true)
       }
     } else {
       try {
@@ -129,24 +165,29 @@ export function ClientManagement() {
           null,
           null
         )
-      const newClient: Client = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: formData.phone,
-        password: formData.password,
-        is_active: true, // padrão ativo
-        postsCount: 0,
-        created_at: newUser.created_at,
-        updated_at: newUser.updated_at,
-      };
+        const newClient: Client = {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: formData.phone,
+          password: formData.password,
+          is_active: true, // padrão ativo
+          postsCount: 0,
+          created_at: newUser.created_at,
+          updated_at: newUser.updated_at,
+        };
         setClients([...clients, newClient])
-      } catch (error) {
-        console.error("Failed to create user:", error)
+        setReload((prev) => !prev);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+        setError(error.message)
+          } else {
+        setError("Erro ao criar usuário")
+        }
+        setIsErrorModalOpen(true)
       }
     }
-
-    setFormData({ name: "", email: "", phone: "", password: "", is_active: false })
+    setFormData({ name: "", email: "", phone: "", password: "", created_at: "", is_active: false })
     setIsCreateModalOpen(false)
   }
 
@@ -158,6 +199,7 @@ export function ClientManagement() {
       email: client.email,
       phone: client.phone || "",
       password: client.password || "",
+      created_at: client.created_at || "",
       is_active: client.is_active 
     })
     setIsCreateModalOpen(true)
@@ -212,7 +254,7 @@ export function ClientManagement() {
 
  
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", password: "", is_active: false })
+    setFormData({ name: "", email: "", phone: "", password: "",created_at:"", is_active: false })
     setEditingClient(null)
     setIsCreateModalOpen(false)
   }
@@ -275,7 +317,7 @@ export function ClientManagement() {
                     <Label htmlFor="password">Senha de acesso</Label>
                     <Input
                       id="password"
-                      placeholder="data de nascimento"
+                      placeholder="Ano de nascimento"
                       value={formData.password}
                       onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                     />
@@ -292,7 +334,7 @@ export function ClientManagement() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
@@ -309,7 +351,20 @@ export function ClientManagement() {
         <hr />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
-          {clients.map((client, index) => (
+         {loading ? (
+            <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+            </div>
+          ) : clients.length <= 1 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
+              <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Cadastrar Primeiro Cliente
+              </Button>
+            </div>
+          ) : (
+          clients.map((client, index) => (
             !client.is_superuser ? (
               <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
                 <CardHeader>
@@ -350,12 +405,12 @@ export function ClientManagement() {
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleis_active(client.id)} className="cursor-pointer">
+                          <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             {client.is_active ? "Desativar" : "Ativar"}
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => handleDelete(client.id)} >
+                          <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
                           </DropdownMenuItem>
@@ -395,22 +450,63 @@ export function ClientManagement() {
                   </Button>
                 </CardContent>
               </Card>
-            ) : null
-          ))}
+                ) : null
+              ))
+            )}
         </div>
-
-        {clients.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
-            <Button className="mt-4" onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Cadastrar Primeiro Cliente
-            </Button>
-          </div>
-        )}
       </main>
 
       <Footer/>
+      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Erro</DialogTitle>
+          </DialogHeader>
+          <p className="text-red-600 mt-2">{error}</p>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmModal.isOpen} onOpenChange={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmModal.action === "delete" ? "Confirmar exclusão" : "Confirmar alteração de status"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="mt-2 text-gray-700">
+            {confirmModal.action === "delete"
+              ? `Tem certeza que deseja excluir ${confirmModal.client?.name}? Esta ação não pode ser desfeita.`
+              : `Tem certeza que deseja ${confirmModal.client?.is_active ? "desativar" : "ativar"} ${confirmModal.client?.name}?`}
+          </p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+              className="bg-gray-200 hover:bg-gray-300 cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              className={`${
+                confirmModal.action === "delete" ? "bg-red-600 hover:bg-red-800" : "bg-[#d35429] hover:bg-[#83341a]"
+              } text-white cursor-pointer`}
+              onClick={() => {
+                if (confirmModal.client) {
+                  if (confirmModal.action === "delete") handleDelete(confirmModal.client.id)
+                  else toggleis_active(confirmModal.client.id)
+                }
+                setConfirmModal(prev => ({ ...prev, isOpen: false }))
+              }}
+            >
+              {confirmModal.action === "delete" ? "Excluir" : confirmModal.client?.is_active ? "Desativar" : "Ativar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
