@@ -1,0 +1,144 @@
+
+.animated-background {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
+}
+
+.floating-item {
+  position: absolute;
+  will-change: transform;
+}
+
+.cloud {
+  position: relative;
+}
+
+.cloud.cute .cloud-part {
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.cloud.cute .cloud-part.main {
+  width: 70%;
+  height: 70%;
+  top: 15%;
+  left: 15%;
+}
+
+.cloud.cute .cloud-part.left {
+  width: 50%;
+  height: 50%;
+  top: 30%;
+  left: -10%;
+}
+
+.cloud.cute .cloud-part.right {
+  width: 50%;
+  height: 50%;
+  top: 30%;
+  right: -10%;
+}
+
+.cloud.cute .cloud-part.top {
+  width: 40%;
+  height: 40%;
+  top: -10%;
+  left: 30%;
+}
+
+.cloud.minimal .cloud-circle {
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.cloud.minimal .cloud-circle.big {
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+}
+
+.cloud.minimal .cloud-circle.medium {
+  width: 50%;
+  height: 50%;
+  top: 5%;
+  left: -10%;
+}
+
+.cloud.minimal .cloud-circle.small {
+  width: 40%;
+  height: 40%;
+  top: 40%;
+  right: -5%;
+}
+
+
+.cloud.cartoon {
+  background: white;
+  border-radius: 60% 60% 40% 40%;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+}
+
+.cloud.cartoon .cloud-curve {
+  position: absolute;
+  width: 40%;
+  height: 30%;
+  background: white;
+  border-radius: 50%;
+}
+
+.cloud.cartoon .cloud-curve {
+  top: -15%;
+  left: 10%;
+}
+
+.cloud.cartoon .cloud-curve.reverse {
+  top: -15%;
+  right: 10%;
+  left: auto;
+}
+
+
+.balloon {
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.1));
+}
+
+.balloon:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 2px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateX(-50%);
+}
+
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1) rotate(var(--rotation));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.1) rotate(var(--rotation));
+  }
+}
+
+.floating-item div[style*="hsla"] {
+  filter: drop-shadow(0 0 8px currentColor);
+  animation: pulse 2s infinite alternate;
+}

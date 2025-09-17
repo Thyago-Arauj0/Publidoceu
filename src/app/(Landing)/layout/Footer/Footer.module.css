@@ -1,0 +1,56 @@
+.footer{
+    background: #f2ead3;
+    padding: 10px;
+}
+
+.company{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+}
+
+.logo{
+    text-align: center;
+}
+
+.contact h4{
+    text-align: center;
+}
+
+.socialMedia{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.socialMedia li {
+  display: inline-block;
+  padding: 5px;
+  font-size: 2rem;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.about{
+  margin-bottom: 100px;
+}
+.socialMedia li:hover {
+  color: #A67C52;
+  transform: scale(1.2);
+}
+
+
+hr {
+  border: none;
+  height: 2px;
+  background-color: black;
+  margin: 1rem 0;
+}
+
+
+.copyright{
+    text-align: center;
+    padding: 5px;
+}
+

@@ -2,11 +2,11 @@ import { PostApproval } from "@/components/card-approval"
 
 interface PostApprovalPageProps {
   params: {
-    boardId: string
+    userId: string
     cardId: string
   }
 }
 
 export default function PostApprovalPage({ params }: PostApprovalPageProps) {
-  return <PostApproval boardId={params.boardId} cardId={params.cardId} />
+  return <PostApproval userId={params.userId} cardId={params.cardId} />
 }

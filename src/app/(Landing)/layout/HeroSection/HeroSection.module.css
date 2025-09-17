@@ -1,0 +1,147 @@
+.heroSection {
+  height: 100dvh;
+  max-height: 800px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  position: relative;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 0;
+  overflow: hidden;
+}
+
+
+.heroSection::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(242, 234, 211, 0.1);
+  z-index: 1;
+}
+
+.heroSection > * {
+  position: relative;
+  z-index: 2;
+}
+
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom, 
+    rgba(30, 58, 95, 0.6),
+    rgba(30, 58, 95, 0.8)
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.logo{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
+}
+
+.logoImage {
+  width: 100px;
+  height: auto;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.logoImage:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+
+.logo img {
+  width: 80px;
+  margin-bottom: 1em;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.logo img:hover {
+  transform: scale(1.05);
+}
+
+.logo span {
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.start{
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  text-align: start;
+  gap: 1em;
+}
+
+.start h1 {
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.start div p {
+  font-size: 1.1rem;
+  max-width: 400px;
+  color: #f0f0f0;
+}
+
+/* Se estiver usando CSS modules (HeroSection.module.css) */
+.btnContainer {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.btnLink {
+  width: 100%;
+  display: block;
+}
+
+@media (max-width: 768px) {
+
+  .start{
+    width: 100%;
+    max-width: 500px;
+    display: block;
+    text-align: center;
+    gap: 1em;
+  }
+
+  .start div p {
+    font-size: 1rem;
+    padding: 0 1rem;
+    max-width: 600px;
+  }
+
+  .content {
+    gap: 1.5rem;
+  }
+}
