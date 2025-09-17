@@ -74,7 +74,7 @@ export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: Kanb
 
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Calendar className="h-3 w-3" />
-          <span>{new Date(card.due_date || "Sem data para entrega").toLocaleDateString("pt-BR")}</span>
+          <span>{card.due_date?.split("-").reverse().join("/") || "Sem data para entrega"}</span>
         </div>
 
         <div className="flex items-center justify-between">

@@ -32,7 +32,6 @@ useEffect(() => {
     const fetchBoard = async () => {
       try {
         const boards = await getBoards()
-        console.log("boards:", boards)
         setBoards(boards)
       } catch (error) {
         setError(error instanceof Error ? error.message : "BoardId não encontrado")
@@ -57,9 +56,6 @@ useEffect(() => {
 
   const fetchCard = async () => {
     const board = boards.find(board => String(board.customer) === String(userId));
-    console.log("board:", board);
-    console.log("customer:", board?.customer);
-    console.log("userId:", userId);
 
     if (!board) {
       console.error("Nenhum board correspondente encontrado para este cliente.");
@@ -224,11 +220,7 @@ useEffect(() => {
                   </p>
                   <p className="flex items-center space-x-2 text-[#1e3a5f]">
                     <CalendarDays className="h-4 w-4 text-[#d35429]" />
-                    <span>
-                      {cardData.due_date
-                        ? new Date(cardData.due_date).toLocaleDateString("pt-BR")
-                        : "Sem data"}
-                    </span>
+                    <span>{cardData.due_date?.split("-").reverse().join("/") || "Sem data para entrega"}</span>
                   </p>
                 </div>
               </div>

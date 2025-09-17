@@ -65,18 +65,18 @@ export const createUser = async (
 
     return response;
   }catch (err: any) {
-  const message = err?.message || "";
+    const message = err?.message || "";
 
-  if (message.includes("unique") || message.includes("email")) {
-    throw new Error("Este e-mail já está cadastrado. Tente outro.");
+    if (message.includes("unique") || message.includes("email")) {
+      throw new Error("Este e-mail já está cadastrado. Tente outro.");
+    }
+
+    if (message.includes("password")) {
+      throw new Error("A senha não é válida. Verifique e tente novamente.");
+    }
+
+    throw new Error("Erro ao criar usuário. Verifique os dados e tente novamente.");
   }
-
-  if (message.includes("password")) {
-    throw new Error("A senha não é válida. Verifique e tente novamente.");
-  }
-
-  throw new Error("Erro ao criar usuário. Verifique os dados e tente novamente.");
-}
 
 };
 

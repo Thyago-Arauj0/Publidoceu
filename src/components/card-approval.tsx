@@ -9,25 +9,61 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, XCircle, MessageSquare } from "lucide-react"
 import Image from "next/image"
+import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
 import { Card as CardType} from "@/lib/types/cardType"
+import { getBoard } from "@/lib/Board"
+import { Board } from "@/lib/types/boardType"
 
 interface PostApprovalProps {
-  boardId: string
+  userId: string
   cardId: string
 }
 
-export function PostApproval({ boardId, cardId }: PostApprovalProps) {
+export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const [card, setCard] = useState<CardType>({} as CardType)
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [boards, setBoards] = useState<Board[]>([])
   const router = useRouter()
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
+    const fetchBoard = async () => {
+      try {
+        const fetchedBoards = await getBoard();
+
+        if (fetchedBoards && fetchedBoards.length > 0) {
+          setBoards(fetchedBoards);
+          console.log(fetchedBoards)
+        } else {
+          console.error("Nenhum board encontrado");
+          setError("Nenhum board disponível");
+          setIsErrorModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar boards:", error);
+        setError("Erro ao carregar boards");
+        setIsErrorModalOpen(true);
+      }
+    };
+    fetchBoard();
+  }, []);
+
+  useEffect(() => {
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     const fetchCard = async () => {
       try {
-        const data: CardType = await getCard(boardId, cardId);
+        const data: CardType = await getCard(String(board.id), cardId);
         setCard(data);
       } catch (error) {
         console.error("Erro ao buscar card:", error);
@@ -36,13 +72,21 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
     };
 
     fetchCard();
-  }, [boardId]);
+  }, [boards]);
+
 
   const handleFeedbackSubmit = async () => {
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     if (!feedback.trim()) return;
     setIsSubmitting(true);
     try {
-      await addFeedback(boardId, cardId, feedback);
+      await addFeedback(String(board.id), cardId, feedback);
       setCard((prev) => ({ ...prev, feedback: { id: prev.feedback?.id || 0, card: prev.id, text: feedback } }));
       setFeedback("");
     } catch (error) {
@@ -53,10 +97,17 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
   }
 
   const handleApproval = async (action: "approve" | "reject") => {
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     setIsSubmitting(true);
     try {
       const newStatus = action === "approve" ? "done" : "disapprove";
-      await updateCardStatus(boardId, cardId, newStatus);
+      await updateCardStatus(String(board.id), cardId, newStatus);
       setCard((prev) => ({ ...prev, status: newStatus }));
       setIsEditing(false);
     } catch (error) {
@@ -102,7 +153,7 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
-              onClick={() => router.push(`/client/${boardId}`)}
+              onClick={() => router.push(`/client/${userId}`)}
               className="hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -283,6 +334,18 @@ export function PostApproval({ boardId, cardId }: PostApprovalProps) {
           </div>
         </div>
       </main>
+
+      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Erro</DialogTitle>
+          </DialogHeader>
+          <p className="text-red-600 mt-2">{error}</p>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

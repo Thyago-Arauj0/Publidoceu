@@ -50,8 +50,6 @@ export function CreatePostModal({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false)
 
-  console.log("userId", userId)
-
 
   useEffect(() => {
       const fetchBoard = async () => {
@@ -71,7 +69,6 @@ export function CreatePostModal({
     const fetchUser = async () => {
       try {
         const user = await getUser(userId)
-        console.log(user)
         setUser(user)
       } catch (error) {
          if (error instanceof Error) {
@@ -122,8 +119,6 @@ export function CreatePostModal({
     }
 
     const board = boards?.find(board => board.customer === user?.id)
-    console.log("customer", board?.customer)
-    console.log(user?.id)
     
     if(board) {
       formData.board = board.id
@@ -136,12 +131,20 @@ export function CreatePostModal({
       return
     }
 
+    let dueDateFormatted = formData.due_date; // default é a string do input "YYYY-MM-DD"
+    if (formData.due_date) {
+      const [year, month, day] = formData.due_date.split("-").map(Number);
+      // criar Date para garantir que não haja deslocamento de dia
+      const dateUTC = new Date(Date.UTC(year, month - 1, day));
+      dueDateFormatted = dateUTC.toISOString().split("T")[0]; // apenas "YYYY-MM-DD"
+    }
+
     const postData = {
       title: formData.title,
       description: formData.description,
       board: formData.board,
       status: formData.status || "todo",
-      due_date: formData.due_date,
+      due_date: dueDateFormatted,
       feedback: editingCard?.feedback || {},
     }
 

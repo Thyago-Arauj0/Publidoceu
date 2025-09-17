@@ -124,9 +124,11 @@ export function ClientManagement() {
       const board = boards.find(board => String(board.customer) === String(userId))
 
       if (!board) {
-        console.error("Nenhum board correspondente encontrado para este cliente.")
-        return 0
-      }
+          if (userId !== "algumIdEsperado") {
+            console.warn(`Cliente ${userId} não possui board ainda.`)
+          }
+          return 0
+        }
 
       try {
         const cards = await getCards(`${board.id}`)

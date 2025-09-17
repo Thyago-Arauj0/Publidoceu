@@ -66,7 +66,6 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  console.log("Boards atualizados:", boards);
   
   if (!boards || boards.length === 0) {
     console.log("Aguardando boards...");
@@ -74,20 +73,15 @@ useEffect(() => {
   }
 
   const board = boards[0];
-  console.log("Board selecionado:", board);
-   console.log("Board id:", board.id);
 
   const fetchData = async () => {
     try {
       // Fetch user
       const userData = await getUser(userId);
-      console.log("Dados do usuário:", userData);
       setUser(userData);
 
       // Fetch cards
-       console.log("Board id:", board.id);
       const cardsData = await getCards(String(board.id));
-      console.log("Cards recebidos:", cardsData);
       setCards(cardsData);
       organizeCardsByWeek(cardsData);
     } catch (error) {
@@ -268,7 +262,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <NotificationsDropdown></NotificationsDropdown>
+            {/* <NotificationsDropdown></NotificationsDropdown> */}
 
             <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
               <LogOut className="h-4 w-4 mr-2" />

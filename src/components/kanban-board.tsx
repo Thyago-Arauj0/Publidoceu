@@ -147,7 +147,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
       
 
       {/* Página atual */}
-      <div className="mt-10 grid grid-cols-4">
+      <div className="mt-10 grid md:grid-cols-4 gap-3">
       {getCardsByStatus(activeStatus).map(card => {
           const board = boards.find(b => String(b.customer) === String(userId))
 
