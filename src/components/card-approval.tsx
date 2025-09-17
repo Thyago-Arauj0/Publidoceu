@@ -38,7 +38,6 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
         if (fetchedBoards && fetchedBoards.length > 0) {
           setBoards(fetchedBoards);
-          console.log(fetchedBoards)
         } else {
           console.error("Nenhum board encontrado");
           setError("Nenhum board disponível");
