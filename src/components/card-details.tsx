@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import Footer from "./footer"
 import { Board } from "@/lib/types/boardType"
 import { getBoards } from "@/lib/Board"
+import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 
 interface CardDetailsProps {
   userId: string
@@ -27,15 +28,19 @@ const [boards, setBoards] = useState<Board[]>([])
 const router = useRouter()
 const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
 const [error, setError] = useState<string | null>(null);
+const [isLoading, setIsLoading] = useState(true)
 
 useEffect(() => {
     const fetchBoard = async () => {
+      setIsLoading(true); 
       try {
         const boards = await getBoards()
         setBoards(boards)
       } catch (error) {
         setError(error instanceof Error ? error.message : "BoardId não encontrado")
         setIsErrorModalOpen(true)
+      }finally {
+      setIsLoading(false); // 🔹 sempre desliga
       }
     }
     fetchBoard()
@@ -46,29 +51,35 @@ useEffect(() => {
   if (boards.length === 0) return; // espera boards carregarem
 
   const fetchUser = async () => {
+    setIsLoading(true); 
     try {
       const data = await getUser(userId);
       setUser(data.name);
     } catch (error) {
       console.error("Erro ao buscar usuário:", error);
-    }
+    }finally {
+      setIsLoading(false); // 🔹 sempre desliga
+      }
   };
 
   const fetchCard = async () => {
+
     const board = boards.find(board => String(board.customer) === String(userId));
 
     if (!board) {
       console.error("Nenhum board correspondente encontrado para este cliente.");
       return;
     }
-
+    setIsLoading(true); 
     try {
       const data: CardType = await getCard(board.id.toString(), cardId);
       setCardData(data);
     } catch (error) {
       console.error("Erro ao buscar card:", error);
       setCardData({} as CardType);
-    }
+    }finally {
+      setIsLoading(false); // 🔹 sempre desliga
+      }
   };
 
   fetchUser();
@@ -112,6 +123,10 @@ useEffect(() => {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  if (isLoading) {
+    return <Loading />
   }
 
   return (

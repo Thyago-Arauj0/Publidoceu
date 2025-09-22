@@ -20,6 +20,7 @@ import { logoutUser } from "@/lib/AuthService"
 import Footer from "./footer"
 import { getBoards } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
+import Loading from "@/app/(areaSocialMedia)/dashboard/loading"
 
 export interface Client extends UserProfile {
   phone?: string | null
@@ -50,6 +51,7 @@ export function ClientManagement() {
     action: "delete" | "toggle"
     client?: Client
   }>({ isOpen: false, action: "delete", client: undefined })
+  const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
 
@@ -72,12 +74,15 @@ export function ClientManagement() {
   
   useEffect(() => {
     const fetchBoard = async () => {
+      setIsLoading(true); 
       try {
         const boards = await getBoards()
         setBoards(boards)
       } catch (error) {
         setError(error instanceof Error ? error.message : "BoardId não encontrado")
         setIsErrorModalOpen(true)
+      }finally {
+      setIsLoading(false); // 🔹 sempre desliga
       }
     }
     fetchBoard()
@@ -89,6 +94,7 @@ export function ClientManagement() {
     async function fetchClients() {
       setLoading(true) 
       try {
+        setIsLoading(true); 
         const users = await getUsers()
 
         const formattedClients = await Promise.all(
@@ -116,6 +122,7 @@ export function ClientManagement() {
         setClients([])
       } finally {
         setLoading(false)
+        setIsLoading(false)
       }
   }
 
@@ -281,6 +288,10 @@ export function ClientManagement() {
     setFormData({ name: "", email: "", phone: "", password: "",created_at:"", is_active: false })
     setEditingClient(null)
     setIsCreateModalOpen(false)
+  }
+
+  if (isLoading) {
+    return <Loading />
   }
 
 

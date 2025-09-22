@@ -3,17 +3,16 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CheckCircle, XCircle, MessageSquare } from "lucide-react"
-import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
 import { Card as CardType} from "@/lib/types/cardType"
 import { getBoard } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
+import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 
 interface PostApprovalProps {
   userId: string
@@ -29,10 +28,11 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const router = useRouter()
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchBoard = async () => {
+      setIsLoading(true); 
       try {
         const fetchedBoards = await getBoard();
 
@@ -47,6 +47,8 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
         console.error("Erro ao buscar boards:", error);
         setError("Erro ao carregar boards");
         setIsErrorModalOpen(true);
+      }finally {
+      setIsLoading(false); // 🔹 sempre desliga
       }
     };
     fetchBoard();
@@ -61,12 +63,15 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
     const board = boards[0];
 
     const fetchCard = async () => {
+      setIsLoading(true); 
       try {
         const data: CardType = await getCard(String(board.id), cardId);
         setCard(data);
       } catch (error) {
         console.error("Erro ao buscar card:", error);
         setCard({} as CardType);
+      }finally {
+      setIsLoading(false); // 🔹 sempre desliga
       }
     };
 
@@ -143,6 +148,10 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-700 border border-gray-300";
   };
+
+  if (isLoading) {
+    return <Loading />
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

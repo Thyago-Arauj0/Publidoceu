@@ -17,6 +17,7 @@ import Footer from "./footer"
 import { getBoard } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
+import Loading from "@/app/(areaClient)/client/[userId]/loading"
 
 interface Props {
   userId: string;
@@ -39,6 +40,7 @@ export function ClientDashboard({ userId }: Props) {
   const router = useRouter()
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true)
 
   const handleLogout =  async() => {
     await logoutUser()
@@ -47,6 +49,7 @@ export function ClientDashboard({ userId }: Props) {
 
 useEffect(() => {
   const fetchBoard = async () => {
+    setIsLoading(true); 
     try {
       const fetchedBoards = await getBoard();
       if (fetchedBoards && fetchedBoards.length > 0) {
@@ -60,6 +63,8 @@ useEffect(() => {
       console.error("Erro ao buscar boards:", error);
       setError("Erro ao carregar boards");
       setIsErrorModalOpen(true);
+    }finally {
+      setIsLoading(false); // 🔹 sempre desliga
     }
   };
   fetchBoard();
@@ -75,6 +80,7 @@ useEffect(() => {
   const board = boards[0];
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       // Fetch user
       const userData = await getUser(userId);
@@ -88,6 +94,8 @@ useEffect(() => {
       console.error("Erro ao buscar dados:", error);
       setError("Erro ao carregar dados");
       setIsErrorModalOpen(true);
+    }finally {
+      setIsLoading(false); // 🔹 sempre desliga
     }
   };
 
@@ -237,6 +245,12 @@ useEffect(() => {
     return colors[status as keyof typeof colors] || "bg-gray-500 text-white";
   };
 
+  
+  if (isLoading) {
+    return <Loading />
+  }
+
+
   return (
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
@@ -363,7 +377,7 @@ useEffect(() => {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white leading-tight line-clamp-2">
+                  <CardTitle className="text-lg uppercase font-semibold text-gray-900 dark:text-white leading-tight line-clamp-2">
                     {card.title}
                   </CardTitle>
                   <Badge
