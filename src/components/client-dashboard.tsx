@@ -370,7 +370,7 @@ useEffect(() => {
         </div>
         {/* Grid de Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredCards.map((card) => (
+          {filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").map((card) => (
             <Card
               key={card.id}
               className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-900"

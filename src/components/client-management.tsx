@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone } from "lucide-react"
+import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, Eye, EyeOff, Key } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getUsers, createUser, updateUser, deleteUser } from "@/lib/User"
 import { getCards } from "@/lib/Card"
@@ -41,6 +41,8 @@ export function ClientManagement() {
     created_at: "",
     is_active: true
   })
+  const [showPasswordField, setShowPasswordField] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [reload, setReload] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false)
@@ -106,9 +108,9 @@ export function ClientManagement() {
             author: user.author,
             is_active: user.is_active,
             is_superuser: user.is_superuser,
-            created_at: user.created_at
-              ? new Date(user.created_at).toISOString().split("T")[0]
-              : new Date().toISOString().split("T")[0],
+            created_at: user.profile?.created_at
+            ? new Date(user.profile.created_at).toLocaleDateString("pt-BR")
+            : new Date().toLocaleDateString("pt-BR"),
           }))
         )
         setClients(formattedClients)
@@ -167,7 +169,7 @@ export function ClientManagement() {
           editingClient.id,
           formData.name,
           formData.email,
-          formData.password,
+          formData.password || undefined,
           { whatsapp: formatWhatsapp(formData.phone) },
           editingClient.is_active,
           null,
@@ -219,6 +221,8 @@ export function ClientManagement() {
       }
     }
     setFormData({ name: "", email: "", phone: "", password: "", created_at: "", is_active: false })
+    setShowPasswordField(false)
+    setShowPassword(false)
     setIsCreateModalOpen(false)
   }
 
@@ -229,10 +233,12 @@ export function ClientManagement() {
       name: client.name,
       email: client.email,
       phone: client.phone || "",
-      password: client.password || "",
+      password: "",
       created_at: client.created_at || "",
       is_active: client.is_active 
     })
+    setShowPasswordField(false) // Esconde o campo de senha ao editar
+    setShowPassword(false)
     setIsCreateModalOpen(true)
   }
 
@@ -287,8 +293,15 @@ export function ClientManagement() {
   const resetForm = () => {
     setFormData({ name: "", email: "", phone: "", password: "",created_at:"", is_active: false })
     setEditingClient(null)
+    setShowPasswordField(false)
+    setShowPassword(false)
     setIsCreateModalOpen(false)
   }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
+
 
   if (isLoading) {
     return <Loading />
@@ -346,9 +359,9 @@ export function ClientManagement() {
                           onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                         />
                       </div>
-                    ) }
+                  ) }
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="password">Senha de acesso</Label>
                     <Input
                       id="password"
@@ -356,7 +369,66 @@ export function ClientManagement() {
                       value={formData.password}
                       onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                     />
-                  </div>
+                  </div> */}
+                                 {showPasswordField || !editingClient ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Senha de acesso</Label>
+                        {editingClient && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowPasswordField(false)}
+                            className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
+                          >
+                            Ocultar
+                          </Button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder={editingClient ? "Nova senha (deixe em branco para manter a atual)" : "Ano de nascimento"}
+                          value={formData.password}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent cursor-pointer"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-500" />
+                          )}
+                        </Button>
+                      </div>
+                      {editingClient && (
+                        <p className="text-xs text-gray-500">
+                          Deixe em branco para manter a senha atual
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    editingClient && (
+                      <div className="space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowPasswordField(true)}
+                          className="w-full flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Key className="h-4 w-4" />
+                          Alterar Senha
+                        </Button>
+                      </div>
+                    )
+                  )}
 
 
                   <div className="flex justify-end gap-2 pt-4">
@@ -471,7 +543,7 @@ export function ClientManagement() {
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-sm text-gray-500">{client.postsCount} posts</span>
                     <span className="text-sm text-gray-500">
-                      Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}
+                      Desde {client.created_at}
                     </span>
                   </div>
 
