@@ -156,7 +156,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900">
+      <header className="bg-[#1e3a5f] text-white dark:bg-gray-900">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button 
@@ -167,15 +167,16 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Revise e aprove o conteúdo
-            </div>
+
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-sm text-center text-orange-500 dark:text-gray-400 mb-4">
+          Revise e aprove o conteúdo
+        </div>
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Post Preview */}
           <div className="lg:col-span-2">

@@ -21,11 +21,20 @@ export interface Card {
   due_date?: string | null;   
   created_at: string;          
   updated_at: string;          
-  feedback?: Feedback;         
+  feedback?: Feedback;     
+  CheckLists: CheckList[];
 }
 
 export interface Feedback {
   id: number;
   card: number; // ID do Card
   text?: string | null;
+}
+
+export interface CheckList {
+  id: number; 
+  title: string;
+  is_check: boolean;
+  created_at: string;          
+  updated_at: string;   
 }

@@ -5,7 +5,7 @@ import { getCard } from "@/lib/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ArrowLeft, CalendarDays, Clock, MessageSquare, User } from "lucide-react"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare } from "lucide-react"
 import { Card as CardType } from "@/lib/types/cardType"
 import { getUser } from "@/lib/User"
 import { Button } from "./ui/button"
@@ -14,6 +14,9 @@ import Footer from "./footer"
 import { Board } from "@/lib/types/boardType"
 import { getBoards } from "@/lib/Board"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
+import { createCheckList, getCheckLists } from "@/lib/CheckList"
+import { CheckList as CheckListType } from "@/lib/types/cardType"
+import AddChecklistModal from "./add-checklist-modal"
 
 interface CardDetailsProps {
   userId: string
@@ -23,6 +26,7 @@ interface CardDetailsProps {
 export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
 const [cardData, setCardData] = useState<CardType>({} as CardType)
+const [checklist, setChecklist] = useState<CheckListType[]>([])
 const [user, setUser] = useState<string>('')
 const [boards, setBoards] = useState<Board[]>([])
 const router = useRouter()
@@ -84,9 +88,54 @@ useEffect(() => {
 
   fetchUser();
   fetchCard();
-}, [boards, userId, cardId]); // <- board depende de boards, então precisa ficar aqui
+}, [boards, userId, cardId]); 
+
+useEffect(() => {
+  if (!cardData.id) return; // só roda se cardData tiver id
+
+  const fetchChecklists = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getCheckLists(cardData.id.toString());
+      setChecklist(data);
+      console.log("Checklists:", data);
+    } catch (error) {
+      console.error("Erro ao buscar checklists:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchChecklists();
+}, [cardData]); // 🔹 depende só de cardData
 
 
+
+
+
+const handleCreateCheckList = async () => {
+  if (!cardData.id) {
+    setError("Card ID não disponível para criar checklist.");
+    setIsErrorModalOpen(true);
+    return;
+  }
+  const formData = new FormData();
+  formData.append("title", "Nova Checklist");
+  formData.append("is_check", "false");
+  setIsLoading(true);
+  try {
+    const newCheckList = await createCheckList(cardData.id.toString(), formData);
+    setCardData(prev => ({
+      ...prev,
+      CheckLists: [...prev.CheckLists, newCheckList]
+    }));
+  } catch (error) {
+    setError(error instanceof Error ? error.message : "Erro ao criar checklist.");
+    setIsErrorModalOpen(true);
+  } finally {
+    setIsLoading(false);
+  }
+}
 
   const getStatusLabel = (status: string) => {
     const labels = {
@@ -132,7 +181,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-background">
 
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-[#1e3a5f] dark:bg-gray-800 border-b text-white border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -198,6 +247,36 @@ useEffect(() => {
                 <p className="text-[#1e3a5f]/80 leading-relaxed">
                   {cardData.description}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-none rounded-xl">
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
+                <CheckSquare className="h-5 w-5 text-[#d35429]" />
+                <span>Checklists</span>
+              </CardTitle>
+              {cardData.id && (
+                <AddChecklistModal
+                  cardId={cardData.id.toString()}
+                  onCreated={() => {
+                    getCheckLists(cardData.id.toString()).then(setChecklist);
+                  }}
+                />
+               )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {checklist.length === 0 ? (
+                  <p className="text-[#1e3a5f]/80">Nenhuma checklist disponível.</p>
+                ) : (
+                  checklist.map((item) => (
+                    <div key={item.id} className="border-l-4 border-[#941c26] pl-4 py-2 bg-white rounded-md">
+                      <p className="text-[#1e3a5f]/80">{item.title}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
