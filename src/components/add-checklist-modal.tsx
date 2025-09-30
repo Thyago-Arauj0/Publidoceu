@@ -1,34 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { createCheckList } from "@/lib/CheckList";
+import { createCheckList, updateCheckList } from "@/lib/CheckList";
+import { Edit } from "lucide-react";
 
-export default function AddChecklistModal({ cardId, onCreated }: { cardId: string; onCreated: () => void }) {
+interface Props {
+  cardId: string;
+  onCreated: () => void;
+  checklistId?: string; // se existir, é edição
+  initialTitle?: string;
+}
+
+export default function AddChecklistModal({ cardId, onCreated, checklistId, initialTitle = "" }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreate = async () => {
+  useEffect(() => {
+    setTitle(initialTitle);
+  }, [initialTitle, isOpen]);
+
+  const handleSubmit = async () => {
     if (!title) {
       setError("O título é obrigatório.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("is_check", "false");
-
     setIsLoading(true);
     try {
-      await createCheckList(cardId, formData);
+      if (checklistId) {
+        // passa status atual sem alteração, só envia o texto
+        await updateCheckList(cardId, checklistId, false, title);
+      } else {
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("is_check", "false");
+        await createCheckList(cardId, formData);
+      }
       setTitle("");
       setIsOpen(false);
-      onCreated(); // atualiza a lista de checklists no CardDetails
+      onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar checklist.");
+      setError(err instanceof Error ? err.message : "Erro ao salvar checklist.");
     } finally {
       setIsLoading(false);
     }
@@ -37,11 +53,13 @@ export default function AddChecklistModal({ cardId, onCreated }: { cardId: strin
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="cursor-pointer">Adicionar Checklist</Button>
+        <Button variant="outline" size="sm">
+          {checklistId ? <Edit className="h-3 w-3"/> : "Adicionar Checklist"}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Criar Checklist</DialogTitle>
+          <DialogTitle>{checklistId ? "Editar Checklist" : "Criar Checklist"}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col space-y-4 mt-2">
           <input
@@ -54,7 +72,9 @@ export default function AddChecklistModal({ cardId, onCreated }: { cardId: strin
           {error && <p className="text-red-600">{error}</p>}
           <div className="flex justify-end space-x-2">
             <Button onClick={() => setIsOpen(false)} variant="ghost">Cancelar</Button>
-            <Button onClick={handleCreate} disabled={isLoading}>{isLoading ? "Criando..." : "Criar"}</Button>
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? "Salvando..." : checklistId ? "Salvar" : "Criar"}
+            </Button>
           </div>
         </div>
       </DialogContent>

@@ -13,6 +13,9 @@ import { Card as CardType} from "@/lib/types/cardType"
 import { getBoard } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
+import { getCheckLists } from "@/lib/CheckList"
+import { CheckList as CheckListType } from "@/lib/types/cardType"
+import { updateCheckList } from "@/lib/CheckList"
 
 interface PostApprovalProps {
   userId: string
@@ -29,6 +32,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true)
+  const [checklist, setChecklist] = useState<CheckListType[]>([])
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -77,6 +81,45 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
     fetchCard();
   }, [boards]);
+  
+  useEffect(() => {
+    if (!card.id) return;
+  
+    const fetchChecklists = async () => {
+      setIsLoading(true);
+      try {
+        console.log("Buscando checklist para card:", card.id);
+        const data = await getCheckLists(card.id.toString());
+        setChecklist(data);
+        console.log("Checklists:", data);
+      } catch (error) {
+        console.error("Erro ao buscar checklists:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchChecklists();
+  }, [card.id]);
+
+    const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
+      try {
+        const updated = await updateCheckList(
+          card.id.toString(), 
+          itemId.toString(), 
+          !itemData.is_check, 
+          itemData.title
+        );
+
+        setChecklist((prev) =>
+          prev.map((chk) =>
+            chk.id === itemId ? { ...chk, is_check: updated.is_check } : chk
+          )
+        );
+      } catch (err) {
+        console.error("Erro ao atualizar checklist:", err);
+      }
+    };
 
 
   const handleFeedbackSubmit = async () => {
@@ -205,9 +248,39 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                 )}
 
                 <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Descrição</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-3">Descrição</h3>
                   <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{card.description}</p>
                 </div>
+
+                {/* Checklist Section */}
+                {checklist.length > 0 && (
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-3">Lista de tarefas</h3>
+                    <ul className="space-y-3">
+                      {checklist.map((item) => (
+                        <li key={item.id} className="flex items-center gap-3 p-2 rounded bg-gray-100">
+                          <button
+                            onClick={() => handleToggleChecklist(item.id, item)}
+                            className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
+                              item.is_check
+                                ? "bg-green-500 border-green-500 text-white"
+                                : "bg-white border-gray-400 dark:bg-gray-800"
+                            }`}
+                          >
+                            {item.is_check && <CheckCircle className="h-4 w-4" />}
+                          </button>
+                          <span
+                            className={`text-gray-700 dark:text-gray-300 ${
+                              item.is_check ? "line-through opacity-70" : ""
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-6 text-sm">
                   <div>

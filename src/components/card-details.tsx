@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { getCard } from "@/lib/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare, Trash } from "lucide-react"
 import { Card as CardType } from "@/lib/types/cardType"
 import { getUser } from "@/lib/User"
 import { Button } from "./ui/button"
@@ -14,7 +14,7 @@ import Footer from "./footer"
 import { Board } from "@/lib/types/boardType"
 import { getBoards } from "@/lib/Board"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
-import { createCheckList, getCheckLists } from "@/lib/CheckList"
+import { getCheckLists, deleteCheckList } from "@/lib/CheckList"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
 import AddChecklistModal from "./add-checklist-modal"
 
@@ -107,35 +107,23 @@ useEffect(() => {
   };
 
   fetchChecklists();
-}, [cardData]); // 🔹 depende só de cardData
+}, [cardData]); 
+
+  const handleDeleteChecklist = async (checklistId: string) => {
+    if (!cardData.id) return;
+
+    if (!confirm("Deseja realmente excluir este checklist?")) return;
+
+    try {
+      await deleteCheckList(cardData.id.toString(), checklistId);
+      setChecklist((prev) => prev.filter((item) => item.id.toString() !== checklistId));
+    } catch (err) {
+      console.error("Erro ao excluir checklist:", err);
+    }
+  };
 
 
 
-
-
-const handleCreateCheckList = async () => {
-  if (!cardData.id) {
-    setError("Card ID não disponível para criar checklist.");
-    setIsErrorModalOpen(true);
-    return;
-  }
-  const formData = new FormData();
-  formData.append("title", "Nova Checklist");
-  formData.append("is_check", "false");
-  setIsLoading(true);
-  try {
-    const newCheckList = await createCheckList(cardData.id.toString(), formData);
-    setCardData(prev => ({
-      ...prev,
-      CheckLists: [...prev.CheckLists, newCheckList]
-    }));
-  } catch (error) {
-    setError(error instanceof Error ? error.message : "Erro ao criar checklist.");
-    setIsErrorModalOpen(true);
-  } finally {
-    setIsLoading(false);
-  }
-}
 
   const getStatusLabel = (status: string) => {
     const labels = {
@@ -272,10 +260,33 @@ const handleCreateCheckList = async () => {
                   <p className="text-[#1e3a5f]/80">Nenhuma checklist disponível.</p>
                 ) : (
                   checklist.map((item) => (
-                    <div key={item.id} className="border-l-4 border-[#941c26] pl-4 py-2 bg-white rounded-md">
+                    <div key={item.id} className="pl-4 py-2 bg-gray-100 rounded-md flex flex-col justify-between gap-2">
                       <p className="text-[#1e3a5f]/80">{item.title}</p>
+                      <div className="flex justify-end gap-2 px-2">
+                        {/* Botão editar */}
+                        <AddChecklistModal
+                          cardId={cardData.id.toString()}
+                          checklistId={item.id.toString()}
+                          initialTitle={item.title}
+                          onCreated={() => getCheckLists(cardData.id.toString()).then(setChecklist)}
+                        />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteChecklist(item.id.toString())}
+                        >
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))
+                )}
+              </div>
+              <div className="mt-4">
+                {checklist.length > 0 && (
+                  <span className="text-sm text-[#1e3a5f]/80">
+                    Total de checklists: {checklist.length}
+                  </span>
                 )}
               </div>
             </CardContent>

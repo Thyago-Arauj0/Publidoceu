@@ -8,6 +8,7 @@ export const getCheckLists = async (cardId: string): Promise<CheckList[]> => {
     method: "GET",
   });
 }
+
 export const createCheckList = async (cardId: string, form: FormData): Promise<CheckList> => {
   return authFetch<CheckList>(`${API_BASE_URL}/api/v1/card/${cardId}/checklist/`, {
     method: "POST",
@@ -15,10 +16,10 @@ export const createCheckList = async (cardId: string, form: FormData): Promise<C
   });
 }
 
-export const updateCheckList = async (cardId: string, checklistId: string, form: FormData): Promise<CheckList> => {
+export const updateCheckList = async (cardId: string, checklistId: string, status: boolean, text?: string): Promise<CheckList> => {
   return authFetch<CheckList>(`${API_BASE_URL}/api/v1/card/${cardId}/checklist/${checklistId}/`, {
     method: "PATCH",
-    body: form, 
+    body: JSON.stringify({ is_check: status, title: text }), 
   });
 }
 
