@@ -38,3 +38,12 @@ export interface CheckList {
   created_at: string;          
   updated_at: string;   
 }
+
+export interface File {
+  id: number;
+  card: number;           // id do Card relacionado
+  is_approved: boolean;
+  file: string;           // URL do arquivo
+  created_at: string;     
+  updated_at: string;
+}

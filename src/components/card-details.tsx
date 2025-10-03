@@ -5,7 +5,7 @@ import { getCard } from "@/lib/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare, Trash } from "lucide-react"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare, Trash, FileText, List, Plus, Upload, X } from "lucide-react"
 import { Card as CardType } from "@/lib/types/cardType"
 import { getUser } from "@/lib/User"
 import { Button } from "./ui/button"
@@ -17,6 +17,10 @@ import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 import { getCheckLists, deleteCheckList } from "@/lib/CheckList"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
 import AddChecklistModal from "./add-checklist-modal"
+import { getFiles, deleteFile, createFile } from "@/lib/File"
+import { File as FileType } from "@/lib/types/cardType"
+import Image from "next/image"
+import AddFileModal from "./add-file-modal"
 
 interface CardDetailsProps {
   userId: string
@@ -27,6 +31,7 @@ export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
 const [cardData, setCardData] = useState<CardType>({} as CardType)
 const [checklist, setChecklist] = useState<CheckListType[]>([])
+const [files, setFiles] = useState<FileType[]>([])
 const [user, setUser] = useState<string>('')
 const [boards, setBoards] = useState<Board[]>([])
 const router = useRouter()
@@ -93,20 +98,24 @@ useEffect(() => {
 useEffect(() => {
   if (!cardData.id) return; // só roda se cardData tiver id
 
-  const fetchChecklists = async () => {
+  const fetchChecklistsAndFiles = async () => {
     setIsLoading(true);
     try {
-      const data = await getCheckLists(cardData.id.toString());
-      setChecklist(data);
-      console.log("Checklists:", data);
+      // Buscar checklists
+      const checklistData = await getCheckLists(cardData.id.toString());
+      setChecklist(checklistData);
+
+      // Buscar arquivos
+      const filesData = await getFiles(cardData.id.toString());
+      setFiles(filesData);
     } catch (error) {
-      console.error("Erro ao buscar checklists:", error);
+      console.error("Erro ao buscar dados:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  fetchChecklists();
+  fetchChecklistsAndFiles();
 }, [cardData]); 
 
   const handleDeleteChecklist = async (checklistId: string) => {
@@ -122,8 +131,28 @@ useEffect(() => {
     }
   };
 
+  const handleDeleteFile = async (fileId: string) => {
+    if (!cardData.id) return;
 
+    if (!confirm("Deseja realmente excluir este arquivo?")) return;
 
+    try {
+      await deleteFile(cardData.id.toString(), fileId);
+      setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
+    } catch (err) {
+      console.error("Erro ao excluir arquivo:", err);
+    }
+  };
+
+  const refreshFiles = async () => {
+    if (!cardData.id) return;
+    try {
+      const filesData = await getFiles(cardData.id.toString());
+      setFiles(filesData);
+    } catch (error) {
+      console.error("Erro ao atualizar arquivos:", error);
+    }
+  };
 
   const getStatusLabel = (status: string) => {
     const labels = {
@@ -152,6 +181,7 @@ useEffect(() => {
 
     return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
   }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -160,6 +190,24 @@ useEffect(() => {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  // Função auxiliar para verificar se um checklist está completo
+  const isChecklistCompleted = (checkList: CheckListType): boolean => {
+    return checkList.is_check ?? false;
+  }
+
+
+  // Função auxiliar para obter o título do checklist
+  const getCheckListTitle = (checkList: CheckListType): string => {
+    return 'title' in checkList ? (checkList as any).title : ''
+  }
+
+  // Função para obter o tipo de arquivo baseado na URL
+  const getFileType = (fileUrl: string): string => {
+    if (fileUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) return 'video'
+    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) return 'image'
+    return 'other'
   }
 
   if (isLoading) {
@@ -177,7 +225,6 @@ useEffect(() => {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar
                 </Button>
-                {/* <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Voltar</h2> */}
             </div>
           </div>
         </div>
@@ -210,25 +257,99 @@ useEffect(() => {
         </Card>
 
         <div className="space-y-6">
+          {/* Seção de Arquivos - SEMPRE VISÍVEL */}
           <Card className="border-none shadow-none rounded-xl">
-            <CardHeader>
-              <div>
-                {cardData.image && /\.(mp4|webm|ogg)(\?.*)?$/i.test(cardData.image) ? (
-                  <video
-                    src={cardData.image}
-                    controls
-                    className="w-full rounded-lg max-h-[90vh] shadow-none border-none"
-                  />
-                ) : (
-                  <img
-                    src={cardData.image || "/placeholder.svg"}
-                    alt="Card illustration"
-                    className="w-full rounded-lg border-none max-h-[90vh] shadow-none"
-                  />
-                )}
-              </div>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
+                <FileText className="h-5 w-5 text-[#d35429]" />
+                <span>Arquivos ({files.length})</span>
+              </CardTitle>
+              {cardData.id && (
+                <AddFileModal
+                  cardId={cardData.id.toString()}
+                  onCreated={refreshFiles}
+                />
+              )}
             </CardHeader>
+            <CardContent>
+              {files.length === 0 ? (
+                <p className="text-[#1e3a5f]/80 text-center py-8">
+                  Nenhum arquivo adicionado ainda.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {files.map((file) => {
+                    const fileType = getFileType(file.file)
+                    const isCompleted = file.is_approved === true
+                    
+                    return (
+                      <div 
+                        key={file.id} 
+                        className={`border rounded-lg overflow-hidden transition-all ${
+                          isCompleted ? 'border-green-500 border-2' : 'border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between p-3 border-b">
+                          <div className="flex items-center gap-3 flex-1">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {file.file.split('/').pop()}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(file.created_at).toLocaleDateString()}
+                                {isCompleted && (
+                                  <span className="ml-2 text-green-600 font-medium">✓ Aprovado</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeleteFile(file.id.toString())}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Preview do arquivo */}
+                        <div className="relative w-full h-40 bg-gray-100">
+                          {fileType === 'image' ? (
+                            <Image 
+                              src={file.file} 
+                              alt="Arquivo" 
+                              fill 
+                              className="object-contain" 
+                            />
+                          ) : fileType === 'video' ? (
+                            <video 
+                              src={file.file} 
+                              controls 
+                              className="w-full h-full object-contain"
+                            >
+                              Seu navegador não suporta o elemento de vídeo.
+                            </video>
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <FileText className="h-12 w-12 text-gray-400" />
+                              <span className="ml-2 text-sm text-gray-500">
+                                {file.file.split('/').pop()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card className="border-none shadow-none rounded-xl">
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-2 text-[#1e3a5f]">Descrição</h3>
@@ -242,8 +363,8 @@ useEffect(() => {
           <Card className="border-none shadow-none rounded-xl">
             <CardHeader className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
-                <CheckSquare className="h-5 w-5 text-[#d35429]" />
-                <span>Checklists</span>
+                <List className="h-5 w-5 text-[#d35429]" />
+                <span>Checklists ({checklist.length})</span>
               </CardTitle>
               {cardData.id && (
                 <AddChecklistModal
@@ -259,34 +380,37 @@ useEffect(() => {
                 {checklist.length === 0 ? (
                   <p className="text-[#1e3a5f]/80">Nenhuma checklist disponível.</p>
                 ) : (
-                  checklist.map((item) => (
-                    <div key={item.id} className="pl-4 py-2 bg-gray-100 rounded-md flex flex-col justify-between gap-2">
-                      <p className="text-[#1e3a5f]/80">{item.title}</p>
-                      <div className="flex justify-end gap-2 px-2">
-                        {/* Botão editar */}
-                        <AddChecklistModal
-                          cardId={cardData.id.toString()}
-                          checklistId={item.id.toString()}
-                          initialTitle={item.title}
-                          onCreated={() => getCheckLists(cardData.id.toString()).then(setChecklist)}
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteChecklist(item.id.toString())}
-                        >
-                          <Trash className="h-3 w-3" />
-                        </Button>
+                  checklist.map((item) => {
+                    const isCompleted = isChecklistCompleted(item)
+                    const title = getCheckListTitle(item)
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="pl-4 py-2 bg-gray-100 rounded-md flex flex-col justify-between gap-2"
+                      >
+                        <p className={`text-[#1e3a5f]/80 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+                          {title}
+                        </p>
+                        <div className="flex justify-end gap-2 px-2">
+                          {/* Botão editar */}
+                          <AddChecklistModal
+                            cardId={cardData.id.toString()}
+                            checklistId={item.id.toString()}
+                            initialTitle={title}
+                            onCreated={() => getCheckLists(cardData.id.toString()).then(setChecklist)}
+                          />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteChecklist(item.id.toString())}
+                          >
+                            <Trash className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="mt-4">
-                {checklist.length > 0 && (
-                  <span className="text-sm text-[#1e3a5f]/80">
-                    Total de checklists: {checklist.length}
-                  </span>
+                    )
+                  })
                 )}
               </div>
             </CardContent>
@@ -365,7 +489,6 @@ useEffect(() => {
         </div>
       </DialogContent>
     </Dialog>
-
 
     </div>
   )
