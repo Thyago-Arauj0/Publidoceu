@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CheckCircle, XCircle, MessageSquare } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, MessageSquare, FileText, Check, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
 import { Card as CardType} from "@/lib/types/cardType"
@@ -16,6 +16,9 @@ import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 import { getCheckLists } from "@/lib/CheckList"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
 import { updateCheckList } from "@/lib/CheckList"
+import { getFiles, updateFile } from "@/lib/File"
+import { File as FileType } from "@/lib/types/cardType"
+import Image from "next/image"
 
 interface PostApprovalProps {
   userId: string
@@ -28,6 +31,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [boards, setBoards] = useState<Board[]>([])
+  const [files, setFiles] = useState<FileType[]>([])
   const router = useRouter()
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,42 +89,80 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   useEffect(() => {
     if (!card.id) return;
   
-    const fetchChecklists = async () => {
+    const fetchChecklistsAndFiles = async () => {
       setIsLoading(true);
       try {
-        console.log("Buscando checklist para card:", card.id);
-        const data = await getCheckLists(card.id.toString());
-        setChecklist(data);
-        console.log("Checklists:", data);
+        // Buscar checklists
+        const checklistData = await getCheckLists(card.id.toString());
+        setChecklist(checklistData);
+
+        // Buscar arquivos
+        const filesData = await getFiles(card.id.toString());
+        setFiles(filesData);
       } catch (error) {
-        console.error("Erro ao buscar checklists:", error);
+        console.error("Erro ao buscar dados:", error);
       } finally {
         setIsLoading(false);
       }
     };
   
-    fetchChecklists();
+    fetchChecklistsAndFiles();
   }, [card.id]);
 
-    const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
-      try {
-        const updated = await updateCheckList(
-          card.id.toString(), 
-          itemId.toString(), 
-          !itemData.is_check, 
-          itemData.title
-        );
+  const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
+    try {
+      const updated = await updateCheckList(
+        card.id.toString(), 
+        itemId.toString(), 
+        !itemData.is_check, 
+        itemData.title
+      );
 
-        setChecklist((prev) =>
-          prev.map((chk) =>
-            chk.id === itemId ? { ...chk, is_check: updated.is_check } : chk
-          )
-        );
-      } catch (err) {
-        console.error("Erro ao atualizar checklist:", err);
-      }
-    };
+      setChecklist((prev) =>
+        prev.map((chk) =>
+          chk.id === itemId ? { ...chk, is_check: updated.is_check } : chk
+        )
+      );
+    } catch (err) {
+      console.error("Erro ao atualizar checklist:", err);
+    }
+  };
 
+  const handleApproveFile = async (fileId: string) => {
+    if (!card.id) return;
+
+    try {
+      // Criar FormData para enviar o status de aprovação
+      await updateFile(card.id.toString(), fileId, true);
+      
+      // Atualizar estado local
+      setFiles(prev => prev.map(file => 
+        file.id.toString() === fileId ? { ...file, is_approved: true } : file
+      ));
+    } catch (err) {
+      console.error("Erro ao aprovar arquivo:", err);
+      setError("Erro ao aprovar arquivo");
+      setIsErrorModalOpen(true);
+    }
+  };
+
+  const handleDisapproveFile = async (fileId: string) => {
+    if (!card.id) return;
+
+    try {
+      // Criar FormData para enviar o status de aprovação
+      await updateFile(card.id.toString(), fileId, false);
+      
+      // Atualizar estado local
+      setFiles(prev => prev.map(file => 
+        file.id.toString() === fileId ? { ...file, is_approved: false } : file
+      ));
+    } catch (err) {
+      console.error("Erro ao reprovar arquivo:", err);
+      setError("Erro ao reprovar arquivo");
+      setIsErrorModalOpen(true);
+    }
+  };
 
   const handleFeedbackSubmit = async () => {
     if (!boards || boards.length === 0) {
@@ -192,6 +234,13 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-700 border border-gray-300";
   };
 
+  // Função para obter o tipo de arquivo baseado na URL
+  const getFileType = (fileUrl: string): string => {
+    if (fileUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) return 'video'
+    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) return 'image'
+    return 'other'
+  }
+
   if (isLoading) {
     return <Loading />
   }
@@ -232,26 +281,92 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
               </div>
 
               <div className="space-y-6">
-          
-               {card.image && /\.(mp4|webm|ogg)(\?.*)?$/i.test(card.image) ? (
-                  <video
-                    src={card.image}
-                    controls
-                    className="w-full rounded-lg max-h-[90vh] shadow-none border-none"
-                  />
-                ) : (
-                  <img
-                    src={card.image || "/placeholder.svg"}
-                    alt={card.title} 
-                    className="w-full rounded-lg border-none max-h-[90vh] shadow-none"
-                  />
-                )}
-
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-white mb-3">Descrição</h3>
                   <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{card.description}</p>
                 </div>
 
+                {/* Seção de Arquivos */}
+                {files.length > 0 && (
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-3">Arquivos ({files.length})</h3>
+                    <div className={`${files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
+                      {files.map((file) => {
+                        const fileType = getFileType(file.file)
+                        const isApproved = file.is_approved === true
+                        
+                        return (
+                          <div 
+                            key={file.id} 
+                            className={`relative rounded-lg overflow-hidden break-inside-avoid ${
+                              isApproved ? 'ring-2 ring-green-500' : ''
+                            }`}
+                          >
+                            {/* Preview do arquivo */}
+                            <div className="relative w-full min-h-[200px] flex items-center justify-center bg-gray-100">
+                              {fileType === 'image' ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Image
+                                    src={file.file}
+                                    alt="Arquivo"
+                                    width={800}
+                                    height={600}
+                                    className="max-w-full max-h-full object-contain"
+                                    style={{ width: 'auto', height: 'auto' }}
+                                  />
+                                </div>
+                              ) : fileType === 'video' ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <video
+                                    src={file.file}
+                                    controls
+                                    className="max-w-full max-h-full object-contain"
+                                  >
+                                    Seu navegador não suporta o elemento de vídeo.
+                                  </video>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center h-40 w-full">
+                                  <FileText className="h-12 w-12 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Botões de ação flutuantes */}
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              {!isApproved ? (
+                                <Button
+                                  size="sm"
+                                  className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
+                                  onClick={() => handleApproveFile(file.id.toString())}
+                                  title="Aprovar arquivo"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
+                                  onClick={() => handleDisapproveFile(file.id.toString())}
+                                  title="Desaprovar arquivo"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* Indicador de aprovado */}
+                            {isApproved && (
+                              <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-md font-medium">
+                                ✓ Aprovado
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
                 {/* Checklist Section */}
                 {checklist.length > 0 && (
                   <div>

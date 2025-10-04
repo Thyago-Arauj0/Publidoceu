@@ -277,7 +277,7 @@ useEffect(() => {
                   Nenhum arquivo adicionado ainda.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`${files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
                   {files.map((file) => {
                     const fileType = getFileType(file.file)
                     const isCompleted = file.is_approved === true
@@ -285,62 +285,57 @@ useEffect(() => {
                     return (
                       <div 
                         key={file.id} 
-                        className={`border rounded-lg overflow-hidden transition-all ${
-                          isCompleted ? 'border-green-500 border-2' : 'border-gray-200'
+                        className={`relative rounded-lg overflow-hidden break-inside-avoid ${
+                          isCompleted ? 'ring-2 ring-green-500' : ''
                         }`}
                       >
-                        <div className="flex items-center justify-between p-3 border-b">
-                          <div className="flex items-center gap-3 flex-1">
-                            <FileText className="h-5 w-5 text-gray-500" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {file.file.split('/').pop()}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(file.created_at).toLocaleDateString()}
-                                {isCompleted && (
-                                  <span className="ml-2 text-green-600 font-medium">✓ Aprovado</span>
-                                )}
-                              </p>
+                        {/* Preview do arquivo */}
+                        <div className="relative w-full min-h-[200px] flex items-center justify-center">
+                          {fileType === 'image' ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Image
+                                src={file.file}
+                                alt="Arquivo"
+                                width={800}
+                                height={600}
+                                className="max-w-full max-h-full object-contain"
+                                style={{ width: 'auto', height: 'auto' }}
+                              />
                             </div>
-                          </div>
+                          ) : fileType === 'video' ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <video
+                                src={file.file}
+                                controls
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center h-40 w-full">
+                              <FileText className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Botão de excluir flutuante */}
+                        <div className="absolute top-2 right-2">
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50"
+                            className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
                             onClick={() => handleDeleteFile(file.id.toString())}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
                         </div>
-                        
-                        {/* Preview do arquivo */}
-                        <div className="relative w-full h-40 bg-gray-100">
-                          {fileType === 'image' ? (
-                            <Image 
-                              src={file.file} 
-                              alt="Arquivo" 
-                              fill 
-                              className="object-contain" 
-                            />
-                          ) : fileType === 'video' ? (
-                            <video 
-                              src={file.file} 
-                              controls 
-                              className="w-full h-full object-contain"
-                            >
-                              Seu navegador não suporta o elemento de vídeo.
-                            </video>
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <FileText className="h-12 w-12 text-gray-400" />
-                              <span className="ml-2 text-sm text-gray-500">
-                                {file.file.split('/').pop()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+
+                        {/* Indicador de aprovado */}
+                        {isCompleted && (
+                          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-md font-medium">
+                            ✓ Aprovado
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -387,9 +382,9 @@ useEffect(() => {
                     return (
                       <div 
                         key={item.id} 
-                        className="pl-4 py-2 bg-gray-100 rounded-md flex flex-col justify-between gap-2"
+                        className={`pl-4 py-2 bg-gray-100 rounded-md flex flex-col md:flex-row justify-between gap-2 ${isCompleted ? 'border-2 border-green-500' : ''}`}
                       >
-                        <p className={`text-[#1e3a5f]/80 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
+                        <p className="text-[#1e3a5f]/80" >
                           {title}
                         </p>
                         <div className="flex justify-end gap-2 px-2">

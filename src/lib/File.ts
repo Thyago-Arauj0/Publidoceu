@@ -19,7 +19,10 @@ export const createFile = async (cardId: string, form: FormData): Promise<File> 
 export const updateFile = async (cardId: string, fileId: string, status: boolean, file?: string): Promise<File> => {
   return authFetch<File>(`${API_BASE_URL}/api/v1/card/${cardId}/files/${fileId}/`, {
     method: "PATCH",
-    body: JSON.stringify({ is_check: status, file }), 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ is_approved: status, file }),
   });
 }
 
