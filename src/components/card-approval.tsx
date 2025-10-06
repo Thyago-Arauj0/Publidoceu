@@ -88,6 +88,13 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   
   useEffect(() => {
     if (!card.id) return;
+
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
   
     const fetchChecklistsAndFiles = async () => {
       setIsLoading(true);
@@ -97,7 +104,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
         setChecklist(checklistData);
 
         // Buscar arquivos
-        const filesData = await getFiles(card.id.toString());
+        const filesData = await getFiles(String(board.id), card.id.toString());
         setFiles(filesData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
@@ -131,9 +138,16 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const handleApproveFile = async (fileId: string) => {
     if (!card.id) return;
 
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     try {
       // Criar FormData para enviar o status de aprovação
-      await updateFile(card.id.toString(), fileId, true);
+      await updateFile(String(board.id), card.id.toString(), fileId, true);
       
       // Atualizar estado local
       setFiles(prev => prev.map(file => 
@@ -149,9 +163,16 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const handleDisapproveFile = async (fileId: string) => {
     if (!card.id) return;
 
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     try {
       // Criar FormData para enviar o status de aprovação
-      await updateFile(card.id.toString(), fileId, false);
+      await updateFile(String(board.id), card.id.toString(), fileId, false);
       
       // Atualizar estado local
       setFiles(prev => prev.map(file => 

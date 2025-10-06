@@ -99,6 +99,14 @@ useEffect(() => {
   if (!cardData.id) return; // só roda se cardData tiver id
 
   const fetchChecklistsAndFiles = async () => {
+
+    const board = boards.find(board => String(board.customer) === String(userId));
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Buscar checklists
@@ -106,7 +114,7 @@ useEffect(() => {
       setChecklist(checklistData);
 
       // Buscar arquivos
-      const filesData = await getFiles(cardData.id.toString());
+      const filesData = await getFiles(board.id.toString(), cardData.id.toString());
       setFiles(filesData);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
@@ -132,12 +140,18 @@ useEffect(() => {
   };
 
   const handleDeleteFile = async (fileId: string) => {
+    const board = boards.find(board => String(board.customer) === String(userId));
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
     if (!cardData.id) return;
 
     if (!confirm("Deseja realmente excluir este arquivo?")) return;
 
     try {
-      await deleteFile(cardData.id.toString(), fileId);
+      await deleteFile(board.id.toString(), cardData.id.toString(), fileId);
       setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
     } catch (err) {
       console.error("Erro ao excluir arquivo:", err);
@@ -145,9 +159,15 @@ useEffect(() => {
   };
 
   const refreshFiles = async () => {
+    const board = boards.find(board => String(board.customer) === String(userId));
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
     if (!cardData.id) return;
     try {
-      const filesData = await getFiles(cardData.id.toString());
+      const filesData = await getFiles(board.id.toString(), cardData.id.toString());
       setFiles(filesData);
     } catch (error) {
       console.error("Erro ao atualizar arquivos:", error);
@@ -265,7 +285,11 @@ useEffect(() => {
                 <span>Arquivos ({files.length})</span>
               </CardTitle>
               {cardData.id && (
+                
                 <AddFileModal
+                  boardId={
+                    boards.find(board => String(board.customer) === String(userId))?.id.toString() || ''
+                  }
                   cardId={cardData.id.toString()}
                   onCreated={refreshFiles}
                 />

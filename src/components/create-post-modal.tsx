@@ -104,10 +104,18 @@ export function CreatePostModal({
 
   // Carregar arquivos e checklists existentes quando estiver editando
   useEffect(() => {
+
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     const fetchExistingData = async () => {
       if (isEditing && editingCard) {
         try {
-          const files = await getFiles(String(editingCard.id))
+          const files = await getFiles(String(board.id), String(editingCard.id))
           setExistingFiles(files)
         } catch (error) {
           console.error("Erro ao carregar arquivos:", error)
@@ -206,6 +214,7 @@ export function CreatePostModal({
       }
     })
 
+
     try {
       // Criar ou atualizar card
       let cardResult
@@ -222,7 +231,7 @@ export function CreatePostModal({
         for (const filePreview of newFiles) {
           const fileForm = new FormData()
           fileForm.append("file_upload", filePreview.file)
-          await createFile(String(cardResult.id), fileForm)
+          await createFile(board.id.toString(), String(cardResult.id), fileForm)
         }
       }
 
@@ -289,8 +298,15 @@ export function CreatePostModal({
   const handleRemoveExistingFile = async (fileId: number) => {
     if (!editingCard) return
 
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
+    }
+
+    const board = boards[0];
+
     try {
-      await deleteFile(String(editingCard.id), String(fileId))
+      await deleteFile(String(board.id), String(editingCard.id), String(fileId))
       setExistingFiles(prev => prev.filter(file => file.id !== fileId))
     } catch (error) {
       if (error instanceof Error) {

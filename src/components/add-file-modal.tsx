@@ -9,9 +9,11 @@ import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 // Componente Modal para Adicionar Arquivos
 export default function AddFileModal({ 
+  boardId,
   cardId, 
   onCreated 
 }: { 
+  boardId: string
   cardId: string 
   onCreated: () => void 
 }) {
@@ -46,7 +48,7 @@ export default function AddFileModal({
       for (const file of selectedFiles) {
         const formData = new FormData()
         formData.append("file_upload", file)
-        await createFile(cardId, formData)
+        await createFile(boardId, cardId, formData)
       }
 
       // Limpa os arquivos selecionados e fecha o modal
