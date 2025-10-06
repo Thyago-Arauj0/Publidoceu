@@ -303,11 +303,6 @@ export function ClientManagement() {
   }
 
 
-  if (isLoading) {
-    return <Loading />
-  }
-
-
   return (
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
@@ -361,16 +356,8 @@ export function ClientManagement() {
                       </div>
                   ) }
 
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="password">Senha de acesso</Label>
-                    <Input
-                      id="password"
-                      placeholder="Ano de nascimento"
-                      value={formData.password}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                    />
-                  </div> */}
-                                 {showPasswordField || !editingClient ? (
+
+                  {showPasswordField || !editingClient ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Senha de acesso</Label>
@@ -449,7 +436,7 @@ export function ClientManagement() {
         </div>
       </header>
 
-      {/* Main Content */}
+
       <main className="container mx-auto px-4 py-6 min-h-screen">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gerenciamento de Clientes</h1>
@@ -457,110 +444,116 @@ export function ClientManagement() {
         </div>
         <hr />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
-         {loading ? (
-            <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            </div>
-          ) : clients.length <= 1 ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
-              <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar Primeiro Cliente
-              </Button>
-            </div>
-          ) : (
-          clients.map((client, index) => (
-            !client.is_superuser ? (
-              <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
-                        <AvatarFallback>
-                          {client.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">{client.name}</CardTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+        {isLoading ? (
+          <div className="flex justify-center py-20 min-h-[400px] items-center">
+            <Loading />
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
+            {loading ? (
+              <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              </div>
+            ) : clients.length <= 1 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
+                <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Cadastrar Primeiro Cliente
+                </Button>
+              </div>
+            ) : (
+            clients.map((client, index) => (
+              !client.is_superuser ? (
+                <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
+                          <AvatarFallback>
+                            {client.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{client.name}</CardTitle>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={client.is_active === true ? "default" : "secondary"}
+                          className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
+                        >
+                          {client.is_active === true ? "Ativo" : "Inativo"}
+                        </Badge>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
+                              <User className="mr-2 h-4 w-4" />
+                              {client.is_active ? "Desativar" : "Ativar"}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
+                  </CardHeader>
 
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={client.is_active === true ? "default" : "secondary"}
-                        className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
-                      >
-                        {client.is_active === true ? "Ativo" : "Inativo"}
-                      </Badge>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
-                            <User className="mr-2 h-4 w-4" />
-                            {client.is_active ? "Desativar" : "Ativar"}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Mail className="h-4 w-4" />
-                    <span>{client.email}</span>
-                  </div>
-
-                  {client.phone && (
+                  <CardContent className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Phone className="h-4 w-4" />
-                      <span>{client.phone}</span>
+                      <Mail className="h-4 w-4" />
+                      <span>{client.email}</span>
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm text-gray-500">{client.postsCount} posts</span>
-                    <span className="text-sm text-gray-500">
-                      Desde {client.created_at}
-                    </span>
-                  </div>
+                    {client.phone && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Phone className="h-4 w-4" />
+                        <span>{client.phone}</span>
+                      </div>
+                    )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full bg-transparent cursor-pointer py-5"
-                    onClick={() => router.push(`/clients/${client.id}`)}
-                  >
-                    Ver Área do Cliente
-                  </Button>
-                </CardContent>
-              </Card>
-                ) : null
-              ))
-            )}
-        </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm text-gray-500">{client.postsCount} posts</span>
+                      <span className="text-sm text-gray-500">
+                        Desde {client.created_at}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full bg-[#e04b19] hover:bg-[#af411c] text-white hover:text-gray-50  cursor-pointer py-5"
+                      onClick={() => router.push(`/clients/${client.id}`)}
+                    >
+                      Ver Área do Cliente
+                    </Button>
+                  </CardContent>
+                </Card>
+                  ) : null
+                ))
+              )}
+            </div>
+        )}
       </main>
 
       <Footer/>

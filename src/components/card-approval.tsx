@@ -18,6 +18,7 @@ import { CheckList as CheckListType } from "@/lib/types/cardType"
 import { updateCheckList } from "@/lib/CheckList"
 import { getFiles, updateFile } from "@/lib/File"
 import { File as FileType } from "@/lib/types/cardType"
+import Footer from "./footer"
 import Image from "next/image"
 
 interface PostApprovalProps {
@@ -294,7 +295,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
           {/* Post Preview */}
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex flex-col gap-2 items-start justify-between mb-6">
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{card.title}</h1>
                 <Badge className={`${getStatusColor(card.status)} rounded-full px-3 py-1 text-xs font-medium`}>
                   {getStatusLabel(card.status)}
@@ -552,6 +553,8 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
           </div>
         </div>
       </main>
+
+      <Footer />
 
       <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
         <DialogContent className="sm:max-w-[400px]">

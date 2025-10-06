@@ -47,60 +47,60 @@ export function ClientDashboard({ userId }: Props) {
     router.push("/login")
   }
 
-useEffect(() => {
-  const fetchBoard = async () => {
-    setIsLoading(true); 
-    try {
-      const fetchedBoards = await getBoard();
-      if (fetchedBoards && fetchedBoards.length > 0) {
-        setBoards(fetchedBoards);
-      } else {
-        console.error("Nenhum board encontrado");
-        setError("Nenhum board disponível");
+  useEffect(() => {
+    const fetchBoard = async () => {
+      setIsLoading(true); 
+      try {
+        const fetchedBoards = await getBoard();
+        if (fetchedBoards && fetchedBoards.length > 0) {
+          setBoards(fetchedBoards);
+        } else {
+          console.error("Nenhum board encontrado");
+          setError("Nenhum board disponível");
+          setIsErrorModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar boards:", error);
+        setError("Erro ao carregar boards");
         setIsErrorModalOpen(true);
+      }finally {
+        setIsLoading(false); // 🔹 sempre desliga
       }
-    } catch (error) {
-      console.error("Erro ao buscar boards:", error);
-      setError("Erro ao carregar boards");
-      setIsErrorModalOpen(true);
-    }finally {
-      setIsLoading(false); // 🔹 sempre desliga
+    };
+    fetchBoard();
+  }, []);
+
+  useEffect(() => {
+    
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
     }
-  };
-  fetchBoard();
-}, []);
 
-useEffect(() => {
-  
-  if (!boards || boards.length === 0) {
-    console.log("Aguardando boards...");
-    return;
-  }
+    const board = boards[0];
 
-  const board = boards[0];
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch user
+        const userData = await getUser(userId);
+        setUser(userData);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch user
-      const userData = await getUser(userId);
-      setUser(userData);
+        // Fetch cards
+        const cardsData = await getCards(String(board.id));
+        setCards(cardsData);
+        organizeCardsByWeek(cardsData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+        setError("Erro ao carregar dados");
+        setIsErrorModalOpen(true);
+      }finally {
+        setIsLoading(false); // 🔹 sempre desliga
+      }
+    };
 
-      // Fetch cards
-      const cardsData = await getCards(String(board.id));
-      setCards(cardsData);
-      organizeCardsByWeek(cardsData);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-      setError("Erro ao carregar dados");
-      setIsErrorModalOpen(true);
-    }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-    }
-  };
-
-  fetchData();
-}, [boards, userId]);
+    fetchData();
+  }, [boards, userId]);
 
   // Função para organizar os cards por semana
   const organizeCardsByWeek = (cards: CardType[]) => {
@@ -300,7 +300,12 @@ useEffect(() => {
                 {showAll ? "Todos os posts" : (weeks[currentWeek] ? formatDateRange(weeks[currentWeek].start, weeks[currentWeek].end) : '')}
               </span>
               <Badge variant="secondary" className="ml-0 sm:ml-2 mt-2 sm:mt-0">
-                {filteredCards.length} {filteredCards.length === 1 ? 'card' : 'cards'}
+                {
+                  filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").length
+                }{' '}
+                {
+                  filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").length === 0 || 1 ? 'Conteúdo' : 'Conteúdos'
+                }
               </Badge>
             </div>
             
@@ -376,7 +381,7 @@ useEffect(() => {
               className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-900"
             >
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col items-start justify-between gap-3">
                   <CardTitle className="text-lg uppercase font-semibold text-gray-900 dark:text-white leading-tight line-clamp-2">
                     {card.title}
                   </CardTitle>
@@ -407,7 +412,7 @@ useEffect(() => {
                       const cardId = card.id
                       router.push(`/client/${userId}/card/${cardId}`)
                     }}
-                    className="w-full border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
+                    className="w-full bg-[#e04b19] text-white hover:text-gray-50 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-[#af411c] dark:hover:bg-gray-800 font-medium"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalhes

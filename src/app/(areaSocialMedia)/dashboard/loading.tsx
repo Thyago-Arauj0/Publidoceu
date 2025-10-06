@@ -1,31 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen dark:bg-gray-900">
-      {/* Header Skeleton */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Novo Cliente Button Skeleton */}
-            <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-
-            {/* Logout Button Skeleton */}
-            <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Skeleton */}
       <main className="container mx-auto px-4 py-6 min-h-screen">
-        <div className="mb-6">
-          {/* Title Skeleton */}
-          <div className="h-8 w-80 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse mb-2"></div>
-          {/* Subtitle Skeleton */}
-          <div className="h-5 w-96 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-        </div>
-
-        <hr className="mb-10" />
-
-        {/* Cards Grid Skeleton */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
@@ -82,13 +57,5 @@ export default function Loading() {
           ))}
         </div>
       </main>
-
-      {/* Footer Skeleton */}
-      <div className="h-16 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse mx-auto"></div>
-        </div>
-      </div>
-    </div>
   )
 }

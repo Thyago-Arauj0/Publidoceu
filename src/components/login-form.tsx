@@ -66,10 +66,7 @@ export function LoginForm() {
 
   return (
     <>
-    <Card className="w-full ">
-      {/* <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-      </CardHeader> */}
+    <Card className="w-full border-0 shadow-none">
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

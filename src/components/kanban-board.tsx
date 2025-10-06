@@ -44,26 +44,6 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
     fetchBoard()
   }, [])
 
-  // useEffect(() => {
-  //   const fetchCards = async () => {
-  //     setIsLoading(true); 
-  //     if (boards.length === 0) return
-
-  //     const board = boards.find(board => String(board.customer) === userId)
-
-  //     if (!board) {
-  //       console.error("Nenhum board correspondente encontrado para este cliente.")
-  //       return
-  //     }
-
-  //     const fetchedCards: Card[] = await getCards(String(board.id))
-  //     setCards([
-  //       ...fetchedCards,
-  //       ...newPosts.filter(np => !fetchedCards.some(fc => fc.id === np.id))
-  //     ])
-  //   }
-  //   fetchCards()
-  // }, [boards, newPosts, userId])
   useEffect(() => {
   const fetchCards = async () => {
     setIsLoading(true); 
@@ -161,10 +141,6 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
     return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
   }
 
-  if (isLoading) {
-    return <Loading />
-  }
-  
 
   return (
     <div>
@@ -183,25 +159,30 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         ))}
       </div>
       
-      {/* Página atual */}
-      <div className="mt-10 grid md:grid-cols-4 gap-3">
-      {getCardsByStatus(activeStatus).map(card => {
-          const board = boards.find(b => String(b.customer) === String(userId))
+      {isLoading ? (
+        <div className="flex justify-center py-20 min-h-[400px] items-center">
+          <Loading />
+        </div>
+        ) : (
+        <div className="mt-10 grid md:grid-cols-4 gap-3">
+        {getCardsByStatus(activeStatus).map(card => {
+            const board = boards.find(b => String(b.customer) === String(userId))
 
-          if (!board) return <p>Carregando cards...</p>
+            if (!board) return <p>Carregando cards...</p>
 
-          return (
-            <KanbanCard
-              key={card.id}
-              card={card}
-              board={board}
-              onMove={(bId, cId, status) => moveCard(cId, status)}
-              onDelete={() => openDeleteModal(card)} 
-              onUpdateCard={handleUpdateCard} 
-            />
-          )
-        })}
-      </div>
+            return (
+              <KanbanCard
+                key={card.id}
+                card={card}
+                board={board}
+                onMove={(bId, cId, status) => moveCard(cId, status)}
+                onDelete={() => openDeleteModal(card)} 
+                onUpdateCard={handleUpdateCard} 
+              />
+            )
+          })}
+        </div>
+      )}
 
       <Dialog
         open={confirmModal.isOpen}

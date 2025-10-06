@@ -1,48 +1,3 @@
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
-
-// // Rotas públicas
-// const publicPaths = ["/login", "/home"];
-// const blockedWhenLoggedIn = ["/login"];
-// const adminPaths = ["/dashboard", "/clients"];
-
-// export function middleware(req: NextRequest) {
-//   const url = req.nextUrl.clone();
-//   const token = req.cookies.get("access_token")?.value;
-//   const isAdmin = req.cookies.get("isAdmin")?.value === "true";
-
-//   const pathname = url.pathname;
-
-
-//   if (token && blockedWhenLoggedIn.includes(url.pathname)) {
-//     if(isAdmin) url.pathname = "/dashboard";
-//     else url.pathname = `/client/${req.cookies.get("userId")?.value || ""}`;
-//     return NextResponse.redirect(url);
-//   }
-
-//   if (!token && !publicPaths.includes(pathname)) {
-//     url.pathname = "/login";
-//     return NextResponse.redirect(url);
-//   }
-
-//   if(token && !isAdmin && adminPaths.includes(pathname)){
-//     url.pathname = `/client/${req.cookies.get("userId")?.value || ""}`;
-//     return NextResponse.redirect(url);
-//   }
-
-//   if (token && isAdmin && pathname.startsWith("/client/") || pathname === "/client") {
-//     url.pathname = "/dashboard";
-//     return NextResponse.redirect(url);
-//   }
-
-//   return NextResponse.next();
-// }
-
-// export const config = {
-//   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-// };
-
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -67,11 +22,11 @@ export function middleware(req: NextRequest) {
   }
 
   // Debug: log das informações
-  console.log('Middleware - Path:', pathname, 'Has token:', !!token, 'isAdmin:', isAdmin);
+  // console.log('Middleware - Path:', pathname, 'Has token:', !!token, 'isAdmin:', isAdmin);
 
   // Se usuário está logado e tenta acessar rota bloqueada quando logado
   if (token && blockedWhenLoggedIn.includes(pathname)) {
-    console.log('Redirecting from blocked path when logged in');
+    // console.log('Redirecting from blocked path when logged in');
     const redirectPath = isAdmin ? "/dashboard" : `/client/${userId}`;
     
     // Prevenir redirecionamento para a mesma página
@@ -84,7 +39,7 @@ export function middleware(req: NextRequest) {
 
   // Se usuário NÃO está logado e tenta acessar rota não pública
   if (!token && !publicPaths.includes(pathname)) {
-    console.log('Redirecting to login - not authenticated');
+    // console.log('Redirecting to login - not authenticated');
     
     // Prevenir redirecionamento para a mesma página
     if (pathname !== "/login") {
@@ -96,7 +51,7 @@ export function middleware(req: NextRequest) {
 
   // Se usuário comum tenta acessar rota de admin
   if (token && !isAdmin && adminPaths.includes(pathname)) {
-    console.log('Redirecting from admin path - not admin');
+    // console.log('Redirecting from admin path - not admin');
     
     // Prevenir redirecionamento para a mesma página
     const clientPath = `/client/${userId}`;
@@ -109,7 +64,7 @@ export function middleware(req: NextRequest) {
 
   // Se admin tenta acessar rota de cliente
   if (token && isAdmin && (pathname.startsWith("/client/") || pathname === "/client")) {
-    console.log('Redirecting from client path - is admin');
+    // console.log('Redirecting from client path - is admin');
     
     // Prevenir redirecionamento para a mesma página
     if (pathname !== "/dashboard") {
@@ -119,7 +74,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  console.log('Allowing access to:', pathname);
+  // console.log('Allowing access to:', pathname);
   return NextResponse.next();
 }
 
