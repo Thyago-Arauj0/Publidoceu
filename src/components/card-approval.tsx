@@ -20,6 +20,8 @@ import { getFiles, updateFile } from "@/lib/File"
 import { File as FileType } from "@/lib/types/cardType"
 import Footer from "./footer"
 import Image from "next/image"
+import { useItemLoading } from "@/hooks/use-item-loading"
+import SmallLoading from "./others/small-loading"
 
 interface PostApprovalProps {
   userId: string
@@ -27,6 +29,7 @@ interface PostApprovalProps {
 }
 
 export function PostApproval({ userId, cardId }: PostApprovalProps) {
+  const { isLoadingItem, startLoading, stopLoading } = useItemLoading()
   const [card, setCard] = useState<CardType>({} as CardType)
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,6 +40,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true)
+
   const [checklist, setChecklist] = useState<CheckListType[]>([])
 
   useEffect(() => {
@@ -118,6 +122,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   }, [card.id]);
 
   const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
+    startLoading(itemId)
     try {
       const updated = await updateCheckList(
         card.id.toString(), 
@@ -133,6 +138,8 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       );
     } catch (err) {
       console.error("Erro ao atualizar checklist:", err);
+    }finally {
+      stopLoading(itemId)
     }
   };
 
@@ -143,6 +150,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       console.log("Aguardando boards...");
       return;
     }
+    startLoading(parseInt(fileId))
 
     const board = boards[0];
 
@@ -158,6 +166,8 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       console.error("Erro ao aprovar arquivo:", err);
       setError("Erro ao aprovar arquivo");
       setIsErrorModalOpen(true);
+    }finally {
+      stopLoading(parseInt(fileId))
     }
   };
 
@@ -168,6 +178,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       console.log("Aguardando boards...");
       return;
     }
+    startLoading(parseInt(fileId))
 
     const board = boards[0];
 
@@ -183,6 +194,8 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       console.error("Erro ao reprovar arquivo:", err);
       setError("Erro ao reprovar arquivo");
       setIsErrorModalOpen(true);
+    }finally {
+      stopLoading(parseInt(fileId))
     }
   };
 
@@ -359,20 +372,30 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                               {!isApproved ? (
                                 <Button
                                   size="sm"
+                                  disabled={isLoadingItem(file.id)}
                                   className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
                                   onClick={() => handleApproveFile(file.id.toString())}
                                   title="Aprovar arquivo"
                                 >
-                                  <Check className="h-4 w-4" />
+                                {isLoadingItem(file.id) ? (
+                                    <SmallLoading />
+                                  ) : (
+                                      <Check className="h-4 w-4" />
+                                  )}
                                 </Button>
                               ) : (
                                 <Button
                                   size="sm"
+                                  disabled={isLoadingItem(file.id)}
                                   className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
                                   onClick={() => handleDisapproveFile(file.id.toString())}
                                   title="Desaprovar arquivo"
                                 >
+                                {isLoadingItem(file.id) ? (
+                                    <SmallLoading />
+                                  ) : (
                                   <X className="h-4 w-4" />
+                                  )}
                                 </Button>
                               )}
                             </div>
@@ -396,23 +419,29 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                     <ul className="space-y-3">
                       {checklist.map((item) => (
                         <li key={item.id} className="flex items-center gap-3 p-2 rounded bg-gray-100">
-                          <button
-                            onClick={() => handleToggleChecklist(item.id, item)}
-                            className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
-                              item.is_check
-                                ? "bg-green-500 border-green-500 text-white"
-                                : "bg-white border-gray-400 dark:bg-gray-800"
-                            }`}
-                          >
-                            {item.is_check && <CheckCircle className="h-4 w-4" />}
-                          </button>
-                          <span
-                            className={`text-gray-700 dark:text-gray-300 ${
-                              item.is_check ? "line-through opacity-70" : ""
-                            }`}
-                          >
-                            {item.title}
-                          </span>
+                            <button
+                              onClick={() => handleToggleChecklist(item.id, item)}
+                              disabled={isLoadingItem(item.id)}
+                              className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
+                                item.is_check
+                                  ? "bg-green-500 border-green-500 text-white"
+                                  : "bg-white border-gray-400 dark:bg-gray-800"
+                              }`}
+                            >
+                              {isLoadingItem(item.id) ? (
+                                <SmallLoading />
+                              ) : (
+                                item.is_check && <CheckCircle className="h-4 w-4" />
+                              )}
+                            </button>
+
+                            <span
+                              className={`text-gray-700 dark:text-gray-300 ${
+                                item.is_check ? "line-through opacity-70" : ""
+                              }`}
+                            >
+                              {item.title}
+                            </span>
                         </li>
                       ))}
                     </ul>

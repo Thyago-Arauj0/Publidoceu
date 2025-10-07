@@ -109,13 +109,15 @@ export default function AddFileModal({
                 <Label>Arquivos selecionados ({selectedFiles.length})</Label>
                 <div className="max-h-40 overflow-y-auto space-y-2">
                   {selectedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div key={index} className="flex items-cente justify-between p-2 border rounded">
+                      <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
                         <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <span className="text-sm truncate">{file.name}</span>
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                        </span>
+                          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+                            <span className="text-sm truncate block min-w-0 flex-1 max-w-[10vh]">{file.name}</span>
+                            <span className="text-xs text-gray-500 flex-shrink-0 whitespace-nowrap">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
                       </div>
                       <Button
                         type="button"
