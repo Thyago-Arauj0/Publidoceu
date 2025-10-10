@@ -445,7 +445,7 @@ export function ClientManagement() {
         <hr />
 
         {isLoading ? (
-          <div className="flex justify-center py-20 min-h-[400px] items-center">
+          <div className="flex justify-center min-h-[400px] items-center">
             <Loading />
           </div>
         ) : (

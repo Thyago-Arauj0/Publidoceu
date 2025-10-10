@@ -14,9 +14,13 @@ export const registerUser = async (data: UserProfile) => {
 };
 
 export const loginUser = async (credentials: { email: string; password: string }) => {
+
+  const normaizedEmail = credentials.email.trim().toLowerCase();
+  console.log("Normalized Email:", normaizedEmail);
+
   const result: AuthResponse = await authFetchNoAuth<typeof credentials, AuthResponse>(
     `${API_BASE_URL}/api/v1/auth/token/`,
-    credentials
+    { email: normaizedEmail, password: credentials.password } 
   );
 
   Cookies.set("access_token", result.access, { expires: 7 });
@@ -24,9 +28,6 @@ export const loginUser = async (credentials: { email: string; password: string }
 
   const user = await getUser();
 
-  if(!user.is_active){
-    throw new Error("Usuário inativo. Contate o administrador.");
-  }
   if(!result.access || !result.refresh){
     throw new Error("Erro ao obter tokens de autenticação.");
   }

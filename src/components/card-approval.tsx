@@ -300,7 +300,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 max-w-4xl min-h-screen">
         <div className="text-sm text-center text-orange-500 dark:text-gray-400 mb-4">
           Revise e aprove o conteúdo
         </div>
