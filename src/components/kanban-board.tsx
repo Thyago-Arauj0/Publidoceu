@@ -66,7 +66,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
       setError("Erro ao carregar cards");
       setIsErrorModalOpen(true);
     } finally {
-      setIsLoading(false); // 🔹 garante desligar sempre
+      setIsLoading(false); // garante desligar sempre
     }
   }
   fetchCards()

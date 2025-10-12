@@ -102,43 +102,6 @@ export function CreatePostModal({
     fetchUser()
   }, [userId])
 
-<<<<<<< HEAD
-=======
-  // Carregar arquivos e checklists existentes quando estiver editando
-  useEffect(() => {
-
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-
-    const board = boards[0];
-
-    const fetchExistingData = async () => {
-      if (isEditing && editingCard) {
-        try {
-          const files = await getFiles(String(board.id), String(editingCard.id))
-          setExistingFiles(files)
-        } catch (error) {
-          console.error("Erro ao carregar arquivos:", error)
-        }
-
-        try {
-          const checkLists = await getCheckLists(String(editingCard.id))
-          setExistingCheckLists(checkLists)
-        } catch (error) {
-          console.error("Erro ao carregar checklists:", error)
-        }
-      }
-    }
-
-    if (open && isEditing && editingCard) {
-      fetchExistingData()
-    }
-  }, [open, isEditing, editingCard])
-
-  // Reset form when modal opens/closes or editingCard changes
->>>>>>> 08d7c908602acfb88e209dab603e459d57cae16f
   useEffect(() => {
     if (open && isEditing && editingCard) {
       setFormData({
@@ -217,24 +180,6 @@ export function CreatePostModal({
         form.append(key, String(value))
       }
     })
-<<<<<<< HEAD
-
-    if (file) form.append("file_upload", file)
-
-
-    try {
-
-      if (isEditing && editingCard) {
-
-        const updatedCard = await updateCard(form, String(editingCard.id))
-        if (onUpdatePost) onUpdatePost(updatedCard)
-
-      } else {
-
-        const createdCard = await createCard(form)
-        onCreatePost(createdCard)
-
-=======
 
 
     try {
@@ -246,14 +191,9 @@ export function CreatePostModal({
       } else {
         cardResult = await createCard(form)
         onCreatePost(cardResult)
->>>>>>> 08d7c908602acfb88e209dab603e459d57cae16f
+
       }
 
-<<<<<<< HEAD
-      setFormData({ title: "", description: "", board: 0, image: "", status: "todo", due_date: "" })
-      setImagePreview(null)
-
-=======
       // Upload dos novos arquivos
       if (newFiles.length > 0) {
         for (const filePreview of newFiles) {
@@ -278,7 +218,7 @@ export function CreatePostModal({
       setNewFiles([])
       setNewCheckListItems([])
       setNewCheckListItemTitle("")
->>>>>>> 08d7c908602acfb88e209dab603e459d57cae16f
+
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message)

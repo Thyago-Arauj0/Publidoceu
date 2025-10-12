@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-export default function Loading() {
-=======
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FileText, List, Clock, MessageSquare, CalendarDays, User } from "lucide-react"
 
 export default function CardDetailSkeleton() {
->>>>>>> 08d7c908602acfb88e209dab603e459d57cae16f
+
   return (
     <main className="container mx-auto px-4 py-6 max-w-4xl min-h-screen">
       {/* Header Card */}

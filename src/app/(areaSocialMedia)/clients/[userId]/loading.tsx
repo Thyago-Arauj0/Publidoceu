@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 "use client"
 
->>>>>>> 08d7c908602acfb88e209dab603e459d57cae16f
 export default function Loading() {
   return (
     <div className="flex justify-center items-center min-h-[400px]">
