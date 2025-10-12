@@ -1,5 +1,6 @@
 import { PiInstagramLogoLight, PiWhatsappLogoLight, PiCloudLight } from "react-icons/pi";
 import { CiMail } from "react-icons/ci";
+import Image from "next/image";
 
 export default function Footer() {
   const date = new Date()
@@ -36,7 +37,7 @@ export default function Footer() {
               aria-label="Ir para o site Publi do Céu"
               className="mb-6 transition-transform hover:scale-105 duration-300"
             >
-              <img 
+              <Image 
                 src={'/assets/logo.png'} 
                 alt='Logo da Publi do Céu' 
                 height="60" 

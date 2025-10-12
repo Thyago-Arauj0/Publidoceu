@@ -3,7 +3,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: ".: Publi do Céu | Sistema de gestão de conteúdo",
+  title: "Publi do Céu | Sistema de gestão de conteúdo",
   description: "Sistema de gestão PubliDoCéu",
   icons: {
     icon: "/favicon.ico",

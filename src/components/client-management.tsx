@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone } from "lucide-react"
+import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, Eye, EyeOff, Key } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getUsers, createUser, updateUser, deleteUser } from "@/lib/User"
 import { getCards } from "@/lib/Card"
@@ -20,6 +20,7 @@ import { logoutUser } from "@/lib/AuthService"
 import Footer from "./footer"
 import { getBoards } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
+import Loading from "@/app/(areaSocialMedia)/dashboard/loading"
 
 export interface Client extends UserProfile {
   phone?: string | null
@@ -40,6 +41,8 @@ export function ClientManagement() {
     created_at: "",
     is_active: true
   })
+  const [showPasswordField, setShowPasswordField] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [reload, setReload] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false)
@@ -50,6 +53,7 @@ export function ClientManagement() {
     action: "delete" | "toggle"
     client?: Client
   }>({ isOpen: false, action: "delete", client: undefined })
+  const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
 
@@ -72,12 +76,15 @@ export function ClientManagement() {
   
   useEffect(() => {
     const fetchBoard = async () => {
+      setIsLoading(true); 
       try {
         const boards = await getBoards()
         setBoards(boards)
       } catch (error) {
         setError(error instanceof Error ? error.message : "BoardId não encontrado")
         setIsErrorModalOpen(true)
+      }finally {
+      setIsLoading(false); // 🔹 sempre desliga
       }
     }
     fetchBoard()
@@ -89,6 +96,7 @@ export function ClientManagement() {
     async function fetchClients() {
       setLoading(true) 
       try {
+        setIsLoading(true); 
         const users = await getUsers()
 
         const formattedClients = await Promise.all(
@@ -100,9 +108,9 @@ export function ClientManagement() {
             author: user.author,
             is_active: user.is_active,
             is_superuser: user.is_superuser,
-            created_at: user.created_at
-              ? new Date(user.created_at).toISOString().split("T")[0]
-              : new Date().toISOString().split("T")[0],
+            created_at: user.profile?.created_at
+            ? new Date(user.profile.created_at).toLocaleDateString("pt-BR")
+            : new Date().toLocaleDateString("pt-BR"),
           }))
         )
         setClients(formattedClients)
@@ -117,6 +125,7 @@ export function ClientManagement() {
         setClients([])
       } finally {
         setLoading(false)
+        setIsLoading(false)
       }
   }
 
@@ -161,7 +170,7 @@ export function ClientManagement() {
           editingClient.id,
           formData.name,
           formData.email,
-          formData.password,
+          formData.password || undefined,
           { whatsapp: formatWhatsapp(formData.phone) },
           editingClient.is_active,
           null,
@@ -213,6 +222,8 @@ export function ClientManagement() {
       }
     }
     setFormData({ name: "", email: "", phone: "", password: "", created_at: "", is_active: false })
+    setShowPasswordField(false)
+    setShowPassword(false)
     setIsCreateModalOpen(false)
   }
 
@@ -223,10 +234,12 @@ export function ClientManagement() {
       name: client.name,
       email: client.email,
       phone: client.phone || "",
-      password: client.password || "",
+      password: "",
       created_at: client.created_at || "",
       is_active: client.is_active 
     })
+    setShowPasswordField(false) // Esconde o campo de senha ao editar
+    setShowPassword(false)
     setIsCreateModalOpen(true)
   }
 
@@ -281,14 +294,20 @@ export function ClientManagement() {
   const resetForm = () => {
     setFormData({ name: "", email: "", phone: "", password: "",created_at:"", is_active: false })
     setEditingClient(null)
+    setShowPasswordField(false)
+    setShowPassword(false)
     setIsCreateModalOpen(false)
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
   }
 
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-[#1e3a5f] dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
@@ -336,17 +355,68 @@ export function ClientManagement() {
                           onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                         />
                       </div>
-                    ) }
+                  ) }
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha de acesso</Label>
-                    <Input
-                      id="password"
-                      placeholder="Ano de nascimento"
-                      value={formData.password}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                    />
-                  </div>
+
+                  {showPasswordField || !editingClient ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Senha de acesso</Label>
+                        {editingClient && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowPasswordField(false)}
+                            className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
+                          >
+                            Ocultar
+                          </Button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder={editingClient ? "Nova senha (deixe em branco para manter a atual)" : "Ano de nascimento"}
+                          value={formData.password}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent cursor-pointer"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-500" />
+                          )}
+                        </Button>
+                      </div>
+                      {editingClient && (
+                        <p className="text-xs text-gray-500">
+                          Deixe em branco para manter a senha atual
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    editingClient && (
+                      <div className="space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowPasswordField(true)}
+                          className="w-full flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Key className="h-4 w-4" />
+                          Alterar Senha
+                        </Button>
+                      </div>
+                    )
+                  )}
 
 
                   <div className="flex justify-end gap-2 pt-4">
@@ -359,7 +429,7 @@ export function ClientManagement() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
+            <Button variant="outline" onClick={handleLogout} className="cursor-pointer bg-red-500/80 border-none hover:bg-red-600/80 text-white hover:text-white">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
@@ -367,7 +437,7 @@ export function ClientManagement() {
         </div>
       </header>
 
-      {/* Main Content */}
+
       <main className="container mx-auto px-4 py-6 min-h-screen">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gerenciamento de Clientes</h1>
@@ -375,110 +445,116 @@ export function ClientManagement() {
         </div>
         <hr />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
-         {loading ? (
-            <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-            </div>
-          ) : clients.length <= 1 ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
-              <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastrar Primeiro Cliente
-              </Button>
-            </div>
-          ) : (
-          clients.map((client, index) => (
-            !client.is_superuser ? (
-              <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
-                        <AvatarFallback>
-                          {client.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">{client.name}</CardTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+        {isLoading ? (
+          <div className="flex justify-center min-h-[400px] items-center">
+            <Loading />
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
+            {loading ? (
+              <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              </div>
+            ) : clients.length <= 1 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
+                <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Cadastrar Primeiro Cliente
+                </Button>
+              </div>
+            ) : (
+            clients.map((client, index) => (
+              !client.is_superuser ? (
+                <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
+                          <AvatarFallback>
+                            {client.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{client.name}</CardTitle>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={client.is_active === true ? "default" : "secondary"}
+                          className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
+                        >
+                          {client.is_active === true ? "Ativo" : "Inativo"}
+                        </Badge>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
+                              <User className="mr-2 h-4 w-4" />
+                              {client.is_active ? "Desativar" : "Ativar"}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
+                  </CardHeader>
 
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={client.is_active === true ? "default" : "secondary"}
-                        className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
-                      >
-                        {client.is_active === true ? "Ativo" : "Inativo"}
-                      </Badge>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
-                            <User className="mr-2 h-4 w-4" />
-                            {client.is_active ? "Desativar" : "Ativar"}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Mail className="h-4 w-4" />
-                    <span>{client.email}</span>
-                  </div>
-
-                  {client.phone && (
+                  <CardContent className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Phone className="h-4 w-4" />
-                      <span>{client.phone}</span>
+                      <Mail className="h-4 w-4" />
+                      <span>{client.email}</span>
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm text-gray-500">{client.postsCount} posts</span>
-                    <span className="text-sm text-gray-500">
-                      Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
+                    {client.phone && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Phone className="h-4 w-4" />
+                        <span>{client.phone}</span>
+                      </div>
+                    )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full bg-transparent cursor-pointer py-5"
-                    onClick={() => router.push(`/clients/${client.id}`)}
-                  >
-                    Ver Área do Cliente
-                  </Button>
-                </CardContent>
-              </Card>
-                ) : null
-              ))
-            )}
-        </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm text-gray-500">{client.postsCount} posts</span>
+                      <span className="text-sm text-gray-500">
+                        Desde {client.created_at}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full bg-[#e04b19] hover:bg-[#af411c] text-white hover:text-gray-50  cursor-pointer py-5"
+                      onClick={() => router.push(`/clients/${client.id}`)}
+                    >
+                      Ver Área do Cliente
+                    </Button>
+                  </CardContent>
+                </Card>
+                  ) : null
+                ))
+              )}
+            </div>
+        )}
       </main>
 
       <Footer/>

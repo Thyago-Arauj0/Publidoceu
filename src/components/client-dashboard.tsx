@@ -17,6 +17,7 @@ import Footer from "./footer"
 import { getBoard } from "@/lib/Board"
 import { Board } from "@/lib/types/boardType"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
+import Loading from "@/app/(areaClient)/client/[userId]/loading"
 
 interface Props {
   userId: string;
@@ -39,60 +40,67 @@ export function ClientDashboard({ userId }: Props) {
   const router = useRouter()
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true)
 
   const handleLogout =  async() => {
     await logoutUser()
     router.push("/login")
   }
 
-useEffect(() => {
-  const fetchBoard = async () => {
-    try {
-      const fetchedBoards = await getBoard();
-      if (fetchedBoards && fetchedBoards.length > 0) {
-        setBoards(fetchedBoards);
-      } else {
-        console.error("Nenhum board encontrado");
-        setError("Nenhum board disponível");
+  useEffect(() => {
+    const fetchBoard = async () => {
+      setIsLoading(true); 
+      try {
+        const fetchedBoards = await getBoard();
+        if (fetchedBoards && fetchedBoards.length > 0) {
+          setBoards(fetchedBoards);
+        } else {
+          console.error("Nenhum board encontrado");
+          setError("Nenhum board disponível");
+          setIsErrorModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar boards:", error);
+        setError("Erro ao carregar boards");
         setIsErrorModalOpen(true);
+      }finally {
+        setIsLoading(false); // 🔹 sempre desliga
       }
-    } catch (error) {
-      console.error("Erro ao buscar boards:", error);
-      setError("Erro ao carregar boards");
-      setIsErrorModalOpen(true);
+    };
+    fetchBoard();
+  }, []);
+
+  useEffect(() => {
+    
+    if (!boards || boards.length === 0) {
+      console.log("Aguardando boards...");
+      return;
     }
-  };
-  fetchBoard();
-}, []);
 
-useEffect(() => {
-  
-  if (!boards || boards.length === 0) {
-    console.log("Aguardando boards...");
-    return;
-  }
+    const board = boards[0];
 
-  const board = boards[0];
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch user
+        const userData = await getUser(userId);
+        setUser(userData);
 
-  const fetchData = async () => {
-    try {
-      // Fetch user
-      const userData = await getUser(userId);
-      setUser(userData);
+        // Fetch cards
+        const cardsData = await getCards(String(board.id));
+        setCards(cardsData);
+        organizeCardsByWeek(cardsData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+        setError("Erro ao carregar dados");
+        setIsErrorModalOpen(true);
+      }finally {
+        setIsLoading(false); // 🔹 sempre desliga
+      }
+    };
 
-      // Fetch cards
-      const cardsData = await getCards(String(board.id));
-      setCards(cardsData);
-      organizeCardsByWeek(cardsData);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-      setError("Erro ao carregar dados");
-      setIsErrorModalOpen(true);
-    }
-  };
-
-  fetchData();
-}, [boards, userId]);
+    fetchData();
+  }, [boards, userId]);
 
   // Função para organizar os cards por semana
   const organizeCardsByWeek = (cards: CardType[]) => {
@@ -237,10 +245,16 @@ useEffect(() => {
     return colors[status as keyof typeof colors] || "bg-gray-500 text-white";
   };
 
+  
+  if (isLoading) {
+    return <Loading />
+  }
+
+
   return (
     <div className="min-h-screen dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-[#1e3a5f] dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -257,14 +271,14 @@ useEffect(() => {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.name || "Carregando..."}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
+                <h2 className="text-xl font-semibold text-orange-500 dark:text-white">{user?.name || "Carregando..."}</h2>
+                <p className="text-sm text-gray-300 dark:text-gray-400">Cliente</p>
               </div>
             </div>
 
             {/* <NotificationsDropdown></NotificationsDropdown> */}
 
-            <Button variant="outline" onClick={handleLogout} className="cursor-pointer">
+            <Button variant="outline" onClick={handleLogout} className="cursor-pointer bg-red-500/80 border-none hover:bg-red-600/80 text-white hover:text-white">
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
@@ -286,7 +300,12 @@ useEffect(() => {
                 {showAll ? "Todos os posts" : (weeks[currentWeek] ? formatDateRange(weeks[currentWeek].start, weeks[currentWeek].end) : '')}
               </span>
               <Badge variant="secondary" className="ml-0 sm:ml-2 mt-2 sm:mt-0">
-                {filteredCards.length} {filteredCards.length === 1 ? 'card' : 'cards'}
+                {
+                  filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").length
+                }{' '}
+                {
+                  filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").length === 0 || 1 ? 'Conteúdo' : 'Conteúdos'
+                }
               </Badge>
             </div>
             
@@ -356,14 +375,14 @@ useEffect(() => {
         </div>
         {/* Grid de Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredCards.map((card) => (
+          {filteredCards.filter((card) => card.status !== "todo" && card.status !== "in_progress").map((card) => (
             <Card
               key={card.id}
               className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-900"
             >
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-3">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white leading-tight line-clamp-2">
+                <div className="flex flex-col items-start justify-between gap-3">
+                  <CardTitle className="text-lg uppercase font-semibold text-gray-900 dark:text-white leading-tight line-clamp-2">
                     {card.title}
                   </CardTitle>
                   <Badge
@@ -393,7 +412,7 @@ useEffect(() => {
                       const cardId = card.id
                       router.push(`/client/${userId}/card/${cardId}`)
                     }}
-                    className="w-full border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium"
+                    className="w-full bg-[#e04b19] text-white hover:text-gray-50 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-[#af411c] dark:hover:bg-gray-800 font-medium"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Detalhes

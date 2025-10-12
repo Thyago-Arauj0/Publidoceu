@@ -12,8 +12,8 @@ import Footer from '../layout/Footer/Footer'
 
 
 export const metadata: Metadata = {
-  title: "PubliDoCeu - Login",
-  description: "Faça login para acessar o sistema",
+  title: "Publi do Céu | Empresa de Marketing Digital",
+  description: "Agência de Marketing Digital especializada em impulsionar sua presença online e alcançar resultados extraordinários.",
 }
 
 

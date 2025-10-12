@@ -174,9 +174,11 @@ const clients = [
                 >
                   {/* Imagem de capa */}
                   <div className="relative h-40 overflow-hidden">
-                    <img
+                    <Image
                       src={client.photo}
                       alt={`Trabalho realizado para ${client.name}`}
+                      width={400}
+                      height={160}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.src = '/placeholder.svg'
@@ -188,7 +190,7 @@ const clients = [
                   <div className="p-5 flex-1 flex flex-col">
                     {/* Logo e informações básicas */}
                     <div className="flex items-center mb-4">
-                      <img
+                      <Image
                         src={client.logo}
                         width={50}
                         height={50}

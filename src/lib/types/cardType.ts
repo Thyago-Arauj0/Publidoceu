@@ -8,10 +8,9 @@ export const STATUS_LABELS_PT: Record<CardStatus, string> = {
   disapprove: "Reprovado",
 };
 
-
 export interface Card {
   id: number;
-  board: number; // apenas o ID do Board
+  board: number; 
   title: string;
   description?: string | null;
   image?: string | null;
@@ -21,11 +20,29 @@ export interface Card {
   due_date?: string | null;   
   created_at: string;          
   updated_at: string;          
-  feedback?: Feedback;         
+  feedback?: Feedback;     
+  CheckLists: CheckList[];
 }
 
 export interface Feedback {
   id: number;
-  card: number; // ID do Card
+  card: number; 
   text?: string | null;
+}
+
+export interface CheckList {
+  id: number; 
+  title: string;
+  is_check: boolean;
+  created_at: string;          
+  updated_at: string;   
+}
+
+export interface File {
+  id: number;
+  card: number;      
+  is_approved: boolean;
+  file: string;  
+  created_at: string;     
+  updated_at: string;
 }
