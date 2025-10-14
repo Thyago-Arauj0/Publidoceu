@@ -127,6 +127,31 @@ export function CreatePostModal({
     }
   }, [open, isEditing, editingCard])
 
+  useEffect(() => {
+  const fetchExistingData = async () => {
+    if (open && isEditing && editingCard) {
+      try {
+        // Buscar arquivos existentes
+        if (boards && boards.length > 0) {
+          const board = boards[0]; // ou encontre o board correto
+          const files = await getFiles(String(board.id), String(editingCard.id));
+          setExistingFiles(files);
+        }
+
+        // Buscar checklists existentes
+        const checkLists = await getCheckLists(String(editingCard.id));
+        setExistingCheckLists(checkLists);
+      } catch (error) {
+        console.error("Erro ao carregar dados existentes:", error);
+        setError("Erro ao carregar dados do card");
+        setIsErrorModalOpen(true);
+      }
+    }
+  };
+
+  fetchExistingData();
+}, [open, isEditing, editingCard, boards]); // Adicione boards como dependência
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -331,7 +356,7 @@ export function CreatePostModal({
   const isImage = (fileType: string) => fileType.startsWith('image/')
   const isVideo = (fileType: string) => fileType.startsWith('video/')
 
-  // Função auxiliar para obter o título do checklist
+  
   const getCheckListTitle = (checkList: CheckList): string => {
     return 'title' in checkList ? (checkList as any).title : ''
   }
