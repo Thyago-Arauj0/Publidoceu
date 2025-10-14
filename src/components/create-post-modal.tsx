@@ -378,7 +378,11 @@ export function CreatePostModal({
             </Button>
           )}
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
+          style={{
+          scrollbarWidth: 'none',      /* Firefox */
+          msOverflowStyle: 'none',     /* IE e Edge antigos */
+        }}>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Editar Post" : "Criar Novo Post"}</DialogTitle>
           </DialogHeader>
@@ -572,12 +576,12 @@ export function CreatePostModal({
 
                 {/* Lista de novos arquivos pré-visualizados */}
                 {newFiles.map(filePreview => (
-                  <div key={filePreview.id} className="border rounded-lg overflow-hidden bg-white">
+                  <div key={filePreview.id} className="border rounded-lg max-w-[300px] mx-auto overflow-hidden bg-white">
                     <div className="flex items-center justify-between p-3 border-b">
                       <div className="flex items-center gap-3 flex-1">
                         <FileText className="h-5 w-5 text-gray-500" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{filePreview.name}</p>
+                          <p className="text-sm font-medium truncate max-w-[200px]">{filePreview.name}</p>
                           <p className="text-xs text-gray-500">
                             {(filePreview.file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
@@ -595,7 +599,7 @@ export function CreatePostModal({
                     </div>
                     
                     {/* Preview do arquivo */}
-                    <div className="relative w-full h-40 bg-gray-100">
+                    <div className="relative w-full max-w-[400px] h-40 bg-gray-100">
                       {isImage(filePreview.type) ? (
                         <Image 
                           src={filePreview.previewUrl} 
