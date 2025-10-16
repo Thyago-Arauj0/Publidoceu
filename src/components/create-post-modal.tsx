@@ -21,6 +21,7 @@ import { getCheckLists, createCheckList, updateCheckList, deleteCheckList } from
 import { File as FileType } from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType"
 import { CheckList } from "@/lib/types/cardType"
+import { uploadToCloudinary } from "@/lib/Cloudinary"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
@@ -152,111 +153,120 @@ export function CreatePostModal({
   fetchExistingData();
 }, [open, isEditing, editingCard, boards]); // Adicione boards como dependência
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
 
-    if (!formData.title || !formData.description) {
-      setLoading(false)
-      return
-    }
-
-    const board = boards?.find(board => board.customer === user?.id)
-    if (board) {
-      formData.board = board.id
-    } else {
-      console.error("Nenhum board correspondente encontrado para este cliente.")
-      setLoading(false)
-      return
-    }
-
-    if (!user?.id) {
-      console.error("Nenhum clientId encontrado, não é possível criar/atualizar post.")
-      setLoading(false)
-      return
-    }
-
-    // Formata a data de vencimento
-    let dueDateFormatted = formData.due_date
-    if (formData.due_date) {
-      const [year, month, day] = formData.due_date.split("-").map(Number)
-      const dateUTC = new Date(Date.UTC(year, month - 1, day))
-      dueDateFormatted = dateUTC.toISOString().split("T")[0]
-    }
-
-    const postData = {
-      title: formData.title,
-      description: formData.description,
-      board: formData.board,
-      status: formData.status || "todo",
-      due_date: dueDateFormatted,
-      feedback: editingCard?.feedback || {},
-    }
-
-    console.log(postData)
-
-    const form = new FormData()
-
-    Object.entries(postData).forEach(([key, value]) => {
-      // Para objetos, converte para JSON string, para outros valores usa String()
-      if (typeof value === 'object' && value !== null) {
-        form.append(key, JSON.stringify(value))
-      } else {
-        form.append(key, String(value))
-      }
-    })
-
-
-    try {
-      // Criar ou atualizar card
-      let cardResult
-      if (isEditing && editingCard) {
-        cardResult = await updateCard(form, String(editingCard.id))
-        if (onUpdatePost) onUpdatePost(cardResult)
-      } else {
-        cardResult = await createCard(form)
-        onCreatePost(cardResult)
-
-      }
-
-      // Upload dos novos arquivos
-      if (newFiles.length > 0) {
-        for (const filePreview of newFiles) {
-          const fileForm = new FormData()
-          fileForm.append("file_upload", filePreview.file)
-          await createFile(board.id.toString(), String(cardResult.id), fileForm)
-        }
-      }
-
-      // Criar novos itens de checklist
-      if (newCheckListItems.length > 0) {
-        for (const item of newCheckListItems) {
-          const checklistForm = new FormData();
-          checklistForm.append("title", item.title);
-          await createCheckList(String(cardResult.id), checklistForm);
-        }
-      }
-
-      // Reset do modal
-      setOpen(false)
-      setFormData({ title: "", description: "", board: 0, status: "todo", due_date: "" })
-      setNewFiles([])
-      setNewCheckListItems([])
-      setNewCheckListItemTitle("")
-
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("Erro ao criar post")
-      }
-      setIsErrorModalOpen(true)
-    } finally {
-      setLoading(false)
-
-    }
+  if (!formData.title || !formData.description) {
+    setLoading(false)
+    return
   }
 
+  const board = boards?.find(board => board.customer === user?.id)
+  if (board) {
+    formData.board = board.id
+  } else {
+    console.error("Nenhum board correspondente encontrado para este cliente.")
+    setLoading(false)
+    return
+  }
+
+  if (!user?.id) {
+    console.error("Nenhum clientId encontrado, não é possível criar/atualizar post.")
+    setLoading(false)
+    return
+  }
+
+  // Formata a data de vencimento
+  let dueDateFormatted = formData.due_date
+  if (formData.due_date) {
+    const [year, month, day] = formData.due_date.split("-").map(Number)
+    const dateUTC = new Date(Date.UTC(year, month - 1, day))
+    dueDateFormatted = dateUTC.toISOString().split("T")[0]
+  }
+
+  const postData = {
+    title: formData.title,
+    description: formData.description,
+    board: formData.board,
+    status: formData.status || "todo",
+    due_date: dueDateFormatted,
+    feedback: editingCard?.feedback || {},
+  }
+
+  console.log(postData)
+
+  const form = new FormData()
+
+  Object.entries(postData).forEach(([key, value]) => {
+    if (typeof value === 'object' && value !== null) {
+      form.append(key, JSON.stringify(value))
+    } else {
+      form.append(key, String(value))
+    }
+  })
+
+  try {
+    // Criar ou atualizar card
+    let cardResult
+    if (isEditing && editingCard) {
+      cardResult = await updateCard(form, String(editingCard.id))
+      if (onUpdatePost) onUpdatePost(cardResult)
+    } else {
+      cardResult = await createCard(form)
+      onCreatePost(cardResult)
+    }
+
+    // ✅ CORREÇÃO: Upload dos novos arquivos para Cloudinary primeiro
+    if (newFiles.length > 0) {
+      for (const filePreview of newFiles) {
+        try {
+          console.log("📤 Fazendo upload para Cloudinary:", filePreview.name)
+          
+          // 1. Faz upload para Cloudinary e obtém a URL
+          const cloudinaryUrl = await uploadToCloudinary(filePreview.file)
+          console.log("✅ Upload concluído, URL:", cloudinaryUrl)
+          
+          // 2. Salva a URL no backend
+          await createFile(board.id.toString(), String(cardResult.id), { 
+            file: cloudinaryUrl 
+          })
+          console.log("✅ Arquivo salvo no banco de dados")
+          
+        } catch (fileError) {
+          console.error(`❌ Erro ao processar arquivo ${filePreview.name}:`, fileError)
+          // Continua com os outros arquivos mesmo se um falhar
+        }
+      }
+    }
+
+    // Criar novos itens de checklist
+    if (newCheckListItems.length > 0) {
+      for (const item of newCheckListItems) {
+        const checklistForm = new FormData();
+        checklistForm.append("title", item.title);
+        await createCheckList(String(cardResult.id), checklistForm);
+      }
+    }
+
+    // Reset do modal
+    setOpen(false)
+    setFormData({ title: "", description: "", board: 0, status: "todo", due_date: "" })
+    setNewFiles([])
+    setNewCheckListItems([])
+    setNewCheckListItemTitle("")
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      setError(error.message)
+    } else {
+      setError("Erro ao criar post")
+    }
+    setIsErrorModalOpen(true)
+  } finally {
+    setLoading(false)
+  }
+}
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
     if (!selectedFiles || selectedFiles.length === 0) return
