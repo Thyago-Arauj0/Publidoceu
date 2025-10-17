@@ -2,6 +2,7 @@ import { LoginForm } from "@/components/login-form"
 import type { Metadata } from "next"
 import Footer from "@/components/footer"
 import { User } from "lucide-react"
+import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Publi do Céu - Login",
@@ -18,9 +19,11 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-2 text-[#1e3a5f]">
               <User className="h-10 w-10"/>
-              <h1 className="text-3xl font-bold text-[#1e3a5f]">
-                Publi do Céu 
-              </h1>
+              <Link href="/">
+                <h1 className="text-3xl font-bold text-[#1e3a5f]">
+                  Publi do Céu 
+                </h1>
+              </Link>
             </div>
             <p className="text-foreground dark:text-gray-400 mt-2">
               Faça login para acessar o sistema

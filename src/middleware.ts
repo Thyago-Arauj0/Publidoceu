@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Rotas públicas
-const publicPaths = ["/", "/login", "/home", "/Questions", "/api/auth"];
-const blockedWhenLoggedIn = ["/", "/login", "/home", "/Questions"];
+const publicPaths = ["/", "/login", "/home", "/Questions"];
+const blockedWhenLoggedIn = ["/login"];
 const adminPaths = ["/dashboard", "/clients"];
 
 export function middleware(req: NextRequest) {
@@ -20,9 +20,6 @@ export function middleware(req: NextRequest) {
       pathname.includes('.')) {
     return NextResponse.next();
   }
-
-  // Debug: log das informações
-  // console.log('Middleware - Path:', pathname, 'Has token:', !!token, 'isAdmin:', isAdmin);
 
   // Se usuário está logado e tenta acessar rota bloqueada quando logado
   if (token && blockedWhenLoggedIn.includes(pathname)) {

@@ -170,7 +170,7 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
                     </Link>
 
                     {/* Botão Já sou cliente - Primário */}
-                    <Link href="/Login" className="w-full cursor-pointer">
+                    <Link href="/login" className="w-full cursor-pointer">
                       <Button
                         size="lg"
                         className="w-full h-14 text-base font-semibold group transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer bg-[#e04b19] hover:bg-[#af411c] text-white"
