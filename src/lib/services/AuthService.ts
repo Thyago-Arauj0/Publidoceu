@@ -1,4 +1,4 @@
-import {  UserProfile, AuthResponse } from "./types/userType";
+import {  UserProfile, AuthResponse } from "../types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 import Cookies from "js-cookie";
 import { getUser } from "./User";

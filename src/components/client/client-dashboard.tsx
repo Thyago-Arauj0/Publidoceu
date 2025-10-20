@@ -4,81 +4,51 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, Eye, ChevronLeft, ChevronRight, Calendar, Grid } from "lucide-react"
+import { Eye, ChevronLeft, ChevronRight, Calendar, Grid } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { getCards } from "@/lib/Card"
-import { logoutUser } from "@/lib/AuthService"
-import { getUser } from "@/lib/User"
+import { getCards } from "@/lib/services/Card"
+import { logoutUser } from "@/lib/services/AuthService"
+import { getUser } from "@/lib/services/User"
 import { Card as CardType} from "@/lib/types/cardType"
-import NotificationsDropdown from "./notification-dropdown"
-import Footer from "./footer"
-import { getBoard } from "@/lib/Board"
-import { Board } from "@/lib/types/boardType"
+import Footer from "../footer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import Loading from "@/app/(areaClient)/client/[userId]/loading"
+import { getStatusColor } from "@/lib/helpers/getStatusColor"
+import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
+import { formatDateRange } from "@/lib/helpers/formatDateRange"
+import useCardFilters from "@/hooks/use-card-filters"
+import HeaderClient from "../header-client"
+import useFoundBoard from "@/hooks/use-found-board"
+
 
 interface Props {
   userId: string;
 }
 
-interface Week {
-  start: Date;
-  end: Date;
-  cards: CardType[];
-}
 
 export function ClientDashboard({ userId }: Props) {
   const [cards, setCards] = useState<CardType[]>([])
-  const [filteredCards, setFilteredCards] = useState<CardType[]>([])
   const [user, setUser] = useState<any>({})
-  const [currentWeek, setCurrentWeek] = useState<number>(0)
-  const [weeks, setWeeks] = useState<Week[]>([])
-  const [showAll, setShowAll] = useState<boolean>(false)
-  const [boards, setBoards] = useState<Board[]>([])
-  const router = useRouter()
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true)
+
+  const router = useRouter()
 
   const handleLogout =  async() => {
     await logoutUser()
     router.push("/login")
   }
 
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoading(true); 
-      try {
-        const fetchedBoards = await getBoard();
-        if (fetchedBoards && fetchedBoards.length > 0) {
-          setBoards(fetchedBoards);
-        } else {
-          console.error("Nenhum board encontrado");
-          setError("Nenhum board disponível");
-          setIsErrorModalOpen(true);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar boards:", error);
-        setError("Erro ao carregar boards");
-        setIsErrorModalOpen(true);
-      }finally {
-        setIsLoading(false); // 🔹 sempre desliga
-      }
-    };
-    fetchBoard();
-  }, []);
+
+  const { boards, isErrorModalOpen, setIsErrorModalOpen, error } = useFoundBoard();
+
 
   useEffect(() => {
-    
     if (!boards || boards.length === 0) {
       console.log("Aguardando boards...");
       return;
     }
-
     const board = boards[0];
-
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -92,160 +62,32 @@ export function ClientDashboard({ userId }: Props) {
         organizeCardsByWeek(cardsData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
-        setError("Erro ao carregar dados");
+        // setError("Erro ao carregar dados");
         setIsErrorModalOpen(true);
       }finally {
-        setIsLoading(false); // 🔹 sempre desliga
+        setIsLoading(false);
       }
     };
 
     fetchData();
   }, [boards, userId]);
-
-  // Função para organizar os cards por semana
-  const organizeCardsByWeek = (cards: CardType[]) => {
-    if (cards.length === 0) {
-      setWeeks([]);
-      setFilteredCards([]);
-      return;
-    }
-    
-    // Ordenar cards por data (do mais recente para o mais antigo)
-    const sortedCards = [...cards].sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    // Criar um mapa de semanas
-    const weekMap = new Map<string, CardType[]>();
-    
-    sortedCards.forEach(card => {
-      const cardDate = new Date(card.created_at);
-      // Obter o início da semana (segunda-feira)
-      const weekStart = getStartOfWeek(cardDate);
-      const weekKey = weekStart.toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      if (!weekMap.has(weekKey)) {
-        weekMap.set(weekKey, []);
-      }
-      weekMap.get(weekKey)!.push(card);
-    });
-    
-    // Converter o mapa em array de semanas ordenadas (da mais recente para a mais antiga)
-    const weeksArray: Week[] = Array.from(weekMap.entries())
-      .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-      .map(([weekStartStr, weekCards]) => {
-        const weekStart = new Date(weekStartStr);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        
-        return {
-          start: weekStart,
-          end: weekEnd,
-          cards: weekCards
-        };
-      });
-    
-    setWeeks(weeksArray);
-    
-    // Mostrar a semana mais recente por padrão
-    if (weeksArray.length > 0) {
-      setCurrentWeek(0);
-      setFilteredCards(weeksArray[0].cards);
-    }
-  };
-
-  // Função para obter o início da semana (segunda-feira)
-  const getStartOfWeek = (date: Date): Date => {
-    const result = new Date(date);
-    const day = result.getDay(); // 0 (domingo) a 6 (sábado)
-    const diff = result.getDate() - day + (day === 0 ? -6 : 1); // ajuste para segunda-feira
-    result.setDate(diff);
-    result.setHours(0, 0, 0, 0);
-    return result;
-  };
-
-  // Filtrar cards pela semana selecionada
-  const filterCardsByWeek = (weekIndex: number) => {
-    if (weekIndex >= 0 && weekIndex < weeks.length) {
-      setFilteredCards(weeks[weekIndex].cards);
-    }
-  };
-
-  // Mostrar todos os cards
-  const showAllCards = () => {
-    setShowAll(true);
-    setFilteredCards(cards);
-  };
-
-  // Voltar para a visualização por semana
-  const showWeeklyView = () => {
-    setShowAll(false);
-    if (weeks.length > 0) {
-      filterCardsByWeek(currentWeek);
-    }
-  };
-
-  // Navegar para a semana anterior
-  const goToPreviousWeek = () => {
-    if (currentWeek < weeks.length - 1) {
-      const newWeek = currentWeek + 1;
-      setCurrentWeek(newWeek);
-      filterCardsByWeek(newWeek);
-    }
-  };
-
-  // Navegar para a próxima semana
-  const goToNextWeek = () => {
-    if (currentWeek > 0) {
-      const newWeek = currentWeek - 1;
-      setCurrentWeek(newWeek);
-      filterCardsByWeek(newWeek);
-    }
-  };
-
-  // Formatar data para exibição
-  const formatDateRange = (start: Date, end: Date) => {
-    const isSameMonth = start.getMonth() === end.getMonth();
-    const isSameYear = start.getFullYear() === end.getFullYear();
-    
-    if (isSameMonth && isSameYear) {
-      return `${start.getDate()} - ${end.getDate()} de ${start.toLocaleDateString('pt-BR', { month: 'long' })} ${isSameYear ? '' : start.getFullYear()}`;
-    } else if (isSameYear) {
-      return `${start.getDate()} de ${start.toLocaleDateString('pt-BR', { month: 'long' })} - ${end.getDate()} de ${end.toLocaleDateString('pt-BR', { month: 'long' })} ${start.getFullYear()}`;
-    } else {
-      return `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      todo: "A Fazer",
-      in_progress: "Em Progresso",
-      review: "Em Revisão",
-      done: "Concluído",
-      disapprove: "Reprovado",
-      aprovadas: "Aprovado",
-      reprovadas: "Reprovado",
-    } as const;
-
-    return labels[status as keyof typeof labels] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      todo: "bg-gray-500 text-white",
-      in_progress: "bg-blue-500 text-white",
-      review: "bg-yellow-500 text-black",
-      done: "bg-green-500 text-white",
-      disapprove: "bg-red-500 text-white",
-      aprovadas: "bg-green-600 text-white",
-      reprovadas: "bg-red-600 text-white",
-    } as const;
-
-    return colors[status as keyof typeof colors] || "bg-gray-500 text-white";
-  };
-
   
+  const {
+    filteredCards,
+    currentWeek,
+    weeks,
+    showAll,
+    organizeCardsByWeek,
+    filterCardsByWeek,
+    showWeeklyView,
+    goToPreviousWeek,
+    goToNextWeek,
+    showAllCards,
+    setCurrentWeek
+  } = useCardFilters(cards);
+
+
+
   if (isLoading) {
     return <Loading />
   }
@@ -253,38 +95,12 @@ export function ClientDashboard({ userId }: Props) {
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-[#1e3a5f] dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Cliente" />
-                <AvatarFallback>
-                  {user?.name
-                    ? user.name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-xl font-semibold text-orange-500 dark:text-white">{user?.name || "Carregando..."}</h2>
-                <p className="text-sm text-gray-300 dark:text-gray-400">Cliente</p>
-              </div>
-            </div>
-
-            {/* <NotificationsDropdown></NotificationsDropdown> */}
-
-            <Button variant="outline" onClick={handleLogout} className="cursor-pointer bg-red-500/80 border-none hover:bg-red-600/80 text-white hover:text-white">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
+      <HeaderClient
+        type="client-dashboard"
+        user={user}
+        userId={userId}
+        onLogout={handleLogout}
+      />
 
       <main className="container mx-auto px-6 py-10 min-h-screen">
         <div className="mb-8">
@@ -444,17 +260,17 @@ export function ClientDashboard({ userId }: Props) {
 
       <Footer/>
 
-    <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Erro</DialogTitle>
-        </DialogHeader>
-        <p className="text-red-600 mt-2">{error}</p>
-        <div className="flex justify-end mt-4">
-          <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Erro</DialogTitle>
+          </DialogHeader>
+          <p className="text-red-600 mt-2">{error}</p>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
 
     </div>

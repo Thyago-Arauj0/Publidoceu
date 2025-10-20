@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn } from "lucide-react"
-import { loginUser } from "@/lib/AuthService"
+import { loginUser } from "@/lib/services/AuthService"
 import Cookies from "js-cookie"
 import {
   Dialog,

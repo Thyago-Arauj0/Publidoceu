@@ -1,4 +1,4 @@
-import { Card, Feedback } from "./types/cardType";
+import { Card, Feedback } from "../types/cardType";
 import { authFetch } from "./Auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;

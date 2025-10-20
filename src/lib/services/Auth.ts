@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import { AuthResponse } from "./types/userType";
+import { AuthResponse } from "../types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 type ApiError = { message?: string };
 

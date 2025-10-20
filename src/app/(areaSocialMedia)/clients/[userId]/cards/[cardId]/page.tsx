@@ -1,4 +1,4 @@
-import CardDetails from "@/components/card-details"
+import CardDetails from "@/components/admin/card-details"
 import React from "react";
 
 interface PostApprovalPageProps {

@@ -1,4 +1,4 @@
-import { PostApproval } from "@/components/card-approval"
+import { PostApproval } from "@/components/client/card-approval"
 
 interface PostApprovalPageProps {
   params: {

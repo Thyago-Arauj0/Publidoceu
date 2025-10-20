@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { KanbanCard } from "@/components/kanban-card"
-import { getCards, updateCardStatus, deleteCard} from "@/lib/Card"
+import { KanbanCard } from "@/components/admin/kanban-card"
+import { getCards, updateCardStatus, deleteCard} from "@/lib/services/Card"
 import { Card, CardStatus } from "@/lib/types/cardType"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { getBoards } from "@/lib/Board"
+import { getBoards } from "@/lib/services/Board"
 import { Board } from "@/lib/types/boardType"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/loading"
 

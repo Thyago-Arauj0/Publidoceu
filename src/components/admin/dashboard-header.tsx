@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { CreatePostModal } from "@/components/create-post-modal"
+import { CreatePostModal } from "@/components/admin/create-post-modal"
 
 interface DashboardHeaderProps {
   onCreatePost: (post: any) => void,

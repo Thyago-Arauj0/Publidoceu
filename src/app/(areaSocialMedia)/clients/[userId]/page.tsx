@@ -2,8 +2,8 @@
 
 import React from "react"
 import { useState } from "react"
-import { KanbanBoard } from "@/components/kanban-board"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { KanbanBoard } from "@/components/admin/kanban-board"
+import { DashboardHeader } from "@/components/admin/dashboard-header"
 import Footer from "@/components/footer"
 
 interface PostApprovalPageProps {

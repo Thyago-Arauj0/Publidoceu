@@ -6,22 +6,25 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CheckCircle, XCircle, MessageSquare, FileText, Check, X } from "lucide-react"
+import { CheckCircle, XCircle, MessageSquare, FileText, Check, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
-import { getCard, updateCardStatus, addFeedback } from "@/lib/Card"
-import { Card as CardType} from "@/lib/types/cardType"
-import { getBoard } from "@/lib/Board"
-import { Board } from "@/lib/types/boardType"
+import { updateCardStatus, addFeedback } from "@/lib/services/Card"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
-import { getCheckLists } from "@/lib/CheckList"
+import { getCheckLists } from "@/lib/services/CheckList"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
-import { updateCheckList } from "@/lib/CheckList"
-import { getFiles, updateFile } from "@/lib/File"
+import { updateCheckList } from "@/lib/services/CheckList"
+import { getFiles, updateFile } from "@/lib/services/File"
 import { File as FileType } from "@/lib/types/cardType"
-import Footer from "./footer"
+import Footer from "../footer"
 import Image from "next/image"
 import { useItemLoading } from "@/hooks/use-item-loading"
-import SmallLoading from "./others/small-loading"
+import SmallLoading from "../others/small-loading"
+import { getStatusColor } from "@/lib/helpers/getStatusColor"
+import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
+import HeaderClient from "../header-client"
+import useFoundBoard from "@/hooks/use-found-board"
+import useFoundCards from "@/hooks/use-found-cards"
+import { getFileType } from "@/lib/helpers/getFileType"
 
 interface PostApprovalProps {
   userId: string
@@ -30,66 +33,17 @@ interface PostApprovalProps {
 
 export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const { isLoadingItem, startLoading, stopLoading } = useItemLoading()
-  const [card, setCard] = useState<CardType>({} as CardType)
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [boards, setBoards] = useState<Board[]>([])
   const [files, setFiles] = useState<FileType[]>([])
   const router = useRouter()
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true)
-
   const [checklist, setChecklist] = useState<CheckListType[]>([])
+  const { boards, isErrorModalOpen, setIsErrorModalOpen, error } = useFoundBoard();
+  const {card, isLoadingCard, setCard} = useFoundCards(boards, cardId);
+  
 
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoading(true); 
-      try {
-        const fetchedBoards = await getBoard();
-
-        if (fetchedBoards && fetchedBoards.length > 0) {
-          setBoards(fetchedBoards);
-        } else {
-          console.error("Nenhum board encontrado");
-          setError("Nenhum board disponível");
-          setIsErrorModalOpen(true);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar boards:", error);
-        setError("Erro ao carregar boards");
-        setIsErrorModalOpen(true);
-      }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-    };
-    fetchBoard();
-  }, []);
-
-  useEffect(() => {
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-
-    const board = boards[0];
-
-    const fetchCard = async () => {
-      setIsLoading(true); 
-      try {
-        const data: CardType = await getCard(String(board.id), cardId);
-        setCard(data);
-      } catch (error) {
-        console.error("Erro ao buscar card:", error);
-        setCard({} as CardType);
-      }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-    };
-
-    fetchCard();
-  }, [boards]);
   
   useEffect(() => {
     if (!card.id) return;
@@ -164,7 +118,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       ));
     } catch (err) {
       console.error("Erro ao aprovar arquivo:", err);
-      setError("Erro ao aprovar arquivo");
+      // setError("Erro ao aprovar arquivo");
       setIsErrorModalOpen(true);
     }finally {
       stopLoading(parseInt(fileId))
@@ -192,7 +146,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       ));
     } catch (err) {
       console.error("Erro ao reprovar arquivo:", err);
-      setError("Erro ao reprovar arquivo");
+      // setError("Erro ao reprovar arquivo");
       setIsErrorModalOpen(true);
     }finally {
       stopLoading(parseInt(fileId))
@@ -241,65 +195,16 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      todo: "A Fazer",
-      in_progress: "Em Progresso",
-      review: "Em Revisão",
-      done: "Concluído",
-      disapprove: "Reprovado",
-      aprovadas: "Aprovado",
-      reprovadas: "Reprovado",
-    } as const;
 
-    return labels[status as keyof typeof labels] || status;
-  };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      todo: "bg-gray-100 text-gray-700 border border-gray-300",
-      in_progress: "bg-blue-100 text-blue-700 border border-blue-300",
-      review: "bg-amber-100 text-amber-700 border border-amber-300",
-      done: "bg-green-100 text-green-700 border border-green-300",
-      disapprove: "bg-red-100 text-red-700 border border-red-300",
-      aprovadas: "bg-green-100 text-green-700 border border-green-300",
-      reprovadas: "bg-red-100 text-red-700 border border-red-300",
-    } as const;
-
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-700 border border-gray-300";
-  };
-
-  // Função para obter o tipo de arquivo baseado na URL
-  const getFileType = (fileUrl: string): string => {
-    if (fileUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) return 'video'
-    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) return 'image'
-    return 'other'
-  }
-
-  if (isLoading) {
+  if (isLoading || isLoadingCard) {
     return <Loading />
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <header className="bg-[#1e3a5f] text-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => router.push(`/client/${userId}`)}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
+      <HeaderClient type="card-approval" userId={userId} user={null} onLogout={() => router.push('/client/logout')} />
 
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl min-h-screen">
         <div className="text-sm text-center text-orange-500 dark:text-gray-400 mb-4">
           Revise e aprove o conteúdo

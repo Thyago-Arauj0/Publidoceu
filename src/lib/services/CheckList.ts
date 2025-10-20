@@ -1,4 +1,4 @@
-import { CheckList } from "./types/cardType";
+import { CheckList } from "../types/cardType";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 import { authFetch } from "./Auth";

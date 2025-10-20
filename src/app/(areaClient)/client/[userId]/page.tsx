@@ -1,4 +1,4 @@
-import { ClientDashboard } from "@/components/client-dashboard"
+import { ClientDashboard } from "@/components/client/client-dashboard"
 
 interface ClientPageProps {
   params: {

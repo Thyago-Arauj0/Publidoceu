@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { createCheckList, updateCheckList } from "@/lib/CheckList";
+import { createCheckList, updateCheckList } from "@/lib/services/CheckList";
 import { Edit } from "lucide-react";
 
 interface Props {
