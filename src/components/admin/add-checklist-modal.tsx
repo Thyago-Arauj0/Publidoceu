@@ -32,7 +32,6 @@ export default function AddChecklistModal({ cardId, onCreated, checklistId, init
     setIsLoading(true);
     try {
       if (checklistId) {
-        // passa status atual sem alteração, só envia o texto
         await updateCheckList(cardId, checklistId, false, title);
       } else {
         const formData = new FormData();

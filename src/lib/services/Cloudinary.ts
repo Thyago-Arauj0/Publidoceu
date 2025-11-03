@@ -1,5 +1,10 @@
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+import { compressFile } from "../helpers/compressFile";
+
+// const compressedFile = await compressImage(file, 0.7);
+// const url = await uploadToCloudinary(compressedFile);
+
 
 interface CloudinaryUploadResponse {
   secure_url: string;
@@ -112,4 +117,5 @@ function formatFileSize(bytes: number): string {
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
 

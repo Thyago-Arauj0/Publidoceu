@@ -7,14 +7,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, MessageSquare, FileText, Check, X } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { updateCardStatus, addFeedback } from "@/lib/services/Card"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
-import { getCheckLists } from "@/lib/services/CheckList"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
 import { updateCheckList } from "@/lib/services/CheckList"
-import { getFiles, updateFile } from "@/lib/services/File"
-import { File as FileType } from "@/lib/types/cardType"
+import { updateFile } from "@/lib/services/File"
 import Footer from "../footer"
 import Image from "next/image"
 import { useItemLoading } from "@/hooks/use-item-loading"
@@ -25,6 +22,9 @@ import HeaderClient from "../header-client"
 import useFoundBoard from "@/hooks/use-found-board"
 import useFoundCards from "@/hooks/use-found-cards"
 import { getFileType } from "@/lib/helpers/getFileType"
+import useFoundChecklist from "@/hooks/use-found-checklist"
+import useFoundFiles from "@/hooks/use-found-files"
+import ModalError from "../others/modal-error"
 
 interface PostApprovalProps {
   userId: string
@@ -36,44 +36,13 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const [feedback, setFeedback] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [files, setFiles] = useState<FileType[]>([])
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [checklist, setChecklist] = useState<CheckListType[]>([])
-  const { boards, isErrorModalOpen, setIsErrorModalOpen, error } = useFoundBoard();
-  const {card, isLoadingCard, setCard} = useFoundCards(boards, cardId);
-  
 
+  const {boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard } = useFoundBoard();
+  const {card, isLoadingCard, setCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCards(boards, cardId);
+  const {files, isLoadingFiles, setFiles, isErrorModalOpenFiles, setIsErrorModalOpenFiles, errorFiles} = useFoundFiles(boards, card.id)
+  const {checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist, errorChecklist} =  useFoundChecklist(boards, card.id)
   
-  useEffect(() => {
-    if (!card.id) return;
-
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-
-    const board = boards[0];
-  
-    const fetchChecklistsAndFiles = async () => {
-      setIsLoading(true);
-      try {
-        // Buscar checklists
-        const checklistData = await getCheckLists(card.id.toString());
-        setChecklist(checklistData);
-
-        // Buscar arquivos
-        const filesData = await getFiles(String(board.id), card.id.toString());
-        setFiles(filesData);
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchChecklistsAndFiles();
-  }, [card.id]);
 
   const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
     startLoading(itemId)
@@ -119,7 +88,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
     } catch (err) {
       console.error("Erro ao aprovar arquivo:", err);
       // setError("Erro ao aprovar arquivo");
-      setIsErrorModalOpen(true);
+      setIsErrorModalOpenBoard(true);
     }finally {
       stopLoading(parseInt(fileId))
     }
@@ -147,7 +116,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
     } catch (err) {
       console.error("Erro ao reprovar arquivo:", err);
       // setError("Erro ao reprovar arquivo");
-      setIsErrorModalOpen(true);
+      setIsErrorModalOpenBoard(true);
     }finally {
       stopLoading(parseInt(fileId))
     }
@@ -197,7 +166,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
 
 
-  if (isLoading || isLoadingCard) {
+  if (isLoadingFiles || isLoadingCard || isLoadingCheckList) {
     return <Loading />
   }
 
@@ -490,17 +459,26 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
       <Footer />
 
-      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
-          </DialogHeader>
-          <p className="text-red-600 mt-2">{error}</p>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalError
+        open={isErrorModalOpenBoard}
+        setIsErrorModalOpen={setIsErrorModalOpenBoard}
+        error={errorBoard}
+      />
+      <ModalError
+        open={isErrorModalOpenCard}
+        setIsErrorModalOpen={setIsErrorModalOpenCard}
+        error={errorCard}
+      />
+      <ModalError
+        open={isErrorModalOpenFiles}
+        setIsErrorModalOpen={setIsErrorModalOpenFiles}
+        error={errorFiles}
+      />
+      <ModalError
+        open={isErrorModalOpenChecklist}
+        setIsErrorModalOpen={setIsErrorModalOpenChecklist}
+        error={errorChecklist}
+      />
     </div>
   )
 }

@@ -8,7 +8,7 @@ export const getFiles = async (boardId: string, cardId: string): Promise<File[]>
   try {
     return await authFetch<File[]>(
       `${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/files/`,
-      { method: "GET" }
+      { method: "GET"}
     );
   } catch (error: any) {
     console.error("Erro ao buscar arquivos:", error);

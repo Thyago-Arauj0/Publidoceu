@@ -1,26 +1,26 @@
 'use client'
 
-import { useState, useEffect } from "react"
-import { getCard } from "@/lib/services/Card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, CheckSquare, Trash, FileText, List, Plus, Upload, X } from "lucide-react"
-import { Card as CardType } from "@/lib/types/cardType"
-import { getUser } from "@/lib/services/User"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, Trash, FileText, List } from "lucide-react"
 import { Button } from "../ui/button"
 import { useRouter } from "next/navigation"
 import Footer from "../footer"
-import { Board } from "@/lib/types/boardType"
-import { getBoards } from "@/lib/services/Board"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/cards/[cardId]/loading"
-import { getCheckLists, deleteCheckList } from "@/lib/services/CheckList"
-import { CheckList as CheckListType } from "@/lib/types/cardType"
+import { getCheckLists } from "@/lib/services/CheckList"
 import AddChecklistModal from "./add-checklist-modal"
-import { getFiles, deleteFile, createFile } from "@/lib/services/File"
-import { File as FileType } from "@/lib/types/cardType"
 import Image from "next/image"
 import AddFileModal from "./add-file-modal"
+import { getStatusColor } from "@/lib/helpers/getStatusColor"
+import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
+import { formatDate } from "@/lib/helpers/formatDateRange"
+import useFoundBoard from "@/hooks/use-found-board"
+import ModalError from "../others/modal-error"
+import useFoundCards from "@/hooks/use-found-cards"
+import useFoundUser from "@/hooks/use-found-user"
+import useFoundFiles from "@/hooks/use-found-files"
+import useFoundChecklist from "@/hooks/use-found-checklist"
+import { getFileType } from "@/lib/helpers/getFileType"
 
 interface CardDetailsProps {
   userId: string
@@ -29,206 +29,14 @@ interface CardDetailsProps {
 
 export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
-const [cardData, setCardData] = useState<CardType>({} as CardType)
-const [checklist, setChecklist] = useState<CheckListType[]>([])
-const [files, setFiles] = useState<FileType[]>([])
-const [user, setUser] = useState<string>('')
-const [boards, setBoards] = useState<Board[]>([])
 const router = useRouter()
-const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-const [error, setError] = useState<string | null>(null);
-const [isLoading, setIsLoading] = useState(true)
-
-useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoading(true); 
-      try {
-        const boards = await getBoards()
-        setBoards(boards)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "BoardId não encontrado")
-        setIsErrorModalOpen(true)
-      }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-    }
-    fetchBoard()
-  }, [])
-
-
-useEffect(() => {
-  if (boards.length === 0) return; // espera boards carregarem
-
-  const fetchUser = async () => {
-    setIsLoading(true); 
-    try {
-      const data = await getUser(userId);
-      setUser(data.name);
-    } catch (error) {
-      console.error("Erro ao buscar usuário:", error);
-    }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-  };
-
-  const fetchCard = async () => {
-
-    const board = boards.find(board => String(board.customer) === String(userId));
-
-    if (!board) {
-      console.error("Nenhum board correspondente encontrado para este cliente.");
-      return;
-    }
-    setIsLoading(true); 
-    try {
-      const data: CardType = await getCard(board.id.toString(), cardId);
-      setCardData(data);
-    } catch (error) {
-      console.error("Erro ao buscar card:", error);
-      setCardData({} as CardType);
-    }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-  };
-
-  fetchUser();
-  fetchCard();
-}, [boards, userId, cardId]); 
-
-useEffect(() => {
-  if (!cardData.id) return; // só roda se cardData tiver id
-
-  const fetchChecklistsAndFiles = async () => {
-
-    const board = boards.find(board => String(board.customer) === String(userId));
-
-    if (!board) {
-      console.error("Nenhum board correspondente encontrado para este cliente.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Buscar checklists
-      const checklistData = await getCheckLists(cardData.id.toString());
-      setChecklist(checklistData);
-
-      // Buscar arquivos
-      const filesData = await getFiles(board.id.toString(), cardData.id.toString());
-      setFiles(filesData);
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchChecklistsAndFiles();
-}, [cardData]); 
-
-  const handleDeleteChecklist = async (checklistId: string) => {
-    if (!cardData.id) return;
-
-    if (!confirm("Deseja realmente excluir este checklist?")) return;
-
-    try {
-      await deleteCheckList(cardData.id.toString(), checklistId);
-      setChecklist((prev) => prev.filter((item) => item.id.toString() !== checklistId));
-    } catch (err) {
-      console.error("Erro ao excluir checklist:", err);
-    }
-  };
-
-  const handleDeleteFile = async (fileId: string) => {
-    const board = boards.find(board => String(board.customer) === String(userId));
-
-    if (!board) {
-      console.error("Nenhum board correspondente encontrado para este cliente.");
-      return;
-    }
-    if (!cardData.id) return;
-
-    if (!confirm("Deseja realmente excluir este arquivo?")) return;
-
-    try {
-      await deleteFile(board.id.toString(), cardData.id.toString(), fileId);
-      setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
-    } catch (err) {
-      console.error("Erro ao excluir arquivo:", err);
-    }
-  };
-
-  const refreshFiles = async () => {
-    const board = boards.find(board => String(board.customer) === String(userId));
-
-    if (!board) {
-      console.error("Nenhum board correspondente encontrado para este cliente.");
-      return;
-    }
-    if (!cardData.id) return;
-    try {
-      const filesData = await getFiles(board.id.toString(), cardData.id.toString());
-      setFiles(filesData);
-    } catch (error) {
-      console.error("Erro ao atualizar arquivos:", error);
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      todo: "A Fazer",
-      in_progress: "Em Progresso",
-      review: "Em Revisão",
-      done: "Concluído",
-      disapprove: "Reprovado",
-      aprovadas: "Aprovado",
-      reprovadas: "Reprovado",
-    } as const
-
-    return labels[status as keyof typeof labels] || status
-  }
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      todo: "bg-gray-500 text-white",
-      in_progress: "bg-blue-500 text-white",
-      review: "bg-yellow-500 text-black",
-      done: "bg-green-500 text-white",
-      disapprove: "bg-red-500 text-white",
-      aprovadas: "bg-green-600 text-white",
-      reprovadas: "bg-red-600 text-white",
-    } as const
-
-    return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  // Função auxiliar para verificar se um checklist está completo
-  const isChecklistCompleted = (checkList: CheckListType): boolean => {
-    return checkList.is_check ?? false;
-  }
-
-
-  // Função auxiliar para obter o título do checklist
-  const getCheckListTitle = (checkList: CheckListType): string => {
-    return 'title' in checkList ? (checkList as any).title : ''
-  }
-
-  // Função para obter o tipo de arquivo baseado na URL
-  const getFileType = (fileUrl: string): string => {
-    if (fileUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) return 'video'
-    if (fileUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) return 'image'
-    return 'other'
-  }
+const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
+const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser } = useFoundUser(boards, userId)
+const { card, isLoadingCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCards(boards, cardId, String(userId));
+const { files, isLoadingFiles, isErrorModalOpenFiles, errorFiles, setIsErrorModalOpenFiles,
+  handleDeleteFile, refreshFiles } = useFoundFiles(boards, card.id, userId)
+const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist,
+  errorChecklist, handleDeleteChecklist, isChecklistCompleted, getCheckListTitle } = useFoundChecklist(boards, card.id)
 
   return (
     <div className="min-h-screen bg-background">
@@ -246,7 +54,7 @@ useEffect(() => {
         </div>
       </header>
 
-      {isLoading ? (
+      {isLoadingCard && isLoadingFiles ? (
           <div className="flex justify-center py-20 min-h-[400px] items-center">
             <Loading />
           </div>
@@ -255,17 +63,17 @@ useEffect(() => {
             <Card className="flex items-start justify-between border-none shadow-none">
               <CardContent className="space-y-2">
                 <CardTitle className="text-2xl font-bold text-[#1e3a5f]">
-                  {cardData.title}
+                  {card.title}
                 </CardTitle>
 
                 <div className="flex gap-2 items-center">
                   <h3 className="text-[#941c26] font-medium">Status:</h3>
                   <Badge
                     className={`${getStatusColor(
-                      cardData?.status
+                      card?.status
                     )} bg-[#d35429] text-white px-3 py-1 rounded-full`}
                   >
-                    {getStatusLabel(cardData?.status) || "Carregando..."}
+                    {getStatusLabel(card?.status) || "Carregando..."}
                   </Badge>
                 </div>
 
@@ -285,13 +93,13 @@ useEffect(() => {
                     <FileText className="h-5 w-5 text-[#d35429]" />
                     <span>Arquivos ({files.length})</span>
                   </CardTitle>
-                  {cardData.id && (
+                  {card.id && (
                     
                     <AddFileModal
                       boardId={
                         boards.find(board => String(board.customer) === String(userId))?.id.toString() || ''
                       }
-                      cardId={cardData.id.toString()}
+                      cardId={card.id.toString()}
                       onCreated={refreshFiles}
                     />
                   )}
@@ -374,7 +182,7 @@ useEffect(() => {
                   <div>
                     <h3 className="font-semibold mb-2 text-[#1e3a5f]">Descrição</h3>
                     <p className="text-[#1e3a5f]/80 leading-relaxed">
-                      {cardData.description}
+                      {card.description}
                     </p>
                   </div>
                 </CardContent>
@@ -386,11 +194,11 @@ useEffect(() => {
                     <List className="h-5 w-5 text-[#d35429]" />
                     <span>Checklists ({checklist.length})</span>
                   </CardTitle>
-                  {cardData.id && (
+                  {card.id && (
                     <AddChecklistModal
-                      cardId={cardData.id.toString()}
+                      cardId={card.id.toString()}
                       onCreated={() => {
-                        getCheckLists(cardData.id.toString()).then(setChecklist);
+                        getCheckLists(card.id.toString()).then(setChecklist);
                       }}
                     />
                     )}
@@ -415,10 +223,10 @@ useEffect(() => {
                             <div className="flex justify-end gap-2 px-2">
                               {/* Botão editar */}
                               <AddChecklistModal
-                                cardId={cardData.id.toString()}
+                                cardId={card.id.toString()}
                                 checklistId={item.id.toString()}
                                 initialTitle={title}
-                                onCreated={() => getCheckLists(cardData.id.toString()).then(setChecklist)}
+                                onCreated={() => getCheckLists(card.id.toString()).then(setChecklist)}
                               />
                               <Button
                                 variant="destructive"
@@ -451,7 +259,7 @@ useEffect(() => {
                       </p>
                       <p className="flex items-center space-x-2 text-[#1e3a5f]">
                         <CalendarDays className="h-4 w-4 text-[#d35429]" />
-                        <span>{formatDate(cardData.created_at)}</span>
+                        <span>{formatDate(card.created_at)}</span>
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -460,7 +268,7 @@ useEffect(() => {
                       </p>
                       <p className="flex items-center space-x-2 text-[#1e3a5f]">
                         <Clock className="h-4 w-4 text-[#d35429]" />
-                        <span>{formatDate(cardData.updated_at)}</span>
+                        <span>{formatDate(card.updated_at)}</span>
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -469,7 +277,7 @@ useEffect(() => {
                       </p>
                       <p className="flex items-center space-x-2 text-[#1e3a5f]">
                         <CalendarDays className="h-4 w-4 text-[#d35429]" />
-                        <span>{cardData.due_date?.split("-").reverse().join("/") || "Sem data para entrega"}</span>
+                        <span>{card.due_date?.split("-").reverse().join("/") || "Sem data para entrega"}</span>
                       </p>
                     </div>
                   </div>
@@ -486,8 +294,8 @@ useEffect(() => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="border-l-4 border-[#941c26] pl-4 py-2 bg-white rounded-md">
-                      {cardData.feedback?.text && (
-                        <p className="text-[#1e3a5f]/80">{cardData.feedback?.text}</p>
+                      {card.feedback?.text && (
+                        <p className="text-[#1e3a5f]/80">{card.feedback?.text}</p>
                       )}
                     </div>
                   </div>
@@ -499,18 +307,32 @@ useEffect(() => {
 
       <Footer/>
 
-    <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Erro</DialogTitle>
-        </DialogHeader>
-        <p className="text-red-600 mt-2">{error}</p>
-        <div className="flex justify-end mt-4">
-          <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
 
+     <ModalError
+        open={isErrorModalOpenBoard}
+        setIsErrorModalOpen={setIsErrorModalOpenBoard}
+        error={errorBoard}
+      />
+      <ModalError
+        open={isErrorModalOpenCard}
+        setIsErrorModalOpen={setIsErrorModalOpenCard}
+        error={errorCard}
+      />
+      <ModalError
+        open={isErrorModalOpenUser}
+        setIsErrorModalOpen={setIsErrorModalOpenUser}
+        error={errorUser}
+      />
+      <ModalError
+        open={isErrorModalOpenFiles}
+        setIsErrorModalOpen={setIsErrorModalOpenFiles}
+        error={errorFiles}
+      />
+      <ModalError
+        open={isErrorModalOpenChecklist}
+        setIsErrorModalOpen={setIsErrorModalOpenChecklist}
+        error={errorChecklist}
+      />
     </div>
   )
 }

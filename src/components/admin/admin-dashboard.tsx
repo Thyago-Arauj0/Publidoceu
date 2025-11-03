@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,294 +13,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, Eye, EyeOff, Key } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getUsers, createUser, updateUser, deleteUser } from "@/lib/services/User"
-import { getCards } from "@/lib/services/Card"
-import { UserProfile } from "@/lib/types/userType"
 import { logoutUser } from "@/lib/services/AuthService"
 import Footer from "../footer"
-import { getBoards } from "@/lib/services/Board"
-import { Board } from "@/lib/types/boardType"
 import Loading from "@/app/(areaSocialMedia)/dashboard/loading"
-
-export interface Client extends UserProfile {
-  phone?: string | null
-  password?: string
-  postsCount?: number
-}
+import { Client } from "@/lib/types/userType"
+import useFoundBoard from "@/hooks/use-found-board"
+import useFoundClients from "@/hooks/use-found-clients"
+import ModalError from "../others/modal-error"
+import ConfirmModal from "../others/modal-confirm"
 
 
 export function ClientManagement() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    created_at: "",
-    is_active: true
-  })
-  const [showPasswordField, setShowPasswordField] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [reload, setReload] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false)
-  const [boards, setBoards] = useState<Board[]>()
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
     action: "delete" | "toggle"
     client?: Client
   }>({ isOpen: false, action: "delete", client: undefined })
-  const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
-
-  const formatWhatsapp = (phone: string) => {
-    if (!phone) return null;
-
-    let digits = phone.replace(/\D/g, "");
-    if (digits.length === 11) {
-      return `+55${digits}`;
-    }
-    if (digits.length === 13 && digits.startsWith("55")) {
-      return `+${digits}`;
-    }
-    return `+${digits}`;
-  }
 
   const openConfirmModal = (client: Client, action: "delete" | "toggle") => {
     setConfirmModal({ isOpen: true, action, client })
   }
-  
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoading(true); 
-      try {
-        const boards = await getBoards()
-        setBoards(boards)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "BoardId não encontrado")
-        setIsErrorModalOpen(true)
-      }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-    }
-    fetchBoard()
-  }, [])
 
-  useEffect(() => {
-    if (!boards) return
-
-    async function fetchClients() {
-      setLoading(true) 
-      try {
-        setIsLoading(true); 
-        const users = await getUsers()
-
-        const formattedClients = await Promise.all(
-          users.map(async (user: UserProfile) => ({
-            ...user,
-            postsCount: await fetchPostsCount(user.id),
-            phone: user.profile?.whatsapp,
-            password: "",
-            author: user.author,
-            is_active: user.is_active,
-            is_superuser: user.is_superuser,
-            created_at: user.profile?.created_at
-            ? new Date(user.profile.created_at).toLocaleDateString("pt-BR")
-            : new Date().toLocaleDateString("pt-BR"),
-          }))
-        )
-        setClients(formattedClients)
-
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message)
-        } else {
-          setError("Erro ao buscar usuário")
-        }
-        setIsErrorModalOpen(true)
-        setClients([])
-      } finally {
-        setLoading(false)
-        setIsLoading(false)
-      }
-  }
-
-  async function fetchPostsCount(userId: number | string) {
-      if (!boards) return 0  
-      const board = boards.find(board => String(board.customer) === String(userId))
-
-      if (!board) {
-          if (userId !== "algumIdEsperado") {
-            console.warn(`Cliente ${userId} não possui board ainda.`)
-          }
-          return 0
-        }
-
-      try {
-        const cards = await getCards(`${board.id}`)
-        return cards.length
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message)
-        } else {
-          setError("Erro ao buscar número de cards")
-        }
-        setIsErrorModalOpen(true)
-        return 0
-      } 
-    }
-
-    fetchClients()
-  }, [reload, boards])
+  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
+  const { 
+    clients, setClients, errorClients, setIsErrorModalOpenClients, isErrorModalOpenClients, isLoadingClients,
+    handleSubmit, handleDelete, handleEdit, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField,
+    setIsCreateModalOpen, setShowPasswordField, showPassword, editingClient, formData, setFormData
+  } = useFoundClients(boards)
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.email) {
-      return
-    }
-    if (editingClient) {
-      try {
-        const updatedUser = await updateUser(
-          editingClient.id,
-          formData.name,
-          formData.email,
-          formData.password || undefined,
-          { whatsapp: formatWhatsapp(formData.phone) },
-          editingClient.is_active,
-          null,
-          null
-        )
-        setClients(
-          clients.map((client) =>
-            client.id === editingClient.id ? { ...client, ...updatedUser, phone: formData.phone } : client,
-          ),
-        )
-        setEditingClient(null)
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-        setError(error.message)
-          } else {
-        setError("Erro ao editar usuário")
-        }
-        setIsErrorModalOpen(true)
-      }
-    } else {
-      try {
-        const newUser = await createUser(
-          formData.name,
-          formData.email,
-          formData.password,
-          null,
-          null
-        )
-        const newClient: Client = {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          phone: formData.phone,
-          password: formData.password,
-          is_active: true, // padrão ativo
-          postsCount: 0,
-          created_at: newUser.created_at,
-          updated_at: newUser.updated_at,
-        };
-        setClients([...clients, newClient])
-        setReload((prev) => !prev);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-        setError(error.message)
-          } else {
-        setError("Erro ao criar usuário")
-        }
-        setIsErrorModalOpen(true)
-      }
-    }
-    setFormData({ name: "", email: "", phone: "", password: "", created_at: "", is_active: false })
-    setShowPasswordField(false)
-    setShowPassword(false)
-    setIsCreateModalOpen(false)
-  }
-
-
-  const handleEdit = (client: Client) => {
-    setEditingClient(client)
-    setFormData({
-      name: client.name,
-      email: client.email,
-      phone: client.phone || "",
-      password: "",
-      created_at: client.created_at || "",
-      is_active: client.is_active 
-    })
-    setShowPasswordField(false) // Esconde o campo de senha ao editar
-    setShowPassword(false)
-    setIsCreateModalOpen(true)
-  }
-
-  const handleDelete = async (clientId: string | number) => {
-    try {
-      await deleteUser(clientId)
-      setClients(clients.filter((client) => client.id !== clientId))
-    } catch (error) {
-      console.error("Failed to delete user:", error)
-    }
-  }
-
-
-  const toggleis_active = async (clientId: string | number) => {
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return;
-
-    const updatedClient = { ...client, is_active: !client.is_active };
-    
-    try {
-      await updateUser(
-        client.id,
-        updatedClient.name,
-        updatedClient.email,
-        undefined, // Não alteramos a senha aqui
-        { whatsapp: client.profile?.whatsapp ?? null }, 
-        updatedClient.is_active, // Novo status
-        undefined,
-        undefined
-      );
-      
-      // Atualiza o estado local
-      setClients(
-        clients.map(c => 
-          c.id === clientId 
-            ? { ...c, is_active: !c.is_active } 
-            : c
-        )
-      );
-    } catch (error) {
-      console.error("Failed to update client status:", error);
-    }
-  };
-
-  
   const handleLogout =  async() => {
     await logoutUser()
     router.push("/login")
-  }
-
- 
-  const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", password: "",created_at:"", is_active: false })
-    setEditingClient(null)
-    setShowPasswordField(false)
-    setShowPassword(false)
-    setIsCreateModalOpen(false)
-  }
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
   }
 
 
@@ -438,175 +184,155 @@ export function ClientManagement() {
       </header>
 
 
-      <main className="container mx-auto px-4 py-6 min-h-screen">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gerenciamento de Clientes</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Gerencie todos os seus clientes e suas informações</p>
+      {isLoadingBoard ? (
+        <div className="flex justify-center min-h-[400px] items-center min-h-screen">
+          <p>Carregando...</p>
         </div>
-        <hr />
-
-        {isLoading ? (
-          <div className="flex justify-center min-h-[400px] items-center">
-            <Loading />
-          </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
-            {loading ? (
-              <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-              </div>
-            ) : clients.length <= 1 ? (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
-                <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Cadastrar Primeiro Cliente
-                </Button>
+          <main className="container mx-auto px-4 py-6 min-h-screen">
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gerenciamento de Clientes</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Gerencie todos os seus clientes e suas informações</p>
+            </div>
+            <hr />
+
+
+            {isLoadingClients ? (
+              <div className="flex justify-center min-h-[400px] items-center">
+                <Loading />
               </div>
             ) : (
-            clients.map((client, index) => (
-              !client.is_superuser ? (
-                <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
-                          <AvatarFallback>
-                            {client.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg">{client.name}</CardTitle>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={client.is_active === true ? "default" : "secondary"}
-                          className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
-                        >
-                          {client.is_active === true ? "Ativo" : "Inativo"}
-                        </Badge>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
-                              <User className="mr-2 h-4 w-4" />
-                              {client.is_active ? "Desativar" : "Ativar"}
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Mail className="h-4 w-4" />
-                      <span>{client.email}</span>
-                    </div>
-
-                    {client.phone && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Phone className="h-4 w-4" />
-                        <span>{client.phone}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-sm text-gray-500">{client.postsCount} posts</span>
-                      <span className="text-sm text-gray-500">
-                        Desde {client.created_at}
-                      </span>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full bg-[#e04b19] hover:bg-[#af411c] text-white hover:text-gray-50  cursor-pointer py-5"
-                      onClick={() => router.push(`/clients/${client.id}`)}
-                    >
-                      Ver Área do Cliente
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
+                {isLoadingClients  ? (
+                  <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : clients.length <= 1 ? (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-500 dark:text-gray-400">Nenhum cliente cadastrado ainda.</p>
+                    <Button className="mt-4 cursor-pointer" onClick={() => setIsCreateModalOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Cadastrar Primeiro Cliente
                     </Button>
-                  </CardContent>
-                </Card>
-                  ) : null
-                ))
-              )}
-            </div>
+                  </div>
+                ) : (
+                clients.map((client, index) => (
+                  !client.is_superuser ? (
+                    <Card key={client.id ?? `client-${index}`} className="overflow-hidden">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src="/placeholder.svg?height=40&width=40" alt={client.name} />
+                              <AvatarFallback>
+                                {client.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-lg">{client.name}</CardTitle>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{client.name}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={client.is_active === true ? "default" : "secondary"}
+                              className={client.is_active === true ? "bg-green-100 text-green-800" : ""}
+                            >
+                              {client.is_active === true ? "Ativo" : "Inativo"}
+                            </Badge>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 cursor-pointer">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
+                                  <User className="mr-2 h-4 w-4" />
+                                  {client.is_active ? "Desativar" : "Ativar"}
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <Mail className="h-4 w-4" />
+                          <span>{client.email}</span>
+                        </div>
+
+                        {client.phone && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <Phone className="h-4 w-4" />
+                            <span>{client.phone}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-sm text-gray-500">{client.postsCount} posts</span>
+                          <span className="text-sm text-gray-500">
+                            Desde {client.created_at}
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full bg-[#e04b19] hover:bg-[#af411c] text-white hover:text-gray-50  cursor-pointer py-5"
+                          onClick={() => router.push(`/clients/${client.id}`)}
+                        >
+                          Ver Área do Cliente
+                        </Button>
+                      </CardContent>
+                    </Card>
+                      ) : null
+                    ))
+                  )}
+              </div>
+            )}
+          </main>
         )}
-      </main>
 
       <Footer/>
-      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
-          </DialogHeader>
-          <p className="text-red-600 mt-2">{error}</p>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={confirmModal.isOpen} onOpenChange={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>
-              {confirmModal.action === "delete" ? "Confirmar exclusão" : "Confirmar alteração de status"}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="mt-2 text-gray-700">
-            {confirmModal.action === "delete"
-              ? `Tem certeza que deseja excluir ${confirmModal.client?.name}? Esta ação não pode ser desfeita.`
-              : `Tem certeza que deseja ${confirmModal.client?.is_active ? "desativar" : "ativar"} ${confirmModal.client?.name}?`}
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-              className="bg-gray-200 hover:bg-gray-300 cursor-pointer"
-            >
-              Cancelar
-            </Button>
-            <Button
-              className={`${
-                confirmModal.action === "delete" ? "bg-red-600 hover:bg-red-800" : "bg-[#d35429] hover:bg-[#83341a]"
-              } text-white cursor-pointer`}
-              onClick={() => {
-                if (confirmModal.client) {
-                  if (confirmModal.action === "delete") handleDelete(confirmModal.client.id)
-                  else toggleis_active(confirmModal.client.id)
-                }
-                setConfirmModal(prev => ({ ...prev, isOpen: false }))
-              }}
-            >
-              {confirmModal.action === "delete" ? "Excluir" : confirmModal.client?.is_active ? "Desativar" : "Ativar"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalError
+        open={isErrorModalOpenBoard}
+        setIsErrorModalOpen={setIsErrorModalOpenBoard}
+        error={errorBoard}
+      />
+      <ModalError
+        open={isErrorModalOpenClients}
+        setIsErrorModalOpen={setIsErrorModalOpenClients}
+        error={errorClients}
+      />
+
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
+        action={confirmModal.action}
+        client={confirmModal.client}
+        handleDelete={handleDelete}
+        setClients={setClients}
+      />
+
 
     </div>
   )

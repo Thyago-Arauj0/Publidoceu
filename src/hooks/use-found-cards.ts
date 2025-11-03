@@ -2,35 +2,56 @@
 import { getCard } from "@/lib/services/Card";
 import { Card as CardType} from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 
-export default function useFoundCards(boards: Board[], cardId: string) {
+export default function useFoundCards(boards: Board[], cardId: string, userId?: string) {
   const [card, setCard] = useState<CardType>({} as CardType)
-  const [isLoadingCard, setIsLoading] = useState(true)
+  const [isLoadingCard, setIsLoadingCard] = useState(true)
+  const [isErrorModalOpenCard, setIsErrorModalOpenCard] = useState(false);
+  const [errorCard, setErrorCard] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!boards || boards.length === 0) {
+
+    if (!boards  || boards.length === 0) {
       console.log("Aguardando boards...");
       return;
     }
+  
+    let board;
 
-    const board = boards[0];
+    if (userId) {
+      board = boards.find(board => String(board.customer) === String(userId));
+    } else {
+      board = boards[0];
+    }
+
+    if (!board) {
+      console.warn("Nenhum board encontrado para o usuário:", userId);
+      setErrorCard("Nenhum board encontrado");
+      setIsErrorModalOpenCard(true);
+      setIsLoadingCard(false);
+      return;
+    }
+
+    
 
     const fetchCard = async () => {
-      setIsLoading(true); 
+      setIsLoadingCard(true); 
       try {
         const data: CardType = await getCard(String(board.id), cardId);
         setCard(data);
       } catch (error) {
         console.error("Erro ao buscar card:", error);
+        setErrorCard("Nenhum Card encontrado");
+        setIsErrorModalOpenCard(true);
         setCard({} as CardType);
       }finally {
-      setIsLoading(false); // 🔹 sempre desliga
+       setIsLoadingCard(false); // 🔹 sempre desliga
       }
     };
 
     fetchCard();
-  }, [boards]);
+  }, [boards, cardId]);
 
-  return { card, isLoadingCard, setCard };
+  return { card, isLoadingCard, setCard, isErrorModalOpenCard, errorCard, setIsErrorModalOpenCard };
 }

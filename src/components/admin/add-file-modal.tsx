@@ -8,6 +8,7 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { createFile } from "@/lib/services/File"
 import { uploadToCloudinary } from "@/lib/services/Cloudinary"
+import { compressFile } from "@/lib/helpers/compressFile"
 
 export default function AddFileModal({ 
   boardId,
@@ -46,7 +47,14 @@ export default function AddFileModal({
     try {
       // 🔹 1️⃣ Faz upload direto ao Cloudinary e salva a URL no backend
       for (const file of selectedFiles) {
-        const cloudinaryUrl = await uploadToCloudinary(file)// retorna secure_url
+        const imageTypes = ["image/jpeg", "image/png", "image/webp"];
+        let compressedFile = file;
+        // Só comprimir se for imagem
+        if (imageTypes.includes(file.type)) {
+          compressedFile = await compressFile(file, 0.7);// sua função de compressão
+        }
+        
+        const cloudinaryUrl = await uploadToCloudinary(compressedFile)// retorna secure_url
         await createFile(boardId, cardId, { file: cloudinaryUrl } as any)// salva a URL no backend
       }
 

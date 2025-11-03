@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Upload, X, Edit, FileText, List, Trash2 } from "lucide-react"
 import Image from "next/image"
-import { getUser } from "@/lib/services/User"
+import { getUser } from "@/lib/services/UserClient"
 import { getBoards } from "@/lib/services/Board"
 import { UserProfile } from "@/lib/types/userType"
 import { CardStatus, Card } from "@/lib/types/cardType"
@@ -22,6 +22,8 @@ import { File as FileType } from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType"
 import { CheckList } from "@/lib/types/cardType"
 import { uploadToCloudinary } from "@/lib/services/Cloudinary"
+import { compressFile } from "@/lib/helpers/compressFile"
+import ModalError from "../others/modal-error"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
@@ -222,9 +224,15 @@ const handleSubmit = async (e: React.FormEvent) => {
       for (const filePreview of newFiles) {
         try {
           console.log("📤 Fazendo upload para Cloudinary:", filePreview.name)
-          
-          // 1. Faz upload para Cloudinary e obtém a URL
-          const cloudinaryUrl = await uploadToCloudinary(filePreview.file)
+
+          const imageTypes = ["image/jpeg", "image/png", "image/webp"];
+          let compressedFile = filePreview.file;
+          // Só comprimir se for imagem
+          if (imageTypes.includes(filePreview.file.type)) {
+            compressedFile = await compressFile(filePreview.file, 0.7);// sua função de compressão
+          }
+   
+          const cloudinaryUrl = await uploadToCloudinary(compressedFile)
           console.log("✅ Upload concluído, URL:", cloudinaryUrl)
           
           // 2. Salva a URL no backend
@@ -651,17 +659,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
-          </DialogHeader>
-          <p className="text-red-600 mt-2">{error}</p>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ModalError
+        open={isErrorModalOpen}
+        setIsErrorModalOpen={setIsErrorModalOpen}
+        error={error}
+      />
     </>
   )
 }

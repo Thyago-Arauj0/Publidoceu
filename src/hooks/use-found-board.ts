@@ -1,37 +1,54 @@
 
-import { getBoard } from "@/lib/services/Board"
+import { getBoards } from "@/lib/services/Board"
 import { Board } from "@/lib/types/boardType";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { logoutUser } from "@/lib/services/AuthService";
+import { useRouter } from "next/navigation";
 
 export default function useFoundBoard() {
   const [boards, setBoards] = useState<Board[]>([])
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true)
+  const [isErrorModalOpenBoard, setIsErrorModalOpenBoard] = useState(false);
+  const [errorBoard, setError] = useState<string | null>(null);
+  const [isLoadingBoard, setIsLoading] = useState(true)
+
+  const router = useRouter()
+
+  
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error("Erro ao fazer logout:", err);
+    } finally {
+      router.push("/login");
+    }
+  }, [router]);
 
   useEffect(() => {
     const fetchBoard = async () => {
         setIsLoading(true); 
         try {
-          const fetchedBoards = await getBoard();
-          if (fetchedBoards && fetchedBoards.length > 0) {
-            setBoards(fetchedBoards);
-          } else {
-            console.error("Nenhum board encontrado");
+          const fetchedBoards = await getBoards();
+          if (!fetchedBoards || fetchedBoards.length === 0) {
             setError("Nenhum board disponível");
-            setIsErrorModalOpen(true);
+            setIsErrorModalOpenBoard(true);
+          } else {
+            setBoards(fetchedBoards);
           }
         } catch (error) {
           console.error("Erro ao buscar boards:", error);
           setError("Erro ao carregar boards");
-          setIsErrorModalOpen(true);
+          setIsErrorModalOpenBoard(true);
+          handleLogout()
+
+          await handleLogout();
         }finally {
           setIsLoading(false); 
         }
     };
 
     fetchBoard();
-  }, []);
+  }, [handleLogout]);
 
-  return { boards, isErrorModalOpen, setIsErrorModalOpen, error, isLoading };
+  return { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard };
 }

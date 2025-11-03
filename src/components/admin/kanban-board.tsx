@@ -6,9 +6,11 @@ import { getCards, updateCardStatus, deleteCard} from "@/lib/services/Card"
 import { Card, CardStatus } from "@/lib/types/cardType"
 import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { getBoards } from "@/lib/services/Board"
-import { Board } from "@/lib/types/boardType"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/loading"
+import ModalError from "../others/modal-error"
+import { getStatusColor } from "@/lib/helpers/getStatusColor"
+import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
+import useFoundBoard from "@/hooks/use-found-board"
 
 interface KanbanBoardProps {
   newPosts: Card[],
@@ -17,7 +19,6 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
   const [cards, setCards] = useState<Card[]>([])
-  const [boards, setBoards] = useState<Board[]>([])
   const [activeStatus, setActiveStatus] = useState<CardStatus>("todo")
   const statusList: CardStatus[] = ["todo", "in_progress", "review", "done", "disapprove"]
    const [confirmModal, setConfirmModal] = useState<{
@@ -28,21 +29,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoading(true); 
-      try {
-        const boards = await getBoards()
-        setBoards(boards)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "BoardId não encontrado")
-        setIsErrorModalOpen(true)
-      }finally {
-      setIsLoading(false); // 🔹 sempre desliga
-      }
-    }
-    fetchBoard()
-  }, [])
+  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
 
   useEffect(() => {
   const fetchCards = async () => {
@@ -66,7 +53,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
       setError("Erro ao carregar cards");
       setIsErrorModalOpen(true);
     } finally {
-      setIsLoading(false); // garante desligar sempre
+      setIsLoading(false);
     }
   }
   fetchCards()
@@ -113,38 +100,9 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
   }
 
 
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      todo: "A Fazer",
-      in_progress: "Em Progresso",
-      review: "Em Revisão",
-      done: "Concluído",
-      disapprove: "Reprovado",
-      aprovadas: "Aprovado",
-      reprovadas: "Reprovado",
-    } as const
-
-    return labels[status as keyof typeof labels] || status
-  }
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      todo: "bg-gray-500 text-white",
-      in_progress: "bg-blue-500 text-white",
-      review: "bg-yellow-500 text-black",
-      done: "bg-green-500 text-white",
-      disapprove: "bg-red-500 text-white",
-      aprovadas: "bg-green-600 text-white",
-      reprovadas: "bg-red-600 text-white",
-    } as const
-
-    return colors[status as keyof typeof colors] || "bg-gray-500 text-white"
-  }
-
 
   return (
     <div>
-      {/* Botões para navegar entre "páginas" */}
       <div className="flex flex-wrap gap-2 mb-4">
         {statusList.map(status => (
           <button
@@ -217,17 +175,16 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
-          </DialogHeader>
-          <p className="text-red-600 mt-2">{error}</p>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+       <ModalError
+          open={isErrorModalOpenBoard}
+          setIsErrorModalOpen={setIsErrorModalOpenBoard}
+          error={errorBoard}
+        />
+        <ModalError
+          open={isErrorModalOpen}
+          setIsErrorModalOpen={setIsErrorModalOpen}
+          error={error}
+        />
     </div>
   )
 }

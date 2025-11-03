@@ -14,6 +14,12 @@ export interface UserProfile {
   author?: string;  
 }
 
+export interface Client extends UserProfile {
+  phone?: string | null
+  password?: string
+  postsCount?: number
+}
+
 
 export interface Profile {
   id: number;    

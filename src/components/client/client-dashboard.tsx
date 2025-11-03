@@ -9,10 +9,9 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { getCards } from "@/lib/services/Card"
 import { logoutUser } from "@/lib/services/AuthService"
-import { getUser } from "@/lib/services/User"
+import { getUser } from "@/lib/services/UserClient"
 import { Card as CardType} from "@/lib/types/cardType"
 import Footer from "../footer"
-import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
 import Loading from "@/app/(areaClient)/client/[userId]/loading"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
 import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
@@ -20,7 +19,7 @@ import { formatDateRange } from "@/lib/helpers/formatDateRange"
 import useCardFilters from "@/hooks/use-card-filters"
 import HeaderClient from "../header-client"
 import useFoundBoard from "@/hooks/use-found-board"
-
+import ModalError from "../others/modal-error"
 
 interface Props {
   userId: string;
@@ -40,7 +39,7 @@ export function ClientDashboard({ userId }: Props) {
   }
 
 
-  const { boards, isErrorModalOpen, setIsErrorModalOpen, error } = useFoundBoard();
+  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard } = useFoundBoard();
 
 
   useEffect(() => {
@@ -63,7 +62,7 @@ export function ClientDashboard({ userId }: Props) {
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
         // setError("Erro ao carregar dados");
-        setIsErrorModalOpen(true);
+        setIsErrorModalOpenBoard(true);
       }finally {
         setIsLoading(false);
       }
@@ -260,19 +259,11 @@ export function ClientDashboard({ userId }: Props) {
 
       <Footer/>
 
-      <Dialog open={isErrorModalOpen} onOpenChange={setIsErrorModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
-          </DialogHeader>
-          <p className="text-red-600 mt-2">{error}</p>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setIsErrorModalOpen(false)} className="cursor-pointer">Fechar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-
+      <ModalError
+          open={isErrorModalOpenBoard}
+          setIsErrorModalOpen={setIsErrorModalOpenBoard}
+          error={errorBoard}
+        />
     </div>
   )
 }
