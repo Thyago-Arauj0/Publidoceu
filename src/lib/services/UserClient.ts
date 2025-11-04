@@ -45,7 +45,6 @@ export const getUser = async (id?: string | number): Promise<UserProfile> => {
       { method: "GET" }
     );
 
-    console.log('✅ Data recebida:', data);
     return data;
   } catch (error) {
     console.error('❌ Erro na requisição getUser:', error);

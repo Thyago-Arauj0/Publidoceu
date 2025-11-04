@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, MessageSquare, FileText, Check, X } from "lucide-react"
+import { CheckCircle, XCircle, MessageSquare, FileText, Check, X, Download } from "lucide-react"
 import { updateCardStatus, addFeedback } from "@/lib/services/Card"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
@@ -25,6 +25,7 @@ import { getFileType } from "@/lib/helpers/getFileType"
 import useFoundChecklist from "@/hooks/use-found-checklist"
 import useFoundFiles from "@/hooks/use-found-files"
 import ModalError from "../others/modal-error"
+import CloudinaryDownload from "../others/file-download"
 
 interface PostApprovalProps {
   userId: string
@@ -242,7 +243,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                             </div>
                             
                             {/* Botões de ação flutuantes */}
-                            <div className="absolute top-2 right-2 flex gap-1">
+                            <div className="absolute top-2 right-2 flex gap-1 items-center">
                               {!isApproved ? (
                                 <Button
                                   size="sm"
@@ -272,6 +273,10 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                                   )}
                                 </Button>
                               )}
+                                <div className="flex ml-2 bg-black text-white p-1 px-2 rounded items-center justify-center gap-1 cursor-pointer">
+                                  <Download className="h-4 w-4" />
+                                  <CloudinaryDownload fileUrl={file.file} />
+                                </div>
                             </div>
 
                             {/* Indicador de aprovado */}

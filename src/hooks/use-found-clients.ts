@@ -107,8 +107,6 @@ export default function useFoundClients(boards: Board[]) {
         if (!token) {
           throw new Error("Token de acesso não encontrado");
         }
-
-        console.log("Token enviado:", token);
         
         if (editingClient) {
           try {

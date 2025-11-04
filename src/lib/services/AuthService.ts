@@ -1,10 +1,3 @@
-
-
-console.log('🔍 API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)
-console.log('🔍 Todas as env:', process.env)
-
-
-
 import {  UserProfile, AuthResponse } from "../types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 import Cookies from "js-cookie";

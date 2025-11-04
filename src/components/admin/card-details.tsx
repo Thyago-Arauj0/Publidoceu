@@ -1,9 +1,15 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, Trash, FileText, List } from "lucide-react"
-import { Button } from "../ui/button"
+import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, FileText, List, MoreVertical, Trash, Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Footer from "../footer"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/cards/[cardId]/loading"
@@ -21,6 +27,7 @@ import useFoundUser from "@/hooks/use-found-user"
 import useFoundFiles from "@/hooks/use-found-files"
 import useFoundChecklist from "@/hooks/use-found-checklist"
 import { getFileType } from "@/lib/helpers/getFileType"
+import CloudinaryDownload from "../others/file-download"
 
 interface CardDetailsProps {
   userId: string
@@ -150,17 +157,34 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
                               )}
                             </div>
                             
-                            {/* Botão de excluir flutuante */}
+ 
                             <div className="absolute top-2 right-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
-                                onClick={() => handleDeleteFile(file.id.toString())}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0 bg-gray-100 hover:bg-gray-200"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem asChild>
+                                    <div className="flex items-center gap-2 cursor-pointer">
+                                      <Download className="h-4 w-4" />
+                                      <CloudinaryDownload fileUrl={file.file} />
+                                    </div>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-700 cursor-pointer"
+                                    onClick={() => handleDeleteFile(file.id.toString())}
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
 
                             {/* Indicador de aprovado */}
