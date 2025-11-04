@@ -7,6 +7,7 @@ import { MoreHorizontal, Calendar } from "lucide-react"
 import Link from "next/link"
 import { CreatePostModal } from "./create-post-modal"
 import { Board } from "@/lib/types/boardType"
+import { getStatusColor } from "@/lib/helpers/getStatusColor"
 
 interface KanbanCardProps {
   card: CardType
@@ -23,22 +24,7 @@ interface KanbanCardProps {
   }))
 
 export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
-  const getStatusColor = (status: CardStatus) => {
-    switch (status) {
-      case "todo":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-      case "in_progress":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-      case "review":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-      case "done":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-      case "disapprove":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    }
-  }
+
 
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow shadow-none">

@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { KanbanCard } from "@/components/admin/kanban-card"
-import { getCards, updateCardStatus, deleteCard} from "@/lib/services/Card"
+import { updateCardStatus, deleteCard} from "@/lib/services/Card"
 import { Card, CardStatus } from "@/lib/types/cardType"
-import { Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/loading"
 import ModalError from "../others/modal-error"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
 import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import useFoundBoard from "@/hooks/use-found-board"
+import useFoundCards from "@/hooks/use-found-cards"
+import ConfirmModal from "../others/modal-confirm"
 
 interface KanbanBoardProps {
   newPosts: Card[],
@@ -18,47 +18,22 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
-  const [cards, setCards] = useState<Card[]>([])
   const [activeStatus, setActiveStatus] = useState<CardStatus>("todo")
   const statusList: CardStatus[] = ["todo", "in_progress", "review", "done", "disapprove"]
-   const [confirmModal, setConfirmModal] = useState<{
+  const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
     card?: Card
   }>({ isOpen: false })
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true)
 
   const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
-
-  useEffect(() => {
-  const fetchCards = async () => {
-    setIsLoading(true); 
-    try {
-      if (boards.length === 0) return;
-
-      const board = boards.find(board => String(board.customer) === userId);
-      if (!board) {
-        console.error("Nenhum board correspondente encontrado para este cliente.");
-        return;
-      }
-
-      const fetchedCards: Card[] = await getCards(String(board.id));
-      setCards([
-        ...fetchedCards,
-        ...newPosts.filter(np => !fetchedCards.some(fc => fc.id === np.id))
-      ]);
-    } catch (error) {
-      console.error("Erro ao buscar cards:", error);
-      setError("Erro ao carregar cards");
-      setIsErrorModalOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-  fetchCards()
-}, [boards, newPosts, userId])
-
+  const {
+    cards,
+    setCards,
+    isLoadingCards,
+    errorCards,
+    isErrorModalOpenCards,
+    setIsErrorModalOpenCards,
+  } = useFoundCards(boards, userId, newPosts)
 
 
   const openDeleteModal = (card: Card) => {
@@ -117,7 +92,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         ))}
       </div>
       
-      {isLoading ? (
+      {isLoadingCards ? (
         <div className="flex justify-center py-20 min-h-[400px] items-center">
           <Loading />
         </div>
@@ -142,49 +117,30 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         </div>
       )}
 
-      <Dialog
-        open={confirmModal.isOpen}
-        onOpenChange={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
-      >
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-          </DialogHeader>
-          <p className="mt-2 text-gray-700">
-            Tem certeza que deseja excluir {confirmModal.card?.title}? Esta ação não pode ser desfeita.
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-              className="bg-gray-200 hover:bg-gray-300 cursor-pointer"
-            >
-              Cancelar
-            </Button>
-            <Button
-                className="bg-red-600 hover:bg-red-800 text-white cursor-pointer"
-                onClick={() => {
-                  const board = boards?.find(b => String(b.customer) === String(userId))
-                  if (!board) return null
-                  if (confirmModal.card) handleDelete(Number(board.id), confirmModal.card.id)
-                }}
-              >
-                Excluir
-              </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
        <ModalError
           open={isErrorModalOpenBoard}
           setIsErrorModalOpen={setIsErrorModalOpenBoard}
           error={errorBoard}
         />
-        <ModalError
-          open={isErrorModalOpen}
-          setIsErrorModalOpen={setIsErrorModalOpen}
-          error={error}
+       <ModalError
+          open={isErrorModalOpenCards}
+          setIsErrorModalOpen={setIsErrorModalOpenCards}
+          error={errorCards}
         />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
+        action="delete"
+        item={{  id: confirmModal.card?.id ?? 0, title: confirmModal.card?.title }}
+        handleDelete={(id) => {
+          const board = boards?.find(b => String(b.customer) === String(userId))
+          if (!board) return
+          handleDelete(Number(board.id), Number(id))
+        }}
+      />
+
+
     </div>
   )
 }

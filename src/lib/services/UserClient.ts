@@ -12,25 +12,69 @@ interface JwtPayload {
 }
 
 
-
 export const getUser = async (id?: string | number): Promise<UserProfile> => {
   let userId = id;
+
+  console.log("🔍 Iniciando getUser...");
 
   // Se não foi passado id, tenta pegar do token
   if (!userId) {
     const token = Cookies.get("access_token");
+    console.log("📝 Token encontrado:", !!token);
+    
     if (!token) {
+      console.error("❌ Token não encontrado");
       throw new Error("Usuário não autenticado");
     }
 
-    const decoded = jwtDecode<JwtPayload>(token);
-    userId = decoded.user_id;
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      userId = decoded.user_id;
+      console.log("👤 UserID do token:", userId);
+    } catch (decodeError) {
+      console.error("❌ Erro ao decodificar token:", decodeError);
+      throw new Error("Token inválido");
+    }
   }
 
-  const data = await authFetch<UserProfile>(
-    `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
-    { method: "GET" }
-  );
+  console.log("🌐 Fazendo requisição para:", `${API_BASE_URL}/api/v1/auth/account/${userId}/`);
 
-  return data;
+  try {
+    const data = await authFetch<UserProfile>(
+      `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
+      { method: "GET" }
+    );
+
+    console.log('✅ Data recebida:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Erro na requisição getUser:', error);
+    throw error;
+  }
 };
+
+// export const getUser = async (id?: string | number): Promise<UserProfile> => {
+//   let userId = id;
+
+//   console.log("chamando id: ", userId)
+//   // Se não foi passado id, tenta pegar do token
+//   if (!userId) {
+//     const token = Cookies.get("access_token");
+//     if (!token) {
+//       throw new Error("Usuário não autenticado");
+//     }
+
+//     const decoded = jwtDecode<JwtPayload>(token);
+//     userId = decoded.user_id;
+//     console.log(userId)
+//   }
+
+//   const data = await authFetch<UserProfile>(
+//     `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
+//     { method: "GET" }
+//   );
+
+//   console.log('Data: ', data)
+
+//   return data;
+// };

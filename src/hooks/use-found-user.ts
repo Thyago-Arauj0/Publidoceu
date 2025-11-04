@@ -1,9 +1,10 @@
 import { getUser } from "@/lib/services/UserClient";
 import { Board } from "@/lib/types/boardType";
 import { useState, useEffect } from "react";
+import { UserProfile } from "@/lib/types/userType";
 
 export default function useFoundUser( boards: Board[], userId: string | number) {
-  const [user, setUser] = useState<string>('')
+  const [user, setUser] = useState<UserProfile>()
   const [isErrorModalOpenUser, setIsErrorModalOpenUser] = useState(false);
   const [errorUser, setErrorUser] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true)
@@ -16,7 +17,7 @@ export default function useFoundUser( boards: Board[], userId: string | number) 
     setIsLoadingUser(true); 
     try {
       const data = await getUser(userId);
-      setUser(data.name);
+      setUser(data);
     } catch (error) {
       setIsErrorModalOpenUser(true);
       setErrorUser("Erro ao carregar usuário");
@@ -27,7 +28,7 @@ export default function useFoundUser( boards: Board[], userId: string | number) 
   };
 
   fetchUser()
-}, [boards])
+}, [boards, userId])
 
   return { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser };
 }

@@ -16,7 +16,7 @@ import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import { formatDate } from "@/lib/helpers/formatDateRange"
 import useFoundBoard from "@/hooks/use-found-board"
 import ModalError from "../others/modal-error"
-import useFoundCards from "@/hooks/use-found-cards"
+import useFoundCard from "@/hooks/use-found-card"
 import useFoundUser from "@/hooks/use-found-user"
 import useFoundFiles from "@/hooks/use-found-files"
 import useFoundChecklist from "@/hooks/use-found-checklist"
@@ -32,7 +32,7 @@ export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 const router = useRouter()
 const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
 const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser } = useFoundUser(boards, userId)
-const { card, isLoadingCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCards(boards, cardId, String(userId));
+const { card, isLoadingCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCard(boards, cardId, String(userId));
 const { files, isLoadingFiles, isErrorModalOpenFiles, errorFiles, setIsErrorModalOpenFiles,
   handleDeleteFile, refreshFiles } = useFoundFiles(boards, card.id, userId)
 const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist,
@@ -54,7 +54,7 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
         </div>
       </header>
 
-      {isLoadingCard && isLoadingFiles ? (
+      { isLoadingUser || isLoadingCard || isLoadingFiles || isLoadingCheckList ? (
           <div className="flex justify-center py-20 min-h-[400px] items-center">
             <Loading />
           </div>
@@ -80,7 +80,7 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <h3 className="text-[#1e3a5f] font-medium">Cliente:</h3>
                   <User className="h-4 w-4 text-[#d35429]" />
-                  <span className="text-[#941c26] font-semibold">{user}</span>
+                  <span className="text-[#941c26] font-semibold">{user?.name}</span>
                 </div>
               </CardContent>
             </Card>

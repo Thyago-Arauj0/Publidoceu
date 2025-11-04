@@ -323,16 +323,14 @@ export function ClientManagement() {
         error={errorClients}
       />
 
-
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
-        action={confirmModal.action}
-        client={confirmModal.client}
+        action={confirmModal.action} // "delete" ou "toggle"
+        item={confirmModal.client}
         handleDelete={handleDelete}
         setClients={setClients}
       />
-
 
     </div>
   )

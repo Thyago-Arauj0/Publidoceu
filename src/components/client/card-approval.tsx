@@ -20,7 +20,7 @@ import { getStatusColor } from "@/lib/helpers/getStatusColor"
 import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import HeaderClient from "../header-client"
 import useFoundBoard from "@/hooks/use-found-board"
-import useFoundCards from "@/hooks/use-found-cards"
+import useFoundCard from "@/hooks/use-found-card"
 import { getFileType } from "@/lib/helpers/getFileType"
 import useFoundChecklist from "@/hooks/use-found-checklist"
 import useFoundFiles from "@/hooks/use-found-files"
@@ -39,7 +39,7 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
   const router = useRouter()
 
   const {boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard } = useFoundBoard();
-  const {card, isLoadingCard, setCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCards(boards, cardId);
+  const {card, isLoadingCard, setCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCard(boards, cardId);
   const {files, isLoadingFiles, setFiles, isErrorModalOpenFiles, setIsErrorModalOpenFiles, errorFiles} = useFoundFiles(boards, card.id)
   const {checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist, errorChecklist} =  useFoundChecklist(boards, card.id)
   

@@ -38,6 +38,12 @@ export interface CheckList {
   updated_at: string;   
 }
 
+export interface CheckListItem {
+  id: string 
+  title: string
+  check_list?: number
+}
+
 export interface File {
   id: number;
   card: number;      
@@ -46,3 +52,5 @@ export interface File {
   created_at: string;     
   updated_at: string;
 }
+
+
