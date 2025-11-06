@@ -1,8 +1,11 @@
+'use client'
+
 import {  UserProfile, AuthResponse } from "../types/userType";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 import Cookies from "js-cookie";
 import { getUser } from "@/lib/services/UserClient";
 import { authFetchNoAuth } from "./Auth";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 
 export const registerUser = async (data: UserProfile) => {
   const result = await authFetchNoAuth<UserProfile, AuthResponse>(
@@ -12,36 +15,6 @@ export const registerUser = async (data: UserProfile) => {
   return result;
 };
 
-// export const loginUser = async (credentials: { email: string; password: string }) => {
-
-//   const normaizedEmail = credentials.email.trim().toLowerCase();
-
-//   const result: AuthResponse = await authFetchNoAuth<typeof credentials, AuthResponse>(
-//     `${API_BASE_URL}/api/v1/auth/token/`,
-//     { email: normaizedEmail, password: credentials.password } 
-//   );
-
-//   Cookies.set("access_token", result.access, { expires: 7 });
-//   Cookies.set("refresh_token", result.refresh, { expires: 7 });
-
-//   const user = await getUser();
-
-//   if(!result.access || !result.refresh){
-//     throw new Error("Erro ao obter tokens de autenticação.");
-//   }
-//   if(!user){
-//     throw new Error("Erro ao obter dados do usuário.");
-//   }
-
-//   if(!user.is_active){
-//     throw new Error("Usuário inativo. Contate o administrador.");
-//   }
-
-//   return {
-//     userType: user.is_superuser ? "admin" : "client",
-//     user
-//   };
-// };
 
 
 export const loginUser = async (credentials: { email: string; password: string }) => {
@@ -63,6 +36,7 @@ export const loginUser = async (credentials: { email: string; password: string }
     Cookies.set("access_token", result.access, { expires: 7 });
     Cookies.set("refresh_token", result.refresh, { expires: 7 });
 
+
     // 4. Tenta buscar o usuário (com timeout para evitar travamento)
     let user: UserProfile | null = null;
     try {
@@ -82,6 +56,13 @@ export const loginUser = async (credentials: { email: string; password: string }
       Cookies.remove("access_token");
       Cookies.remove("refresh_token");
       throw new Error("Usuário inativo. Contate o administrador.");
+    }
+
+    if(user.is_superuser){
+       Cookies.set('isAdmin', "true", { expires: 7 });
+    }else{
+       Cookies.set('isAdmin', "false", { expires: 7 });
+       Cookies.set("userId", String(user.id), { expires: 7 });
     }
 
     return {

@@ -7,8 +7,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 export const getBoards = async (): Promise<Board[]> => {
   return authFetch<Board[]>(`${API_BASE_URL}/api/v1/board/`, {
     method: "GET",
-    cache: 'force-cache', 
-    next: { revalidate: 1800 },
+    cache: 'no-store', 
+    // next: { revalidate: 1800 },
   });
 };
 

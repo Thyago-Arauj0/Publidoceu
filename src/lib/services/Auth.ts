@@ -1,7 +1,6 @@
-// import Cookies from "js-cookie";
-'use server'
+'use client'
 
-import { cookies } from "next/headers";
+import Cookies from "js-cookie";
 import { AuthResponse } from "../types/userType";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 type ApiError = { message?: string };
@@ -13,8 +12,7 @@ type NextRequestInit = RequestInit & {
 
 
 export const refreshAccessToken = async (): Promise<string> => {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refresh_token")?.value;
+  const refreshToken = Cookies.get('refresh_token');
 
   if (!refreshToken) throw new Error("Refresh token não encontrado");
 
@@ -27,15 +25,13 @@ export const refreshAccessToken = async (): Promise<string> => {
   if (!res.ok) throw new Error("Não foi possível renovar o token");
 
   const data = await res.json();
-  cookieStore.set("access_token", data.access, { path: "/", maxAge: 60 * 60 * 24 * 7 });
+  Cookies.set('access_token', data.access, { expires: 7, path: '/' });
 
   return data.access;
 };
 
 export const authFetch = async <R>(url: string, options: NextRequestInit = {}): Promise<R> => {
-  // let token = Cookies.get("access_token");
-  const cookieStore = await cookies();
-  let token = cookieStore.get("access_token")?.value;
+  let token = Cookies.get('access_token');
 
   if (!token) {
     token = await refreshAccessToken();

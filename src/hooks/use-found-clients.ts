@@ -73,6 +73,7 @@ export default function useFoundClients(boards: Board[]) {
 
           if (!board) {
             if (userId !== board) {
+              console.log(board)
               console.warn(`Cliente ${userId} não possui board ainda.`)
             }
             return 0

@@ -1,8 +1,8 @@
-"use server"
+"use client"
 
 import { Card, Feedback } from "../types/cardType";
 import { authFetch } from "./Auth";
-import { revalidateTag } from "next/cache";
+// import { revalidateTag } from "next/cache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 
@@ -10,20 +10,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 export const getCards = async (boardId: string): Promise<Card[]> => {
   return authFetch<Card[]>(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
     method: "GET",
-    next: { 
-      revalidate: 600,
-      tags: ['cards']
-     },
+    // next: { 
+    //   revalidate: 600,
+    //   tags: ['cards']
+    //  },
   });
 };
 
 export const getCard = async (boardId: string, cardId: string): Promise<Card> => {
   return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "GET",
-    next: { 
-      revalidate: 600,
-      tags: ['cards']
-     },
+    // next: { 
+    //   revalidate: 600,
+    //   tags: ['cards']
+    //  },
   });
 };
 
@@ -37,7 +37,7 @@ export const updateCardStatus = async (
     body: JSON.stringify({ status }),
   });
 
-  revalidateTag('cards');
+  // revalidateTag('cards');
 };
 
 export const addFeedback = async (
@@ -46,7 +46,7 @@ export const addFeedback = async (
   feedbackText: string
 ): Promise<Feedback> => {
 
-  revalidateTag('cards');
+  // revalidateTag('cards');
   return authFetch<Feedback>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "PATCH",
     body: JSON.stringify({ feedback: { text: feedbackText } }),
@@ -54,7 +54,7 @@ export const addFeedback = async (
 };
 
 export const createCard = async (form: FormData): Promise<Card> => {
-  revalidateTag('cards');
+  // revalidateTag('cards');
   return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
     method: "POST",
     body: form, 
@@ -63,7 +63,7 @@ export const createCard = async (form: FormData): Promise<Card> => {
 
 
 export const updateCard = async (form: FormData, cardId: string): Promise<Card> => {
-  revalidateTag('cards');
+  // revalidateTag('cards');
   return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
     method: "PATCH",
     body: form, 
@@ -75,7 +75,7 @@ export const deleteCard = async (boardId: string, cardId: string): Promise<strin
   await authFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "DELETE",
   });
-  revalidateTag('cards');
+  // revalidateTag('cards');
   return ({ message: "Card deletado com sucesso." }).message;
 }
 

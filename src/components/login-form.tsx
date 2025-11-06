@@ -40,11 +40,11 @@ export function LoginForm() {
 
         if (result.userType === "admin") {
           router.push("/dashboard")
-          Cookies.set("isAdmin", "true", { expires: 7 })
+          // Cookies.set("isAdmin", "true", { expires: 7 })
         }else if(result.userType === "client"){
           const clientId = `${result.user.id}`
-          Cookies.set("isAdmin", "false", { expires: 7 })
-          Cookies.set("userId", clientId, { expires: 7 })
+          // Cookies.set("isAdmin", "false", { expires: 7 })
+          // Cookies.set("userId", clientId, { expires: 7 })
           router.push(`/client/${clientId}`)
         }
     } catch (error: unknown) {

@@ -37,6 +37,7 @@ export function ClientManagement() {
   }
 
   const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
+    console.log(boards)
   const { 
     clients, setClients, errorClients, setIsErrorModalOpenClients, isErrorModalOpenClients, isLoadingClients,
     handleSubmit, handleDelete, handleEdit, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField,

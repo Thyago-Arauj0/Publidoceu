@@ -1,8 +1,8 @@
-"use server";
+"use client";
 
 
 import { UserProfile } from "../types/userType";
-import { revalidateTag } from "next/cache";
+// import { revalidateTag } from "next/cache";
 import { authFetch } from "@/lib/services/Auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
@@ -13,10 +13,11 @@ export const getUsers = async (): Promise<UserProfile[]> => {
   try {
     const response = await authFetch<UserProfile[]>(`${API_BASE_URL}/api/v1/auth/account/`, {
       method: "GET",
-      next: { 
-        revalidate: 600,
-        tags: ['users']
-       },
+      cache: 'no-store'
+      // next: { 
+      //   revalidate: 600,
+      //   tags: ['users']
+      //  },
     });
 
 
@@ -56,7 +57,7 @@ export const createUser = async (
     if (!response) {
       throw new Error("Falha ao atualizar usuário.");
     }
-    revalidateTag('users');
+    // revalidateTag('users');
     return response;
   }catch (err: any) {
      parseApiError(err);
@@ -92,7 +93,7 @@ export const updateUser = async (
     if (!response) {
       throw new Error("Falha ao atualizar usuário.");
     }
-    revalidateTag('users');
+    // revalidateTag('users');
     return response;
     }catch (err: any) {
      parseApiError(err);
@@ -105,7 +106,7 @@ export const deleteUser = async (id: number | string): Promise<void> => {
     await authFetch<void>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
       method: "DELETE",
     })
-    revalidateTag('users');
+    // revalidateTag('users');
   }catch(err:any){
     throw new Error("Falha ao excluir cliente.");
   }
