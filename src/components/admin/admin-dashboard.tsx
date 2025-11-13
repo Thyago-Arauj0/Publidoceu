@@ -1,8 +1,6 @@
-"use client"
+'use client'
 
 import type React from "react"
-
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,43 +10,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, Eye, EyeOff, Key } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { logoutUser } from "@/lib/services/AuthService"
 import Footer from "../footer"
 import Loading from "@/app/(areaSocialMedia)/dashboard/loading"
-import { Client } from "@/lib/types/userType"
 import useFoundBoard from "@/hooks/use-found-board"
 import useFoundClients from "@/hooks/use-found-clients"
 import ModalError from "../others/modal-error"
 import ConfirmModal from "../others/modal-confirm"
+import Link from "next/link"
 
 
 export function ClientManagement() {
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean
-    action: "delete" | "toggle"
-    client?: Client
-  }>({ isOpen: false, action: "delete", client: undefined })
-
-  const router = useRouter()
-
-  const openConfirmModal = (client: Client, action: "delete" | "toggle") => {
-    setConfirmModal({ isOpen: true, action, client })
-  }
-
-  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
-    console.log(boards)
+  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard, handleLogout } = useFoundBoard()
   const { 
     clients, setClients, errorClients, setIsErrorModalOpenClients, isErrorModalOpenClients, isLoadingClients,
-    handleSubmit, handleDelete, handleEdit, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField,
-    setIsCreateModalOpen, setShowPasswordField, showPassword, editingClient, formData, setFormData
+    handleSubmitClient, handleDeleteClient, handleEditClient, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField,
+    setIsCreateModalOpen, setShowPasswordField, showPassword, editingClient, formData, setFormData, confirmModalClient, setConfirmModalClient, openConfirmModalClient
   } = useFoundClients(boards)
-
-
-  const handleLogout =  async() => {
-    await logoutUser()
-    router.push("/login")
-  }
 
 
   return (
@@ -68,7 +45,7 @@ export function ClientManagement() {
                 <DialogHeader>
                   <DialogTitle>{editingClient ? "Editar Cliente" : "Cadastrar Novo Cliente"}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmitClient} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="company">Empresa</Label>
                     <Input
@@ -186,7 +163,7 @@ export function ClientManagement() {
 
 
       {isLoadingBoard ? (
-        <div className="flex justify-center min-h-[400px] items-center min-h-screen">
+        <div className="flex justify-center items-center min-h-screen">
           <p>Carregando...</p>
         </div>
         ) : (
@@ -254,16 +231,16 @@ export function ClientManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEdit(client)} className="cursor-pointer">
+                                <DropdownMenuItem onClick={() => handleEditClient(client)} className="cursor-pointer">
                                   <Edit className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
+                                <DropdownMenuItem  onClick={() => openConfirmModalClient(client, "toggle")} className="cursor-pointer">
                                   <User className="mr-2 h-4 w-4" />
                                   {client.is_active ? "Desativar" : "Ativar"}
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
+                                <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModalClient(client, "delete")}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Excluir
                                 </DropdownMenuItem>
@@ -297,10 +274,12 @@ export function ClientManagement() {
                           variant="outline"
                           size="sm"
                           className="w-full bg-[#e04b19] hover:bg-[#af411c] text-white hover:text-gray-50  cursor-pointer py-5"
-                          onClick={() => router.push(`/clients/${client.id}`)}
                         >
-                          Ver Área do Cliente
+                          <Link href={`/clients/${client.id}`}>
+                            Ver Área do Cliente
+                          </Link>
                         </Button>
+                       
                       </CardContent>
                     </Card>
                       ) : null
@@ -325,11 +304,11 @@ export function ClientManagement() {
       />
 
       <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
-        action={confirmModal.action} // "delete" ou "toggle"
-        item={confirmModal.client}
-        handleDelete={handleDelete}
+        isOpen={confirmModalClient.isOpen}
+        setIsOpen={(open) => setConfirmModalClient(prev => ({ ...prev, isOpen: open }))}
+        action={confirmModalClient.action} // "delete" ou "toggle"
+        item={confirmModalClient.client}
+        handleDelete={handleDeleteClient}
         setClients={setClients}
       />
 

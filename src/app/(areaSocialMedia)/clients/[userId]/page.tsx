@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState } from "react"
-import { KanbanBoard } from "@/components/admin/kanban-board"
+import { Kanban } from "@/components/admin/kanban"
 import { DashboardHeader } from "@/components/admin/dashboard-header"
 import Footer from "@/components/footer"
 
@@ -25,7 +25,7 @@ export default function ClientsPage({ params }: PostApprovalPageProps) {
     <div className="min-h-screen dark:bg-gray-900">
       <DashboardHeader onCreatePost={handleCreatePost} userId={userId} />
       <main className="container mx-auto px-4 py-6 min-h-screen">
-        <KanbanBoard newPosts={newPosts} userId={userId} />
+        <Kanban newPosts={newPosts} userId={userId} />
       </main>
       <Footer/>
     </div>

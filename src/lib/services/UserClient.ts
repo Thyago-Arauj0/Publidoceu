@@ -50,28 +50,3 @@ export const getUser = async (id?: string | number): Promise<UserProfile> => {
   }
 };
 
-
-//   let userId = id;
-
-//   console.log("chamando id: ", userId)
-//   // Se não foi passado id, tenta pegar do token
-//   if (!userId) {
-//     const token = Cookies.get("access_token");
-//     if (!token) {
-//       throw new Error("Usuário não autenticado");
-//     }
-
-//     const decoded = jwtDecode<JwtPayload>(token);
-//     userId = decoded.user_id;
-//     console.log(userId)
-//   }
-
-//   const data = await authFetch<UserProfile>(
-//     `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
-//     { method: "GET" }
-//   );
-
-//   console.log('Data: ', data)
-
-//   return data;
-// };

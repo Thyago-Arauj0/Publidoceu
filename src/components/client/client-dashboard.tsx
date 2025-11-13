@@ -1,16 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Eye, ChevronLeft, ChevronRight, Calendar, Grid } from "lucide-react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { getCards } from "@/lib/services/Card"
-import { logoutUser } from "@/lib/services/AuthService"
-import { getUser } from "@/lib/services/UserClient"
-import { Card as CardType} from "@/lib/types/cardType"
 import Footer from "../footer"
 import Loading from "@/app/(areaClient)/client/[userId]/loading"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
@@ -18,78 +12,43 @@ import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import { formatDateRange } from "@/lib/helpers/formatDateRange"
 import useCardFilters from "@/hooks/use-card-filters"
 import HeaderClient from "../header-client"
-import useFoundBoard from "@/hooks/use-found-board"
 import ModalError from "../others/modal-error"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { UserProfile } from "@/lib/types/userType"
+import { Card as CardType } from "@/lib/types/cardType"
+import { Board } from "@/lib/types/boardType"
+import useFoundBoard from "@/hooks/use-found-board"
+
 
 interface Props {
-  userId: string;
+  user: UserProfile;
+  boards: Board[];
+  cards: CardType[];
 }
 
+export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
 
-export function ClientDashboard({ userId }: Props) {
-  const [cards, setCards] = useState<CardType[]>([])
-  const [user, setUser] = useState<any>({})
-  const [isLoading, setIsLoading] = useState(true)
+  const {handleLogout} = useFoundBoard()
 
-  const router = useRouter()
-
-  const handleLogout =  async() => {
-    await logoutUser()
-    router.push("/login")
-  }
-
-
-  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard } = useFoundBoard();
-
-
-  useEffect(() => {
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-    const board = boards[0];
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch user
-        const userData = await getUser(userId);
-        setUser(userData);
-
-        // Fetch cards
-        const cardsData = await getCards(String(board.id));
-        setCards(cardsData);
-        organizeCardsByWeek(cardsData);
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        // setError("Erro ao carregar dados");
-        setIsErrorModalOpenBoard(true);
-      }finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [boards, userId]);
-  
   const {
     filteredCards,
     currentWeek,
     weeks,
     showAll,
-    organizeCardsByWeek,
     filterCardsByWeek,
     showWeeklyView,
     goToPreviousWeek,
     goToNextWeek,
     showAllCards,
     setCurrentWeek
-  } = useCardFilters(cards);
+  } = useCardFilters(initialCards);
 
+  // const isLoading = isLoadingCards || isLoadingBoard || isLoadingUser
 
-
-  if (isLoading) {
-    return <Loading />
-  }
+  // if (isLoading) {
+  //   return <Loading />
+  // }
 
 
   return (
@@ -97,7 +56,7 @@ export function ClientDashboard({ userId }: Props) {
       <HeaderClient
         type="client-dashboard"
         user={user}
-        userId={userId}
+        userId={String(user.id)}
         onLogout={handleLogout}
       />
 
@@ -223,14 +182,12 @@ export function ClientDashboard({ userId }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const cardId = card.id
-                      router.push(`/client/${userId}/card/${cardId}`)
-                    }}
                     className="w-full bg-[#e04b19] text-white hover:text-gray-50 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-[#af411c] dark:hover:bg-gray-800 font-medium"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Ver Detalhes
+                    <Link href={`/client/${user.id}/card/${card.id}`} className="flex items-center">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver Detalhes
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -259,11 +216,11 @@ export function ClientDashboard({ userId }: Props) {
 
       <Footer/>
 
-      <ModalError
+      {/* <ModalError
           open={isErrorModalOpenBoard}
           setIsErrorModalOpen={setIsErrorModalOpenBoard}
           error={errorBoard}
-        />
+        /> */}
     </div>
   )
 }

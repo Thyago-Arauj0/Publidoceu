@@ -1,3 +1,5 @@
+import { Board } from "./boardType";
+
 export type CardStatus = "todo" | "in_progress" | "review" | "done" | "disapprove";
 
 export const STATUS_LABELS_PT: Record<CardStatus, string> = {
@@ -53,4 +55,17 @@ export interface File {
   updated_at: string;
 }
 
+
+export interface KanbanProps {
+  newPosts: Card[],
+  userId: string
+}
+
+export interface KanbanCardProps {
+  card: Card
+  board: Board
+  onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
+  onDelete: (boardId: number, cardId: number) => void
+  onUpdateCard?: (updateCard: Card ) => void
+}
 

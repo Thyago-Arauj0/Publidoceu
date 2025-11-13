@@ -1,4 +1,4 @@
-import { Card as CardType, CardStatus, STATUS_LABELS_PT, } from "@/lib/types/cardType"
+import { CardStatus, STATUS_LABELS_PT, } from "@/lib/types/cardType"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -6,22 +6,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Calendar } from "lucide-react"
 import Link from "next/link"
 import { CreatePostModal } from "./create-post-modal"
-import { Board } from "@/lib/types/boardType"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
+import { KanbanCardProps } from "@/lib/types/cardType"
 
-interface KanbanCardProps {
-  card: CardType
-  board: Board
-  onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
-  onDelete: (boardId: number, cardId: number) => void
-  onUpdateCard?: (updateCard: CardType ) => void
-}
-
-
-  const statusOptions = Object.entries(STATUS_LABELS_PT).map(([value, label]) => ({
-    value: value as CardStatus,
-    label,
-  }))
+const statusOptions = Object.entries(STATUS_LABELS_PT).map(([value, label]) => ({
+  value: value as CardStatus,
+  label,
+}))
 
 export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
 

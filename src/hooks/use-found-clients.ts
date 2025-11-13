@@ -1,16 +1,21 @@
-import { useState, useEffect, use } from "react";
+"use client"
+
+import { useState, useEffect } from "react";
 import { getUsers ,deleteUser, updateUser, createUser } from "@/lib/services/User";
-// import { getUsers, deleteUser, updateUser, createUser } from "@/lib/services/User";
 import { Client, UserProfile } from "@/lib/types/userType";
 import { Board } from "@/lib/types/boardType";
 import { getCards } from "@/lib/services/Card";
 import { formatWhatsapp } from "@/lib/helpers/formatWhatsapp"
 
-import Cookies from "js-cookie";
-
 
 export default function useFoundClients(boards: Board[]) {
 
+   const [confirmModalClient, setConfirmModalClient] = useState<{
+      isOpen: boolean
+      action: "delete" | "toggle"
+      client?: Client
+    }>({ isOpen: false, action: "delete", client: undefined })
+  
     const [clients, setClients] = useState<Client[]>([])
     const [errorClients, setError] = useState<string | null>(null);
     const [isErrorModalOpenClients, setIsErrorModalOpenClients] = useState(false);
@@ -96,19 +101,14 @@ export default function useFoundClients(boards: Board[]) {
      fetchClients()
     }, [reload, boards])
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmitClient = async (e: React.FormEvent) => {
         e.preventDefault()
 
         if (!formData.name || !formData.email) {
           return
         }
 
-        const token = Cookies.get("access_token");
 
-        if (!token) {
-          throw new Error("Token de acesso não encontrado");
-        }
-        
         if (editingClient) {
           try {
             const updatedUser = await updateUser(
@@ -172,7 +172,7 @@ export default function useFoundClients(boards: Board[]) {
         setIsCreateModalOpen(false)
       }
 
-    const handleEdit = (client: Client) => {
+    const handleEditClient = (client: Client) => {
         setEditingClient(client)
         setFormData({
           name: client.name,
@@ -187,7 +187,7 @@ export default function useFoundClients(boards: Board[]) {
         setIsCreateModalOpen(true)
       }
 
-    const handleDelete = async (clientId: string | number) => {
+    const handleDeleteClient = async (clientId: string | number) => {
          try {
            await deleteUser(clientId)
            setClients(clients.filter((client) => client.id !== clientId))
@@ -207,11 +207,16 @@ export default function useFoundClients(boards: Board[]) {
     const togglePasswordVisibility = () => {
       setShowPassword(!showPassword)
     }
+
+    const openConfirmModalClient = (client: Client, action: "delete" | "toggle") => {
+      setConfirmModalClient({ isOpen: true, action, client })
+    }
+    
     
         
     return {
       clients, setClients, errorClients, setIsErrorModalOpenClients, isErrorModalOpenClients, isLoadingClients, setReload,
-      handleSubmit, handleDelete, handleEdit, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField, setIsCreateModalOpen,
-      setShowPasswordField, showPassword, editingClient, formData, setFormData
+      handleSubmitClient, handleDeleteClient, handleEditClient, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField, setIsCreateModalOpen,
+      setShowPasswordField, showPassword, editingClient, formData, setFormData, setConfirmModalClient, confirmModalClient, openConfirmModalClient
     };
 }

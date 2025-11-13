@@ -1,5 +1,3 @@
-"use client"
-
 import { CheckList } from "../types/cardType";
 // import { revalidateTag } from "next/cache";
 

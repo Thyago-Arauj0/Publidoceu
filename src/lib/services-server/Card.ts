@@ -1,28 +1,44 @@
+'use server'
+
 import { Card, Feedback } from "../types/cardType";
-import { authFetch } from "./Auth";
+import { cookies } from "next/headers"
 // import { revalidateTag } from "next/cache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 
 
 export const getCards = async (boardId: string): Promise<Card[]> => {
-  return authFetch<Card[]>(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("access_token")?.value 
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
     method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token ? `Bearer ${token}` : ""
+    },
     // next: { 
     //   revalidate: 600,
     //   tags: ['cards']
     //  },
   });
+
+  if (!response.ok) {
+    console.error("Erro ao buscar boards:", response.status)
+    return []
+  }
+  return response.json()
 };
 
 export const getCard = async (boardId: string, cardId: string): Promise<Card> => {
-  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "GET",
     // next: { 
     //   revalidate: 600,
     //   tags: ['cards']
     //  },
   });
+
+  return response.json()
 };
 
 export const updateCardStatus = async (
@@ -30,12 +46,13 @@ export const updateCardStatus = async (
   cardId: string,
   status: string
 ): Promise<void> => {
-  await authFetch<void>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 
   // revalidateTag('cards');
+  return response.json()
 };
 
 export const addFeedback = async (
@@ -45,32 +62,38 @@ export const addFeedback = async (
 ): Promise<Feedback> => {
 
   // revalidateTag('cards');
-  return authFetch<Feedback>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "PATCH",
     body: JSON.stringify({ feedback: { text: feedbackText } }),
   });
+
+  return response.json()
 };
 
 export const createCard = async (form: FormData): Promise<Card> => {
   // revalidateTag('cards');
-  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
     method: "POST",
     body: form, 
   });
+
+  return response.json()
 }
 
 
 export const updateCard = async (form: FormData, cardId: string): Promise<Card> => {
   // revalidateTag('cards');
-  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
     method: "PATCH",
     body: form, 
   });
+
+  return response.json()
 }
 
 
 export const deleteCard = async (boardId: string, cardId: string): Promise<string> => {
-  await authFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+  await fetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
     method: "DELETE",
   });
   // revalidateTag('cards');

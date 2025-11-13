@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, FileText, List, MoreVertical, Trash, Download } from "lucide-react"
-import { useRouter } from "next/navigation"
 import Footer from "../footer"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/cards/[cardId]/loading"
 import { getCheckLists } from "@/lib/services/CheckList"
@@ -28,6 +27,7 @@ import useFoundFiles from "@/hooks/use-found-files"
 import useFoundChecklist from "@/hooks/use-found-checklist"
 import { getFileType } from "@/lib/helpers/getFileType"
 import CloudinaryDownload from "../others/file-download"
+import Link from "next/link"
 
 interface CardDetailsProps {
   userId: string
@@ -36,7 +36,6 @@ interface CardDetailsProps {
 
 export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
-const router = useRouter()
 const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
 const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser } = useFoundUser(boards, userId)
 const { card, isLoadingCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCard(boards, cardId, String(userId));
@@ -52,9 +51,11 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => router.push(`/clients/${userId}/`)} className="cursor-pointer">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
+                <Button variant="ghost" className="cursor-pointer">
+                  <Link href={`/clients/${userId}/`} className="flex">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Voltar
+                  </Link>
                 </Button>
             </div>
           </div>

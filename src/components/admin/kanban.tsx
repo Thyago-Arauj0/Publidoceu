@@ -1,9 +1,4 @@
-"use client"
-
-import { useState } from "react"
 import { KanbanCard } from "@/components/admin/kanban-card"
-import { updateCardStatus, deleteCard} from "@/lib/services/Card"
-import { Card, CardStatus } from "@/lib/types/cardType"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/loading"
 import ModalError from "../others/modal-error"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
@@ -11,69 +6,18 @@ import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import useFoundBoard from "@/hooks/use-found-board"
 import useFoundCards from "@/hooks/use-found-cards"
 import ConfirmModal from "../others/modal-confirm"
+import { KanbanProps } from "@/lib/types/cardType"
 
-interface KanbanBoardProps {
-  newPosts: Card[],
-  userId: string
-}
-
-export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
-  const [activeStatus, setActiveStatus] = useState<CardStatus>("todo")
-  const statusList: CardStatus[] = ["todo", "in_progress", "review", "done", "disapprove"]
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean
-    card?: Card
-  }>({ isOpen: false })
+export function Kanban({ newPosts, userId }: KanbanProps) {
 
   const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
   const {
-    cards,
-    setCards,
     isLoadingCards,
     errorCards,
     isErrorModalOpenCards,
     setIsErrorModalOpenCards,
+    activeStatus, setActiveStatus, statusList, confirmModalCard, openDeleteModal, handleDeleteCard, handleUpdateCard, getCardsByStatus, moveCard, setConfirmModalCard
   } = useFoundCards(boards, userId, newPosts)
-
-
-  const openDeleteModal = (card: Card) => {
-    setConfirmModal({ isOpen: true, card })
-  }
-
-
-  const handleDelete = async (boardId: number, cardId: number) => {
-    if (!cardId) return
-    try {
-      await deleteCard(boardId.toString(), cardId.toString())
-      setCards(prev => prev.filter(c => c.id !== cardId))
-      setConfirmModal({ isOpen: false }) // Fecha o modal apenas depois da exclusão
-    } catch (error) {
-      console.error("Erro ao excluir o card:", error)
-    }
-  }
-
-  const handleUpdateCard = (updatedCard: Card) => {
-    setCards(prevCards =>
-      prevCards.map(card => (card.id === updatedCard.id ? updatedCard : card))
-    )
-  }
-
-
-  const getCardsByStatus = (status: string) => {
-    return cards.filter((card) => card.status === status)
-  }
-
-
-  const moveCard = (cardId: number, newStatus: CardStatus) => {
-    setCards(cards.map(card => card.id === cardId ? { ...card, status: newStatus } : card))
-    const cId = cardId.toString()
-
-     const board = boards.find(b => String(b.customer) === String(userId))
-
-    if (!board) return console.error("Erro! BoardId não encontrado.")
-    updateCardStatus(board.id.toString(), cId, newStatus).catch(console.error)
-  }
-
 
 
   return (
@@ -92,7 +36,7 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         ))}
       </div>
       
-      {isLoadingCards ? (
+      {isLoadingBoard && isLoadingCards ? (
         <div className="flex justify-center py-20 min-h-[400px] items-center">
           <Loading />
         </div>
@@ -129,14 +73,14 @@ export function KanbanBoard({ newPosts, userId }: KanbanBoardProps) {
         />
 
       <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
+        isOpen={confirmModalCard.isOpen}
+        setIsOpen={(open) => setConfirmModalCard(prev => ({ ...prev, isOpen: open }))}
         action="delete"
-        item={{  id: confirmModal.card?.id ?? 0, title: confirmModal.card?.title }}
+        item={{  id: confirmModalCard.card?.id ?? 0, title: confirmModalCard.card?.title }}
         handleDelete={(id) => {
           const board = boards?.find(b => String(b.customer) === String(userId))
           if (!board) return
-          handleDelete(Number(board.id), Number(id))
+          handleDeleteCard(Number(board.id), Number(id))
         }}
       />
 
