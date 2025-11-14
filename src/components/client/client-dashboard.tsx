@@ -14,20 +14,24 @@ import useCardFilters from "@/hooks/use-card-filters"
 import HeaderClient from "../header-client"
 import ModalError from "../others/modal-error"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { UserProfile } from "@/lib/types/userType"
 import { Card as CardType } from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType"
 import useFoundBoard from "@/hooks/use-found-board"
+import { useState, useEffect } from "react"
 
 
 interface Props {
-  user: UserProfile;
-  boards: Board[];
+  user?: UserProfile;
   cards: CardType[];
+  error: string | null
 }
 
-export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
+export function ClientDashboard({ user, cards: initialCards, error } : Props) {
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [err, setError] = useState<string | null>(null)
 
   const {handleLogout} = useFoundBoard()
 
@@ -44,11 +48,19 @@ export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
     setCurrentWeek
   } = useCardFilters(initialCards);
 
-  // const isLoading = isLoadingCards || isLoadingBoard || isLoadingUser
+  useEffect(() => {
+    if (error) {
+      setIsErrorModalOpen(true)
+      setError(error)
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
 
-  // if (isLoading) {
-  //   return <Loading />
-  // }
+  if(isLoading){
+    return <Loading/>
+  }
 
 
   return (
@@ -56,7 +68,7 @@ export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
       <HeaderClient
         type="client-dashboard"
         user={user}
-        userId={String(user.id)}
+        userId={String(user?.id)}
         onLogout={handleLogout}
       />
 
@@ -69,8 +81,8 @@ export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
         <div className="mb-8 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
-              <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-              <span className="font-medium text-gray-900 dark:text-white text-sm sm:text-base break-words max-w-full">
+              <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400 " />
+              <span className="font-medium text-gray-900 dark:text-white text-sm sm:text-base max-w-full">
                 {showAll ? "Todos os posts" : (weeks[currentWeek] ? formatDateRange(weeks[currentWeek].start, weeks[currentWeek].end) : '')}
               </span>
               <Badge variant="secondary" className="ml-0 sm:ml-2 mt-2 sm:mt-0">
@@ -184,7 +196,7 @@ export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
                     size="sm"
                     className="w-full bg-[#e04b19] text-white hover:text-gray-50 border-gray-200 cursor-pointer py-5 dark:border-gray-700 hover:bg-[#af411c] dark:hover:bg-gray-800 font-medium"
                   >
-                    <Link href={`/client/${user.id}/card/${card.id}`} className="flex items-center">
+                    <Link href={`/client/${user?.id}/card/${card.id}`} className="flex items-center">
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalhes
                     </Link>
@@ -216,11 +228,11 @@ export function ClientDashboard({ user, boards, cards: initialCards } : Props) {
 
       <Footer/>
 
-      {/* <ModalError
-          open={isErrorModalOpenBoard}
-          setIsErrorModalOpen={setIsErrorModalOpenBoard}
-          error={errorBoard}
-        /> */}
+      <ModalError
+          open={isErrorModalOpen}
+          setIsErrorModalOpen={setIsErrorModalOpen}
+          error={err}
+        />
     </div>
   )
 }

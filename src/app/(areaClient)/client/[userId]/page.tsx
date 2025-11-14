@@ -13,13 +13,23 @@ interface ClientPageProps {
 
 
 export default async function ClientPage({ params }: ClientPageProps) {
-  const boards = await getBoards()
-  const user = await getUser(params.userId)
-  const board = boards.find(b => String(b.customer) === params.userId)
-  let cards: Card[] = []
-  if(board){
-    cards = await getCards(String(board.id))
-  }
 
-  return <ClientDashboard user={user} boards={boards} cards={cards}/>
+  try {
+    const boards = await getBoards()
+    const user = await getUser(params.userId)
+    const board = boards.find(b => String(b.customer) === params.userId)
+    let cards: Card[] = []
+    if(board){
+      cards = await getCards(String(board.id))
+    }
+
+    return <ClientDashboard user={user}  cards={cards} error={null}/>
+  }catch(error:any){
+    return (
+      <ClientDashboard
+        cards={[]}
+        error={error.message ?? "Erro inesperado"}
+      />
+    )
+  }
 }

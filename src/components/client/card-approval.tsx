@@ -7,173 +7,89 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, MessageSquare, FileText, Check, X, Download } from "lucide-react"
-import { updateCardStatus, addFeedback } from "@/lib/services/Card"
+import { addFeedback } from "@/lib/services/Card"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
-import { updateCheckList } from "@/lib/services/CheckList"
-import { updateFile } from "@/lib/services/File"
 import Footer from "../footer"
 import Image from "next/image"
-import { useItemLoading } from "@/hooks/use-item-loading"
 import SmallLoading from "../others/small-loading"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
 import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import HeaderClient from "../header-client"
-import useFoundBoard from "@/hooks/use-found-board"
-import useFoundCard from "@/hooks/use-found-card"
 import { getFileType } from "@/lib/helpers/getFileType"
-import useFoundChecklist from "@/hooks/use-found-checklist"
-import useFoundFiles from "@/hooks/use-found-files"
 import ModalError from "../others/modal-error"
 import CloudinaryDownload from "../others/file-download"
+import { Card as CardType } from "@/lib/types/cardType"
+import { File } from "@/lib/types/cardType"
+import { Board } from "@/lib/types/boardType"
+import useCard from "@/hooks/use-card"
+import useChecklist from "@/hooks/use-checklist"
+import useFiles from "@/hooks/use-files"
 
-interface PostApprovalProps {
-  userId: string
-  cardId: string
+interface Props {
+  board: Board | null;
+  card: CardType | null;
+  checklists: CheckListType[];
+  files: File[];
+  error: string | null
 }
 
-export function PostApproval({ userId, cardId }: PostApprovalProps) {
-  const { isLoadingItem, startLoading, stopLoading } = useItemLoading()
+export function PostApproval({ board, card, checklists, files, error }: Props) {
   const [feedback, setFeedback] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [err, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const {boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard } = useFoundBoard();
-  const {card, isLoadingCard, setCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCard(boards, cardId);
-  const {files, isLoadingFiles, setFiles, isErrorModalOpenFiles, setIsErrorModalOpenFiles, errorFiles} = useFoundFiles(boards, card.id)
-  const {checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist, errorChecklist} =  useFoundChecklist(boards, card.id)
-  
+  if (!board || !card) {
+    return <div>Erro: dados incompletos.</div>;
+  }
 
-  const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
-    startLoading(itemId)
-    try {
-      const updated = await updateCheckList(
-        card.id.toString(), 
-        itemId.toString(), 
-        !itemData.is_check, 
-        itemData.title
-      );
+  const { Card, setCard, handleApproval, isLoadingCard, isEditingCard, setIsEditingCard } = useCard(board)
+  const { Checklists, setChecklists, handleToggleChecklist, isLoadingChecklist } = useChecklist(Card)
+  const { Files, setFiles, isLoadingFile, handleApproveFile, handleDisapproveFile } = useFiles(board, Card) 
 
-      setChecklist((prev) =>
-        prev.map((chk) =>
-          chk.id === itemId ? { ...chk, is_check: updated.is_check } : chk
-        )
-      );
-    } catch (err) {
-      console.error("Erro ao atualizar checklist:", err);
-    }finally {
-      stopLoading(itemId)
-    }
-  };
+  useEffect(()=>{
+    setCard(card)
+    setFiles(files)
+    setChecklists(checklists)
+  }, [])
 
-  const handleApproveFile = async (fileId: string) => {
-    if (!card.id) return;
-
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-    startLoading(parseInt(fileId))
-
-    const board = boards[0];
-
-    try {
-      // Criar FormData para enviar o status de aprovação
-      await updateFile(String(board.id), card.id.toString(), fileId, true);
-      
-      // Atualizar estado local
-      setFiles(prev => prev.map(file => 
-        file.id.toString() === fileId ? { ...file, is_approved: true } : file
-      ));
-    } catch (err) {
-      console.error("Erro ao aprovar arquivo:", err);
-      // setError("Erro ao aprovar arquivo");
-      setIsErrorModalOpenBoard(true);
-    }finally {
-      stopLoading(parseInt(fileId))
-    }
-  };
-
-  const handleDisapproveFile = async (fileId: string) => {
-    if (!card.id) return;
-
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-    startLoading(parseInt(fileId))
-
-    const board = boards[0];
-
-    try {
-      // Criar FormData para enviar o status de aprovação
-      await updateFile(String(board.id), card.id.toString(), fileId, false);
-      
-      // Atualizar estado local
-      setFiles(prev => prev.map(file => 
-        file.id.toString() === fileId ? { ...file, is_approved: false } : file
-      ));
-    } catch (err) {
-      console.error("Erro ao reprovar arquivo:", err);
-      // setError("Erro ao reprovar arquivo");
-      setIsErrorModalOpenBoard(true);
-    }finally {
-      stopLoading(parseInt(fileId))
-    }
-  };
 
   const handleFeedbackSubmit = async () => {
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
-    }
-
-    const board = boards[0];
-
     if (!feedback.trim()) return;
-    setIsSubmitting(true);
+    setIsLoadingFeedback(true);
     try {
-      await addFeedback(String(board.id), cardId, feedback);
+      await addFeedback(String(board.id), String(Card.id), feedback);
       setCard((prev) => ({ ...prev, feedback: { id: prev.feedback?.id || 0, card: prev.id, text: feedback } }));
       setFeedback("");
     } catch (error) {
       console.error("Erro ao adicionar feedback:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsLoadingFeedback(false);
     }
   }
 
-  const handleApproval = async (action: "approve" | "reject") => {
-    if (!boards || boards.length === 0) {
-      console.log("Aguardando boards...");
-      return;
+  useEffect(() => {
+    if (error) {
+      setIsErrorModalOpen(true)
+      setError(error)
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
     }
-
-    const board = boards[0];
-
-    setIsSubmitting(true);
-    try {
-      const newStatus = action === "approve" ? "done" : "disapprove";
-      await updateCardStatus(String(board.id), cardId, newStatus);
-      setCard((prev) => ({ ...prev, status: newStatus }));
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-
-
-  if (isLoadingFiles || isLoadingCard || isLoadingCheckList) {
-    return <Loading />
+  }, [])
+  
+  if(isLoading){
+    return <Loading/>
   }
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <HeaderClient type="card-approval" userId={userId} user={null} onLogout={() => router.push('/client/logout')} />
+      <HeaderClient type="card-approval" userId={board.customer} user={null} onLogout={() => router.push('/client/logout')} />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl min-h-screen">
         <div className="text-sm text-center text-orange-500 dark:text-gray-400 mb-4">
@@ -184,24 +100,24 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
               <div className="flex flex-col gap-2 items-start justify-between mb-6">
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{card.title}</h1>
-                <Badge className={`${getStatusColor(card.status)} rounded-full px-3 py-1 text-xs font-medium`}>
-                  {getStatusLabel(card.status)}
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{Card.title}</h1>
+                <Badge className={`${getStatusColor(Card.status)} rounded-full px-3 py-1 text-xs font-medium`}>
+                  {getStatusLabel(Card.status)}
                 </Badge>
               </div>
 
               <div className="space-y-6">
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-white mb-3">Descrição</h3>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{card.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{Card.description}</p>
                 </div>
 
                 {/* Seção de Arquivos */}
-                {files.length > 0 && (
+                {Files.length > 0 && (
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-3">Arquivos ({files.length})</h3>
-                    <div className={`${files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
-                      {files.map((file) => {
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-3">Arquivos ({Files.length})</h3>
+                    <div className={`${Files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
+                      {Files.map((file) => {
                         const fileType = getFileType(file.file)
                         const isApproved = file.is_approved === true
                         
@@ -247,12 +163,12 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                               {!isApproved ? (
                                 <Button
                                   size="sm"
-                                  disabled={isLoadingItem(file.id)}
+                                  disabled={isLoadingFile(file.id)}
                                   className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
                                   onClick={() => handleApproveFile(file.id.toString())}
                                   title="Aprovar arquivo"
                                 >
-                                {isLoadingItem(file.id) ? (
+                                {isLoadingFile(file.id) ? (
                                     <SmallLoading />
                                   ) : (
                                       <Check className="h-4 w-4" />
@@ -261,12 +177,12 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                               ) : (
                                 <Button
                                   size="sm"
-                                  disabled={isLoadingItem(file.id)}
+                                  disabled={isLoadingFile(file.id)}
                                   className="cursor-pointer bg-black/50 hover:bg-black/70 text-white border-0 shadow-lg"
                                   onClick={() => handleDisapproveFile(file.id.toString())}
                                   title="Desaprovar arquivo"
                                 >
-                                {isLoadingItem(file.id) ? (
+                                {isLoadingFile(file.id) ? (
                                     <SmallLoading />
                                   ) : (
                                   <X className="h-4 w-4" />
@@ -292,22 +208,22 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                   </div>
                 )}
                 {/* Checklist Section */}
-                {checklist.length > 0 && (
+                {Checklists.length > 0 && (
                   <div>
                     <h3 className="font-bold text-gray-900 dark:text-white mb-3">Lista de tarefas</h3>
                     <ul className="space-y-3">
-                      {checklist.map((item) => (
+                      {Checklists.map((item) => (
                         <li key={item.id} className="flex items-center gap-3 p-2 rounded bg-gray-100">
                             <button
                               onClick={() => handleToggleChecklist(item.id, item)}
-                              disabled={isLoadingItem(item.id)}
+                              disabled={isLoadingChecklist(item.id)}
                               className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
                                 item.is_check
                                   ? "bg-green-500 border-green-500 text-white"
                                   : "bg-white border-gray-400 dark:bg-gray-800"
                               }`}
                             >
-                              {isLoadingItem(item.id) ? (
+                              {isLoadingChecklist(item.id) ? (
                                 <SmallLoading />
                               ) : (
                                 item.is_check && <CheckCircle className="h-4 w-4" />
@@ -331,24 +247,24 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                   <div>
                     <span className="font-medium text-gray-900 dark:text-white block mb-1">Data de Criação</span>
                     <p className="text-gray-600 dark:text-gray-400">
-                      {card.created_at ? new Date(card.created_at).toLocaleDateString("pt-BR") : "-"}
+                      {Card.created_at ? new Date(Card.created_at).toLocaleDateString("pt-BR") : "-"}
                     </p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-900 dark:text-white block mb-1">Agendado para</span>
                     <p className="text-gray-600 dark:text-gray-400">
-                      {card.due_date 
-                        ? new Date(card.due_date).toLocaleDateString("pt-BR") 
+                      {Card.due_date 
+                        ? new Date(Card.due_date).toLocaleDateString("pt-BR") 
                         : "Sem data"}
                     </p>
                   </div>
                 </div>
                 
-                {card.feedback?.text && (
+                {Card.feedback?.text && (
                   <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                     <span className="font-medium text-gray-900 dark:text-white block mb-2">Feedback</span>
                     <p className="text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                      {card.feedback.text}
+                      {Card.feedback.text}
                     </p>
                   </div>
                 )}
@@ -382,10 +298,10 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
 
                   <Button
                     onClick={handleFeedbackSubmit}
-                    disabled={isSubmitting || !feedback.trim()}
+                    disabled={isLoadingFeedback || !feedback.trim()}
                     className="mt-3 w-full bg-[#d35429] hover:bg-[#ac421f] transition-colors cursor-pointer"
                   >
-                    {isSubmitting ? "Enviando..." : "Enviar Feedback"}
+                    {isLoadingFeedback ? "Enviando..." : "Enviar Feedback"}
                   </Button>
                 </div>
               </div>
@@ -395,42 +311,42 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
             <div className="bg-white dark:bg-gray-900 rounded-xl p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Ações</h2>
               
-              {card.status === "done" || card.status === "disapprove" ? (
+              {Card.status === "done" || Card.status === "disapprove" ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge className={`${getStatusColor(card.status)} rounded-full px-3 py-1 text-sm`}>
-                      {card.status === "done" ? "Aprovado" : "Reprovado"}
+                    <Badge className={`${getStatusColor(Card.status)} rounded-full px-3 py-1 text-sm`}>
+                      {Card.status === "done" ? "Aprovado" : "Reprovado"}
                     </Badge>
 
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setIsEditing(!isEditing)}
+                      onClick={() => setIsEditingCard(!isEditingCard)}
                       className="border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                     >
-                      {isEditing ? "Cancelar" : "Alterar"}
+                      {isEditingCard ? "Cancelar" : "Alterar"}
                     </Button>
                   </div>
 
-                  {isEditing && (
+                  {isEditingCard && (
                     <div className="space-y-3 pt-2">
                       <Button
                         onClick={() => handleApproval("approve")}
-                        disabled={isSubmitting}
+                        disabled={isLoadingCard}
                         className="w-full bg-green-600 hover:bg-green-700 transition-colors cursor-pointer"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        {isSubmitting ? "Processando..." : "Aprovar Post"}
+                        {isLoadingCard? "Processando..." : "Aprovar Post"}
                       </Button>
 
                       <Button
                         variant="outline"
                         onClick={() => handleApproval("reject")}
-                        disabled={isSubmitting}
+                        disabled={isLoadingCard}
                         className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
                       >
                         <XCircle className="h-4 w-4 mr-2" />
-                        {isSubmitting ? "Processando..." : "Reprovar Post"}
+                        {isLoadingCard ? "Processando..." : "Reprovar Post"}
                       </Button>
                     </div>
                   )}
@@ -439,21 +355,21 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
                 <div className="space-y-3">
                   <Button
                     onClick={() => handleApproval("approve")}
-                    disabled={isSubmitting}
+                    disabled={isLoadingCard}
                     className="w-full bg-green-600 hover:bg-green-700 transition-colors cursor-pointer"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    {isSubmitting ? "Processando..." : "Aprovar Post"}
+                    {isLoadingCard ? "Processando..." : "Aprovar Post"}
                   </Button>
 
                   <Button
                     variant="outline"
                     onClick={() => handleApproval("reject")}
-                    disabled={isSubmitting}
+                    disabled={isLoadingCard}
                     className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
-                    {isSubmitting ? "Processando..." : "Reprovar Post"}
+                    {isLoadingCard ? "Processando..." : "Reprovar Post"}
                   </Button>
                 </div>
               )}
@@ -465,24 +381,9 @@ export function PostApproval({ userId, cardId }: PostApprovalProps) {
       <Footer />
 
       <ModalError
-        open={isErrorModalOpenBoard}
-        setIsErrorModalOpen={setIsErrorModalOpenBoard}
-        error={errorBoard}
-      />
-      <ModalError
-        open={isErrorModalOpenCard}
-        setIsErrorModalOpen={setIsErrorModalOpenCard}
-        error={errorCard}
-      />
-      <ModalError
-        open={isErrorModalOpenFiles}
-        setIsErrorModalOpen={setIsErrorModalOpenFiles}
-        error={errorFiles}
-      />
-      <ModalError
-        open={isErrorModalOpenChecklist}
-        setIsErrorModalOpen={setIsErrorModalOpenChecklist}
-        error={errorChecklist}
+        open={isErrorModalOpen}
+        setIsErrorModalOpen={setIsErrorModalOpen}
+        error={err}
       />
     </div>
   )

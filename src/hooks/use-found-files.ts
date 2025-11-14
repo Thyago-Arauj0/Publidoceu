@@ -40,40 +40,40 @@ export default function useFoundFiles(boards: Board[], cardId: number, userId?: 
   }, [cardId]);
 
 
-    const handleDeleteFile = async (fileId: string) => {
-      const board = boards.find(board => String(board.customer) === String(userId));
-  
-      if (!board) {
-        console.error("Nenhum board correspondente encontrado para este cliente.");
-        return;
-      }
-      if (!cardId) return;
-  
-      if (!confirm("Deseja realmente excluir este arquivo?")) return;
-  
-      try {
-        await deleteFile(board.id.toString(), cardId.toString(), fileId);
-        setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
-      } catch (err) {
-        console.error("Erro ao excluir arquivo:", err);
-      }
-    };
-  
-    const refreshFiles = async () => {
-      const board = boards.find(board => String(board.customer) === String(userId));
-  
-      if (!board) {
-        console.error("Nenhum board correspondente encontrado para este cliente.");
-        return;
-      }
-      if (!cardId) return;
-      try {
-        const filesData = await getFiles(board.id.toString(), cardId.toString());
-        setFiles(filesData);
-      } catch (error) {
-        console.error("Erro ao atualizar arquivos:", error);
-      }
-    };
+  const handleDeleteFile = async (fileId: string) => {
+    const board = boards.find(board => String(board.customer) === String(userId));
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
+    if (!cardId) return;
+
+    if (!confirm("Deseja realmente excluir este arquivo?")) return;
+
+    try {
+      await deleteFile(board.id.toString(), cardId.toString(), fileId);
+      setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
+    } catch (err) {
+      console.error("Erro ao excluir arquivo:", err);
+    }
+  };
+
+  const refreshFiles = async () => {
+    const board = boards.find(board => String(board.customer) === String(userId));
+
+    if (!board) {
+      console.error("Nenhum board correspondente encontrado para este cliente.");
+      return;
+    }
+    if (!cardId) return;
+    try {
+      const filesData = await getFiles(board.id.toString(), cardId.toString());
+      setFiles(filesData);
+    } catch (error) {
+      console.error("Erro ao atualizar arquivos:", error);
+    }
+  };
 
   return {  files, isLoadingFiles, setFiles, isErrorModalOpenFiles, errorFiles, setIsErrorModalOpenFiles,
     handleDeleteFile, refreshFiles
