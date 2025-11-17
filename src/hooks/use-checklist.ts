@@ -56,5 +56,5 @@ export default function useChecklist(card: Card) {
   }
   
 
-  return { Checklists, setChecklists, handleToggleChecklist, isLoadingChecklist};
+  return { Checklists, setChecklists, handleToggleChecklist, isLoadingChecklist, handleDeleteChecklist, isChecklistCompleted, getCheckListTitle};
 }

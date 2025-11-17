@@ -74,5 +74,5 @@ export default function useFiles(board: Board, card: Card) {
     }
   };
 
-  return { Files, setFiles, isLoadingFile, handleApproveFile, handleDisapproveFile };
+  return { Files, setFiles, isLoadingFile, handleApproveFile, handleDisapproveFile, handleDeleteFile, refreshFiles };
 }

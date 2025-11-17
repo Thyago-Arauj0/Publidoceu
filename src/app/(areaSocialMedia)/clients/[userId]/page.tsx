@@ -1,35 +1,48 @@
-"use client"
+"use server"
 
 import React from "react"
-import { useState } from "react"
 import { Kanban } from "@/components/admin/kanban"
-import { DashboardHeader } from "@/components/admin/dashboard-header"
 import Footer from "@/components/footer"
+import { getBoards } from "@/lib/services-server/Board"
+import { getCards } from "@/lib/services-server/Card"
+import { Card } from "@/lib/types/cardType"
 
-interface PostApprovalPageProps {
-  params: Promise<{ userId: string }>
+
+interface ClientPageProps {
+  params: {
+    userId: string
+  }
 }
 
+export default async function ClientsPage({ params }: ClientPageProps) {
 
-export default function ClientsPage({ params }: PostApprovalPageProps) {
+  try{
+    const boards = await getBoards()
+    const board = boards.find(b => String(b.customer) === params.userId)
+    let cards: Card[] = []
+    if(board){
+      cards = await getCards(String(board.id))
+    }
 
-  const { userId } = React.use(params)
+    return (
+      <div className="min-h-screen dark:bg-gray-900">
+        <main>
+          <Kanban cards={cards} userId={params.userId} boards={boards} error={null} />
+        </main>
+        <Footer/>
+      </div>
+    )
+  }catch(error: any){
 
-  const [newPosts, setNewPosts] = useState<any[]>([])
-
-  const handleCreatePost = (post: any) => {
-    setNewPosts((prev) => [...prev, post])
+    return (
+      <div className="min-h-screen dark:bg-gray-900">
+        <main>
+          <Kanban cards={[]} userId={''} boards={[]} error={error}/>
+        </main>
+        <Footer/>
+      </div>
+    )
   }
-
-  return (
-    <div className="min-h-screen dark:bg-gray-900">
-      <DashboardHeader onCreatePost={handleCreatePost} userId={userId} />
-      <main className="container mx-auto px-4 py-6 min-h-screen">
-        <Kanban newPosts={newPosts} userId={userId} />
-      </main>
-      <Footer/>
-    </div>
-  )
 }
 
 

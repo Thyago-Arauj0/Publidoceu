@@ -19,30 +19,58 @@ import AddFileModal from "./add-file-modal"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
 import { getStatusLabel } from "@/lib/helpers/getStatusLabel"
 import { formatDate } from "@/lib/helpers/formatDateRange"
-import useFoundBoard from "@/hooks/use-found-board"
 import ModalError from "../others/modal-error"
-import useFoundCard from "@/hooks/use-found-card"
-import useFoundUser from "@/hooks/use-found-user"
-import useFoundFiles from "@/hooks/use-found-files"
-import useFoundChecklist from "@/hooks/use-found-checklist"
+import useFiles from "@/hooks/use-files"
+import useChecklist from "@/hooks/use-checklist"
 import { getFileType } from "@/lib/helpers/getFileType"
 import CloudinaryDownload from "../others/file-download"
 import Link from "next/link"
+import { Card as CardType } from "@/lib/types/cardType"
+import { Board } from "@/lib/types/boardType"
+import { CheckList as CheckListType } from "@/lib/types/cardType"
+import { File } from "@/lib/types/cardType"
+import { UserProfile } from "@/lib/types/userType"
+import { useEffect, useState } from "react"
+
 
 interface CardDetailsProps {
-  userId: string
-  cardId: string
+  user: UserProfile | null;
+  board: Board | null;
+  card: CardType | null;
+  checklists: CheckListType[];
+  files: File[];
+  error: string | null
 }
 
-export default function CardDetails({ userId, cardId }: CardDetailsProps) {
 
-const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
-const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser } = useFoundUser(boards, userId)
-const { card, isLoadingCard, isErrorModalOpenCard, setIsErrorModalOpenCard, errorCard} = useFoundCard(boards, cardId, String(userId));
-const { files, isLoadingFiles, isErrorModalOpenFiles, errorFiles, setIsErrorModalOpenFiles,
-  handleDeleteFile, refreshFiles } = useFoundFiles(boards, card.id, userId)
-const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, setIsErrorModalOpenChecklist,
-  errorChecklist, handleDeleteChecklist, isChecklistCompleted, getCheckListTitle } = useFoundChecklist(boards, card.id)
+export default function CardDetails({ user, board, card, checklists, files, error }: CardDetailsProps) {
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [err, setError] = useState<string | null>(null)
+
+  if (!board || !card) {
+    return <div>Erro: dados incompletos.</div>;
+  }
+
+  const { Files, setFiles, handleDeleteFile, refreshFiles } = useFiles(board, card)
+  const { Checklists, setChecklists, handleDeleteChecklist, isChecklistCompleted, getCheckListTitle } = useChecklist(card)
+
+  useEffect(()=>{
+    setFiles(files)
+    setChecklists(checklists)
+  }, [])
+
+  useEffect(() => {
+    if (error) {
+      setIsErrorModalOpen(true)
+      setError(error)
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
+  
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +80,7 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" className="cursor-pointer">
-                  <Link href={`/clients/${userId}/`} className="flex">
+                  <Link href={`/clients/${user?.id}/`} className="flex">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Voltar
                   </Link>
@@ -62,7 +90,7 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
         </div>
       </header>
 
-      { isLoadingUser || isLoadingCard || isLoadingFiles || isLoadingCheckList ? (
+      { isLoading ? (
           <div className="flex justify-center py-20 min-h-[400px] items-center">
             <Loading />
           </div>
@@ -99,27 +127,25 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
                 <CardHeader className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
                     <FileText className="h-5 w-5 text-[#d35429]" />
-                    <span>Arquivos ({files.length})</span>
+                    <span>Arquivos ({Files.length})</span>
                   </CardTitle>
                   {card.id && (
                     
                     <AddFileModal
-                      boardId={
-                        boards.find(board => String(board.customer) === String(userId))?.id.toString() || ''
-                      }
+                      boardId={String(board.id)}
                       cardId={card.id.toString()}
                       onCreated={refreshFiles}
                     />
                   )}
                 </CardHeader>
                 <CardContent>
-                  {files.length === 0 ? (
+                  {Files.length === 0 ? (
                     <p className="text-[#1e3a5f]/80 text-center py-8">
                       Nenhum arquivo adicionado ainda.
                     </p>
                   ) : (
-                    <div className={`${files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
-                      {files.map((file) => {
+                    <div className={`${Files.length === 1 ? 'columns-1' : 'columns-1 md:columns-2'} gap-4 space-y-4`}>
+                      {Files.map((file) => {
                         const fileType = getFileType(file.file)
                         const isCompleted = file.is_approved === true
                         
@@ -217,23 +243,23 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
                 <CardHeader className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2 text-[#1e3a5f]">
                     <List className="h-5 w-5 text-[#d35429]" />
-                    <span>Checklists ({checklist.length})</span>
+                    <span>Checklists ({Checklists.length})</span>
                   </CardTitle>
                   {card.id && (
                     <AddChecklistModal
                       cardId={card.id.toString()}
                       onCreated={() => {
-                        getCheckLists(card.id.toString()).then(setChecklist);
+                        getCheckLists(card.id.toString()).then(setChecklists);
                       }}
                     />
                     )}
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {checklist.length === 0 ? (
+                    {Checklists.length === 0 ? (
                       <p className="text-[#1e3a5f]/80">Nenhuma checklist disponível.</p>
                     ) : (
-                      checklist.map((item) => {
+                      Checklists.map((item) => {
                         const isCompleted = isChecklistCompleted(item)
                         const title = getCheckListTitle(item)
                         
@@ -251,7 +277,7 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
                                 cardId={card.id.toString()}
                                 checklistId={item.id.toString()}
                                 initialTitle={title}
-                                onCreated={() => getCheckLists(card.id.toString()).then(setChecklist)}
+                                onCreated={() => getCheckLists(card.id.toString()).then(setChecklists)}
                               />
                               <Button
                                 variant="destructive"
@@ -334,29 +360,9 @@ const { checklist, isLoadingCheckList, setChecklist, isErrorModalOpenChecklist, 
 
 
      <ModalError
-        open={isErrorModalOpenBoard}
-        setIsErrorModalOpen={setIsErrorModalOpenBoard}
-        error={errorBoard}
-      />
-      <ModalError
-        open={isErrorModalOpenCard}
-        setIsErrorModalOpen={setIsErrorModalOpenCard}
-        error={errorCard}
-      />
-      <ModalError
-        open={isErrorModalOpenUser}
-        setIsErrorModalOpen={setIsErrorModalOpenUser}
-        error={errorUser}
-      />
-      <ModalError
-        open={isErrorModalOpenFiles}
-        setIsErrorModalOpen={setIsErrorModalOpenFiles}
-        error={errorFiles}
-      />
-      <ModalError
-        open={isErrorModalOpenChecklist}
-        setIsErrorModalOpen={setIsErrorModalOpenChecklist}
-        error={errorChecklist}
+        open={isErrorModalOpen}
+        setIsErrorModalOpen={setIsErrorModalOpen}
+        error={err}
       />
     </div>
   )

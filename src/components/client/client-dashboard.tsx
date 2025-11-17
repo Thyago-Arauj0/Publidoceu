@@ -16,8 +16,7 @@ import ModalError from "../others/modal-error"
 import Link from "next/link"
 import { UserProfile } from "@/lib/types/userType"
 import { Card as CardType } from "@/lib/types/cardType"
-import { Board } from "@/lib/types/boardType"
-import useFoundBoard from "@/hooks/use-found-board"
+import useLogout from "@/hooks/use-Logout"
 import { useState, useEffect } from "react"
 
 
@@ -33,7 +32,7 @@ export function ClientDashboard({ user, cards: initialCards, error } : Props) {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
   const [err, setError] = useState<string | null>(null)
 
-  const {handleLogout} = useFoundBoard()
+  const {handleLogout} = useLogout()
 
   const {
     filteredCards,

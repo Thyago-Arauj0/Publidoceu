@@ -1,9 +1,9 @@
-import { getUser } from "@/lib/services/UserClient";
+import { getUser } from "@/lib/services-server/User";
 import { Board } from "@/lib/types/boardType";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/lib/types/userType";
 
-export default function useFoundUser( boards: Board[], userId: string | number) {
+export default function useUser( boards: Board[], userId: string | number) {
   const [user, setUser] = useState<UserProfile>()
   const [isErrorModalOpenUser, setIsErrorModalOpenUser] = useState(false);
   const [errorUser, setErrorUser] = useState<string | null>(null);

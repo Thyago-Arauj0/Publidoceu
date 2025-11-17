@@ -13,20 +13,21 @@ import { Plus, Upload, X, FileText, List, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { CardStatus, Card } from "@/lib/types/cardType"
 import { createCard, updateCard } from "@/lib/services/Card"
-import { getFiles, createFile, updateFile, deleteFile } from "@/lib/services/File"
-import { getCheckLists, createCheckList, updateCheckList, deleteCheckList } from "@/lib/services/CheckList"
+import { getFiles, createFile, deleteFile } from "@/lib/services/File"
+import { getCheckLists, createCheckList, deleteCheckList } from "@/lib/services/CheckList"
 import { File as FileType } from "@/lib/types/cardType"
 import { CheckList } from "@/lib/types/cardType"
 import { uploadToCloudinary } from "@/lib/services/Cloudinary"
 import { compressFile } from "@/lib/helpers/compressFile"
 import ModalError from "../others/modal-error"
-import useFoundBoard from "@/hooks/use-found-board"
-import useFoundUser from "@/hooks/use-found-user"
+import useUser from "@/hooks/use-user"
 import { CheckListItem } from "@/lib/types/cardType"
+import { Board } from "@/lib/types/boardType"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
   onUpdatePost?: (post: any) => void
+  boards: Board[]
   userId: number | string
   editingCard?: Card | null
   isEditing?: boolean
@@ -44,6 +45,7 @@ interface FilePreview {
 export function CreatePostModal({ 
   onCreatePost, 
   onUpdatePost, 
+  boards,
   userId, 
   editingCard = null, 
   isEditing = false 
@@ -65,8 +67,7 @@ export function CreatePostModal({
   const [loading, setLoading] = useState(false)
   const [newCheckListItemTitle, setNewCheckListItemTitle] = useState("") // título do novo item
 
-  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard } = useFoundBoard()
-  const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser } = useFoundUser(boards, userId)
+  const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser} = useUser(boards, userId)
 
   useEffect(() => {
     if (open && isEditing && editingCard) {
@@ -623,11 +624,7 @@ export function CreatePostModal({
         setIsErrorModalOpen={setIsErrorModalOpen}
         error={error}
       />
-       <ModalError
-        open={isErrorModalOpenBoard}
-        setIsErrorModalOpen={setIsErrorModalOpenBoard}
-        error={errorBoard}
-      />
+
        <ModalError
         open={isErrorModalOpenUser}
         setIsErrorModalOpen={setIsErrorModalOpenUser}

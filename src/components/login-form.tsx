@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 import { loginUser } from "@/lib/services/AuthService"
-import Cookies from "js-cookie"
 import ModalError from "./others/modal-error"
 
 export function LoginForm() {

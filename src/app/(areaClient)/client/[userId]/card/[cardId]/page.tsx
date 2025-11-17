@@ -1,7 +1,6 @@
 import { PostApproval } from "@/components/client/card-approval"
 import { getBoards } from "@/lib/services-server/Board"
 import { getCard } from "@/lib/services-server/Card"
-import { getUser } from "@/lib/services-server/User"
 import { getFiles } from "@/lib/services-server/File"
 import { getCheckLists } from "@/lib/services-server/CheckList"
 import { File } from "@/lib/types/cardType"

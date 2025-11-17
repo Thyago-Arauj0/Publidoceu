@@ -5,26 +5,6 @@ import { authFetch } from "./Auth";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 
 
-export const getCards = async (boardId: string): Promise<Card[]> => {
-  return authFetch<Card[]>(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
-    method: "GET",
-    // next: { 
-    //   revalidate: 600,
-    //   tags: ['cards']
-    //  },
-  });
-};
-
-export const getCard = async (boardId: string, cardId: string): Promise<Card> => {
-  return authFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
-    method: "GET",
-    // next: { 
-    //   revalidate: 600,
-    //   tags: ['cards']
-    //  },
-  });
-};
-
 export const updateCardStatus = async (
   boardId: string,
   cardId: string,

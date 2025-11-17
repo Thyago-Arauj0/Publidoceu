@@ -12,21 +12,60 @@ import { Badge } from "@/components/ui/badge"
 import { LogOut, Plus, MoreHorizontal, Edit, Trash2, User, Mail, Phone, Eye, EyeOff, Key } from "lucide-react"
 import Footer from "../footer"
 import Loading from "@/app/(areaSocialMedia)/dashboard/loading"
-import useFoundBoard from "@/hooks/use-found-board"
-import useFoundClients from "@/hooks/use-found-clients"
+import useLogout from "@/hooks/use-Logout"
+import useClients from "@/hooks/use-clients"
 import ModalError from "../others/modal-error"
 import ConfirmModal from "../others/modal-confirm"
 import Link from "next/link"
+import { Client } from "@/lib/types/userType"
+import { useEffect, useState } from "react"
 
+interface Props{
+  users: Client[] | null;
+  error: string | null
+}
 
-export function ClientManagement() {
-  const { boards, isErrorModalOpenBoard, setIsErrorModalOpenBoard, errorBoard, isLoadingBoard, handleLogout } = useFoundBoard()
+export function ClientManagement({users, error}: Props) {
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    action: "delete" | "toggle"
+    client?: Client
+  }>({ isOpen: false, action: "delete", client: undefined })
+
+  const { handleLogout } = useLogout()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [err, setError] = useState<string | null>(null)
+
   const { 
-    clients, setClients, errorClients, setIsErrorModalOpenClients, isErrorModalOpenClients, isLoadingClients,
-    handleSubmitClient, handleDeleteClient, handleEditClient, resetForm, togglePasswordVisibility, isCreateModalOpen, showPasswordField,
-    setIsCreateModalOpen, setShowPasswordField, showPassword, editingClient, formData, setFormData, confirmModalClient, setConfirmModalClient, openConfirmModalClient
-  } = useFoundClients(boards)
+    clients, setClients, errorClients,
+    handleSubmitClient, handleDeleteClient, handleEditClient, 
+    resetForm, togglePasswordVisibility, isCreateModalOpen, 
+    showPasswordField, setIsCreateModalOpen, setShowPasswordField, 
+    showPassword, editingClient, formData, setFormData,
+  } = useClients()
 
+
+  useEffect(()=>{
+    setClients(users ?? [])
+  }, [users])
+
+  useEffect(() => {
+    if (error || errorClients) {
+      setIsErrorModalOpen(true)
+      setError(error || errorClients)
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
+    
+
+  const openConfirmModal = (client: Client, action: "delete" | "toggle") => {
+    setConfirmModal({ isOpen: true, action, client })
+  }
+      
 
   return (
     <div className="min-h-screen dark:bg-gray-900">
@@ -162,7 +201,7 @@ export function ClientManagement() {
       </header>
 
 
-      {isLoadingBoard ? (
+      {isLoading ? (
         <div className="flex justify-center items-center min-h-screen">
           <p>Carregando...</p>
         </div>
@@ -175,13 +214,13 @@ export function ClientManagement() {
             <hr />
 
 
-            {isLoadingClients ? (
+            {isLoading ? (
               <div className="flex justify-center min-h-[400px] items-center">
                 <Loading />
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
-                {isLoadingClients  ? (
+                {isLoading  ? (
                   <div className="col-span-full flex justify-center py-20 min-h-screen items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
                   </div>
@@ -235,12 +274,12 @@ export function ClientManagement() {
                                   <Edit className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem  onClick={() => openConfirmModalClient(client, "toggle")} className="cursor-pointer">
+                                <DropdownMenuItem  onClick={() => openConfirmModal(client, "toggle")} className="cursor-pointer">
                                   <User className="mr-2 h-4 w-4" />
                                   {client.is_active ? "Desativar" : "Ativar"}
                                 </DropdownMenuItem>
 
-                                <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModalClient(client, "delete")}>
+                                <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => openConfirmModal(client, "delete")}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Excluir
                                 </DropdownMenuItem>
@@ -293,21 +332,16 @@ export function ClientManagement() {
       <Footer/>
 
       <ModalError
-        open={isErrorModalOpenBoard}
-        setIsErrorModalOpen={setIsErrorModalOpenBoard}
-        error={errorBoard}
-      />
-      <ModalError
-        open={isErrorModalOpenClients}
-        setIsErrorModalOpen={setIsErrorModalOpenClients}
-        error={errorClients}
-      />
+        open={isErrorModalOpen}
+        setIsErrorModalOpen={setIsErrorModalOpen}
+        error={err}
+      /> 
 
       <ConfirmModal
-        isOpen={confirmModalClient.isOpen}
-        setIsOpen={(open) => setConfirmModalClient(prev => ({ ...prev, isOpen: open }))}
-        action={confirmModalClient.action} // "delete" ou "toggle"
-        item={confirmModalClient.client}
+        isOpen={confirmModal.isOpen}
+        setIsOpen={(open) => setConfirmModal(prev => ({ ...prev, isOpen: open }))}
+        action={confirmModal.action}
+        item={confirmModal.client}
         handleDelete={handleDeleteClient}
         setClients={setClients}
       />
