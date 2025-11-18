@@ -1,9 +1,7 @@
-'use client'
+'use server'
 
-import Cookies from "js-cookie";
-import { AuthResponse } from "../types/userType";
+import { cookies } from "next/headers";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
-type ApiError = { message?: string };
 
 type NextRequestInit = RequestInit & {
   next?: { revalidate?: number };
@@ -11,30 +9,65 @@ type NextRequestInit = RequestInit & {
 };
 
 
-export const refreshAccessToken = async (): Promise<string> => {
-  const refreshToken = Cookies.get('refresh_token');
 
-  if (!refreshToken) throw new Error("Refresh token não encontrado");
+export const serverRefreshAccessToken = async (): Promise<string> => {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+
+    if (!refreshToken) {
+    // Limpa os cookies primeiro
+    cookieStore.delete("refresh_token");
+    cookieStore.delete("access_token");
+    cookieStore.delete("isAdmin");
+    cookieStore.delete("sessionid");
+    
+    // Lança um erro que será capturado no componente
+    throw new Error("AUTH_REQUIRED");
+  }
 
   const res = await fetch(`${API_BASE_URL}/api/v1/auth/token/refresh/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh: refreshToken }),
+    cache: "no-store"
   });
+  
 
-  if (!res.ok) throw new Error("Não foi possível renovar o token");
+  if (!res.ok) {
+    // Limpa cookies
+    cookieStore.delete("refresh_token");
+    cookieStore.delete("access_token");
+    cookieStore.delete("isAdmin");
+    cookieStore.delete("sessionid");
+    
+    throw new Error("AUTH_REQUIRED");
+  }
 
   const data = await res.json();
-  Cookies.set('access_token', data.access, { expires: 7, path: '/' });
+  
+  // Salva novo access token em cookie HttpOnly
+  cookieStore.set("access_token", data.access, {
+    httpOnly: true,
+    path: "/",
+    secure: true,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60
+  });
 
   return data.access;
 };
 
-export const authFetch = async <R>(url: string, options: NextRequestInit = {}): Promise<R> => {
-  let token = Cookies.get('access_token');
 
+export const serverAuthFetch = async <R>(
+  url: string,
+  options: NextRequestInit = {}
+): Promise<R> => {
+  const cookieStore = await cookies();
+  let token = cookieStore.get("access_token")?.value;
+
+  // Sem token → tenta refresh direto
   if (!token) {
-    token = await refreshAccessToken();
+    token = await serverRefreshAccessToken();
   }
 
   const headers: HeadersInit = {
@@ -49,13 +82,14 @@ export const authFetch = async <R>(url: string, options: NextRequestInit = {}): 
   const fetchOptions: RequestInit = {
     ...options,
     headers,
-    cache: options.cache, // ← Isso estava faltando
+    cache: options.cache,
   };
 
-  const response = await fetch(url, fetchOptions);
+  let response = await fetch(url, fetchOptions);
 
+  // Se token expirou → tenta refresh e retry
   if (response.status === 401 || response.status === 403) {
-    token = await refreshAccessToken();
+    token = await serverRefreshAccessToken();
 
     const retryHeaders: HeadersInit = {
       ...options.headers,
@@ -66,35 +100,23 @@ export const authFetch = async <R>(url: string, options: NextRequestInit = {}): 
       (retryHeaders as Record<string, string>)["Content-Type"] = "application/json";
     }
 
-    const retryResponse = await fetch(url, { ...options, headers: retryHeaders });
+    response = await fetch(url, { ...options, headers: retryHeaders });
 
-    if (!retryResponse.ok) {
+    if (!response.ok) {
       throw new Error("Erro após tentativa de refresh");
-    }
-
-    if (retryResponse.status === 204 || retryResponse.headers.get("content-length") === "0") {
-      return "null" as unknown as R;
-    }
-
-    const contentType = retryResponse.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      return retryResponse.json();
-    } else {
-      return (await retryResponse.text()) as unknown as R;
     }
   }
 
   if (!response.ok) {
     let message = `Erro ${response.status}`;
+
     try {
-      const cloned = response.clone(); // 👈 clona a resposta
+      const cloned = response.clone();
       const errorData = await cloned.json();
-      console.error("Resposta de erro da API:", errorData);
       message = errorData.detail || JSON.stringify(errorData);
     } catch {
       const cloned = response.clone();
       const text = await cloned.text();
-      console.error("Erro não-JSON da API:", text);
       message = text;
     }
 
@@ -106,34 +128,9 @@ export const authFetch = async <R>(url: string, options: NextRequestInit = {}): 
   }
 
   const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
+  if (contentType?.includes("application/json")) {
     return response.json();
-  } else {
-    return (await response.text()) as unknown as R;
-  }
-};
-
-
-export const authFetchNoAuth = async <T, R = AuthResponse>(
-  url: string,
-  data: T
-): Promise<R> => {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  const responseData: R | ApiError = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      (responseData as ApiError).message ?? "Erro na requisição: Usuário Inativo ou Credenciais incorretas."
-    );
   }
 
-  return responseData as R;
+  return (await response.text()) as unknown as R;
 };
-

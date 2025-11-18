@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { createCheckList, updateCheckList } from "@/lib/services/CheckList";
+import { actionCreateCheckList, actionUpdateCheckList } from "@/lib/actions/checklistActions";
 import { Edit } from "lucide-react";
 
 interface Props {
@@ -32,12 +32,13 @@ export default function AddChecklistModal({ cardId, onCreated, checklistId, init
     setIsLoading(true);
     try {
       if (checklistId) {
-        await updateCheckList(cardId, checklistId, false, title);
+        await actionUpdateCheckList(cardId, checklistId, false, title);
       } else {
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("is_check", "false");
-        await createCheckList(cardId, formData);
+        const result = await actionCreateCheckList(cardId, title);
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
       }
       setTitle("");
       setIsOpen(false);

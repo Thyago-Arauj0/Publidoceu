@@ -1,9 +1,9 @@
 'use server'
 
 import { ClientManagement } from "@/components/admin/admin-dashboard"
-import { getBoards } from "@/lib/services-server/Board"
-import { getUsers } from "@/lib/services-server/User"
-import { getCards } from "@/lib/services-server/Card"
+import { getBoards } from "@/lib/services/Board"
+import { getUsers } from "@/lib/services/User"
+import { getCards } from "@/lib/services/Card"
 import { UserProfile } from "@/lib/types/userType"
 
 export default async function DashboardPage() {

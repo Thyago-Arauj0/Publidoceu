@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
 //Rotas
 const publicPaths = ["/", "/login", "/home", "/Questions"];
 const blockedWhenLoggedIn = ["/login"];
 const adminPaths = ["/dashboard", "/clients"];
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const token = req.cookies.get("access_token")?.value;
+  const refreshToken = req.cookies.get("refresh_token")?.value;
   const isAdmin = req.cookies.get("isAdmin")?.value === "true";
   const userId = req.cookies.get("userId")?.value || "";
   const pathname = url.pathname;

@@ -7,14 +7,27 @@ import { MoreHorizontal, Calendar } from "lucide-react"
 import Link from "next/link"
 import { CreatePostModal } from "./create-post-modal"
 import { getStatusColor } from "@/lib/helpers/getStatusColor"
-import { KanbanCardProps } from "@/lib/types/cardType"
+import { Board } from "@/lib/types/boardType"
+import { Card as CardType } from "@/lib/types/cardType"
+import { UserProfile } from "@/lib/types/userType"
+
+export interface KanbanCardProps {
+  card: CardType;
+  user: UserProfile | null
+  board: Board 
+  onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
+  onDelete: (boardId: number, cardId: number) => void
+  onUpdateCard?: (updateCard: CardType ) => void
+}
+
+
 
 const statusOptions = Object.entries(STATUS_LABELS_PT).map(([value, label]) => ({
   value: value as CardStatus,
   label,
 }))
 
-export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
+export function KanbanCard({ card, user, board, onMove, onDelete, onUpdateCard }: KanbanCardProps) {
 
 
   return (
@@ -38,7 +51,8 @@ export function KanbanCard({ card, board, onMove, onDelete, onUpdateCard }: Kanb
               onUpdatePost={(updatedCard: any) => {
                  if (onUpdateCard) onUpdateCard(updatedCard)
               }}
-              userId={String(board.customer)}
+              board={board}
+              user={user}
               editingCard={card}
               isEditing={true}
             />

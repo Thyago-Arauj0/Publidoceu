@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CalendarDays, Clock, MessageSquare, User, FileText, List, MoreVertical, Trash, Download } from "lucide-react"
 import Footer from "../footer"
 import Loading from "@/app/(areaSocialMedia)/clients/[userId]/cards/[cardId]/loading"
-import { getCheckLists } from "@/lib/services/CheckList"
+import { actionGetChecklists } from "@/lib/actions/checklistActions"
 import AddChecklistModal from "./add-checklist-modal"
 import Image from "next/image"
 import AddFileModal from "./add-file-modal"
@@ -248,8 +248,9 @@ export default function CardDetails({ user, board, card, checklists, files, erro
                   {card.id && (
                     <AddChecklistModal
                       cardId={card.id.toString()}
-                      onCreated={() => {
-                        getCheckLists(card.id.toString()).then(setChecklists);
+                      onCreated={async () => {
+                        const res = await actionGetChecklists(card.id.toString());
+                        if (res.success) setChecklists(res.data ?? []);
                       }}
                     />
                     )}
@@ -277,7 +278,10 @@ export default function CardDetails({ user, board, card, checklists, files, erro
                                 cardId={card.id.toString()}
                                 checklistId={item.id.toString()}
                                 initialTitle={title}
-                                onCreated={() => getCheckLists(card.id.toString()).then(setChecklists)}
+                                onCreated={async () => {
+                                  const res = await actionGetChecklists(card.id.toString());
+                                  if (res.success) setChecklists(res.data ?? []);
+                                }}
                               />
                               <Button
                                 variant="destructive"

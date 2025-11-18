@@ -12,29 +12,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Upload, X, FileText, List, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { CardStatus, Card } from "@/lib/types/cardType"
-import { createCard, updateCard } from "@/lib/services/Card"
-import { getFiles, createFile, deleteFile } from "@/lib/services/File"
-import { getCheckLists, createCheckList, deleteCheckList } from "@/lib/services/CheckList"
+import { actionCreateCard, actionUpdateCard } from "@/lib/actions/cardActions"
+import {actionGetFiles, actionCreateFile, actionDeleteFile} from "@/lib/actions/fileActions"
+import { actionGetChecklists, actionCreateCheckList, actionDeleteCheckList} from "@/lib/actions/checklistActions"
 import { File as FileType } from "@/lib/types/cardType"
 import { CheckList } from "@/lib/types/cardType"
 import { uploadToCloudinary } from "@/lib/services/Cloudinary"
 import { compressFile } from "@/lib/helpers/compressFile"
 import ModalError from "../others/modal-error"
-import useUser from "@/hooks/use-user"
 import { CheckListItem } from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType"
+import { UserProfile } from "@/lib/types/userType"
 
 interface CreatePostModalProps {
   onCreatePost: (post: any) => void
   onUpdatePost?: (post: any) => void
-  boards: Board[]
-  userId: number | string
+  board: Board
+  user: UserProfile | null
   editingCard?: Card | null
   isEditing?: boolean
 }
 
 interface FilePreview {
-  id: string // ID temporário para identificar o arquivo antes do upload
+  id: string 
   file: File
   previewUrl: string
   name: string
@@ -45,8 +45,8 @@ interface FilePreview {
 export function CreatePostModal({ 
   onCreatePost, 
   onUpdatePost, 
-  boards,
-  userId, 
+  board,
+  user, 
   editingCard = null, 
   isEditing = false 
 }: CreatePostModalProps) {
@@ -66,8 +66,6 @@ export function CreatePostModal({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [newCheckListItemTitle, setNewCheckListItemTitle] = useState("") // título do novo item
-
-  const { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser} = useUser(boards, userId)
 
   useEffect(() => {
     if (open && isEditing && editingCard) {
@@ -98,16 +96,13 @@ export function CreatePostModal({
   const fetchExistingData = async () => {
     if (open && isEditing && editingCard) {
       try {
-        // Buscar arquivos existentes
-        if (boards && boards.length > 0) {
-          const board = boards[0]; // ou encontre o board correto
-          const files = await getFiles(String(board.id), String(editingCard.id));
-          setExistingFiles(files);
-        }
+        const files = await actionGetFiles(String(board.id), String(editingCard.id));
+        setExistingFiles(files);
+        console.log("files: ", files)
 
-        // Buscar checklists existentes
-        const checkLists = await getCheckLists(String(editingCard.id));
-        setExistingCheckLists(checkLists);
+        const checkLists = await actionGetChecklists(String(editingCard.id));
+        setExistingCheckLists(checkLists.success ? checkLists.data ?? [] : []);
+        console.log("checklists: ", checkLists)
       } catch (error) {
         console.error("Erro ao carregar dados existentes:", error);
         setError("Erro ao carregar dados do card");
@@ -117,7 +112,7 @@ export function CreatePostModal({
   };
 
   fetchExistingData();
-  }, [open, isEditing, editingCard, boards]); 
+  }, [open, isEditing, editingCard, board]); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,7 +123,6 @@ export function CreatePostModal({
       return
     }
 
-    const board = boards?.find(board => board.customer === user?.id)
     if (board) {
       formData.board = board.id
     } else {
@@ -171,17 +165,16 @@ export function CreatePostModal({
     })
 
     try {
-      // Criar ou atualizar card
       let cardResult
       if (isEditing && editingCard) {
-        cardResult = await updateCard(form, String(editingCard.id))
+        cardResult = await actionUpdateCard(form, String(editingCard.id))
         if (onUpdatePost) onUpdatePost(cardResult)
       } else {
-        cardResult = await createCard(form)
+        cardResult = await actionCreateCard(form)
         onCreatePost(cardResult)
       }
 
-      // ✅ CORREÇÃO: Upload dos novos arquivos para Cloudinary primeiro
+      // Upload dos novos arquivos para Cloudinary primeiro
       if (newFiles.length > 0) {
         for (const filePreview of newFiles) {
           try {
@@ -198,14 +191,14 @@ export function CreatePostModal({
             console.log("✅ Upload concluído, URL:", cloudinaryUrl)
             
             // 2. Salva a URL no backend
-            await createFile(board.id.toString(), String(cardResult.id), { 
-              file: cloudinaryUrl 
-            })
+            // await createFile(board.id.toString(), String(cardResult.id), { 
+            //   file: cloudinaryUrl 
+            // })
+            await actionCreateFile(board.id.toString(), String(cardResult.id), cloudinaryUrl);
             console.log("✅ Arquivo salvo no banco de dados")
             
           } catch (fileError) {
             console.error(`❌ Erro ao processar arquivo ${filePreview.name}:`, fileError)
-            // Continua com os outros arquivos mesmo se um falhar
           }
         }
       }
@@ -213,9 +206,14 @@ export function CreatePostModal({
       // Criar novos itens de checklist
       if (newCheckListItems.length > 0) {
         for (const item of newCheckListItems) {
-          const checklistForm = new FormData();
-          checklistForm.append("title", item.title);
-          await createCheckList(String(cardResult.id), checklistForm);
+          // const checklistForm = new FormData();
+          // checklistForm.append("title", item.title);
+          try {
+            // await createCheckList(String(cardResult.id), checklistForm);
+            await actionCreateCheckList(String(cardResult.id), item.title);
+          } catch (err) {
+            console.error("ERRO AO CRIAR CHECKLIST:", err);
+          }
         }
       }
 
@@ -240,25 +238,20 @@ export function CreatePostModal({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
     if (!selectedFiles || selectedFiles.length === 0) return
-
     const newFilePreviews: FilePreview[] = []
-
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i]
       const previewUrl = URL.createObjectURL(file)
       
       newFilePreviews.push({
-        id: `new-${Date.now()}-${i}`, // ID temporário
+        id: `new-${Date.now()}-${i}`, 
         file,
         previewUrl,
         name: file.name,
         type: file.type
       })
     }
-
     setNewFiles(prev => [...prev, ...newFilePreviews])
-    
-    // Reset do input para permitir selecionar o mesmo arquivo novamente
     e.target.value = ""
   }
 
@@ -273,15 +266,12 @@ export function CreatePostModal({
   const handleRemoveExistingFile = async (fileId: number) => {
     if (!editingCard) return
 
-    if (!boards || boards.length === 0) {
+    if (!board) {
       console.log("Aguardando boards...");
       return;
     }
-
-    const board = boards[0];
-
     try {
-      await deleteFile(String(board.id), String(editingCard.id), String(fileId))
+      await actionDeleteFile(String(board.id), String(editingCard.id), String(fileId))
       setExistingFiles(prev => prev.filter(file => file.id !== fileId))
     } catch (error) {
       if (error instanceof Error) {
@@ -312,7 +302,7 @@ export function CreatePostModal({
     if (!editingCard) return
 
     try {
-      await deleteCheckList(String(editingCard.id), String(checkListId))
+      await actionDeleteCheckList(String(editingCard.id), String(checkListId))
       setExistingCheckLists(prev => prev.filter(item => item.id !== checkListId))
     } catch (error) {
       if (error instanceof Error) {
@@ -625,11 +615,6 @@ export function CreatePostModal({
         error={error}
       />
 
-       <ModalError
-        open={isErrorModalOpenUser}
-        setIsErrorModalOpen={setIsErrorModalOpenUser}
-        error={errorUser}
-      />
     </>
   )
 }

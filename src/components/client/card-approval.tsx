@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, MessageSquare, FileText, Check, X, Download } from "lucide-react"
-import { addFeedback } from "@/lib/services/Card"
 import Loading from "@/app/(areaClient)/client/[userId]/card/[cardId]/loading"
 import { CheckList as CheckListType } from "@/lib/types/cardType"
 import Footer from "../footer"
@@ -35,8 +34,6 @@ interface Props {
 }
 
 export function PostApproval({ board, card, checklists, files, error }: Props) {
-  const [feedback, setFeedback] = useState("")
-  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
   const [err, setError] = useState<string | null>(null)
@@ -46,7 +43,7 @@ export function PostApproval({ board, card, checklists, files, error }: Props) {
     return <div>Erro: dados incompletos.</div>;
   }
 
-  const { Card, setCard, handleApproval, isLoadingCard, isEditingCard, setIsEditingCard } = useCard(board)
+  const { Card, setCard, handleApproval, isLoadingCard, isEditingCard, setIsEditingCard, handleFeedbackSubmit, isLoadingFeedback, feedback, setFeedback } = useCard(board)
   const { Checklists, setChecklists, handleToggleChecklist, isLoadingChecklist } = useChecklist(Card)
   const { Files, setFiles, isLoadingFile, handleApproveFile, handleDisapproveFile } = useFiles(board, Card) 
 
@@ -57,19 +54,7 @@ export function PostApproval({ board, card, checklists, files, error }: Props) {
   }, [])
 
 
-  const handleFeedbackSubmit = async () => {
-    if (!feedback.trim()) return;
-    setIsLoadingFeedback(true);
-    try {
-      await addFeedback(String(board.id), String(Card.id), feedback);
-      setCard((prev) => ({ ...prev, feedback: { id: prev.feedback?.id || 0, card: prev.id, text: feedback } }));
-      setFeedback("");
-    } catch (error) {
-      console.error("Erro ao adicionar feedback:", error);
-    } finally {
-      setIsLoadingFeedback(false);
-    }
-  }
+
 
   useEffect(() => {
     if (error) {

@@ -1,9 +1,8 @@
 "use client"
 
 import { useState} from "react";
-import { deleteUser, updateUser, createUser } from "@/lib/services/User";
+import { actionDeleteClient, actionUpdateClient, actionCreateClient } from "@/lib/actions/clientActions";
 import { Client } from "@/lib/types/userType";
-import { formatWhatsapp } from "@/lib/helpers/formatWhatsapp"
 
 
 export default function useClients() {
@@ -32,16 +31,7 @@ export default function useClients() {
 
         if (editingClient) {
           try {
-            const updatedUser = await updateUser(
-              editingClient.id,
-              formData.name,
-              formData.email,
-              formData.password || undefined,
-              { whatsapp: formatWhatsapp(formData.phone) },
-              editingClient.is_active,
-              null,
-              null,
-            )
+            const updatedUser = await actionUpdateClient(editingClient, formData)
             setClients(
               clients.map((client) =>
                 client.id === editingClient.id ? { ...client, ...updatedUser, phone: formData.phone } : client,
@@ -57,13 +47,7 @@ export default function useClients() {
           }
         } else {
           try {
-            const newUser = await createUser(
-              formData.name,
-              formData.email,
-              formData.password,
-              null,
-              null
-            )
+            const newUser = await actionCreateClient(formData)
             const newClient: Client = {
               id: newUser.id,
               name: newUser.name,
@@ -107,7 +91,7 @@ export default function useClients() {
 
     const handleDeleteClient = async (clientId: string | number) => {
          try {
-           await deleteUser(clientId)
+           await actionDeleteClient(clientId)
            setClients(clients.filter((client) => client.id !== clientId))
          } catch (error) {
            console.error("Failed to delete user:", error)

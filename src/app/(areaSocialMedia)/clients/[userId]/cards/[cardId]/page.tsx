@@ -1,12 +1,12 @@
 import CardDetails from "@/components/admin/card-details"
 import React from "react";
-import { getBoards } from "@/lib/services-server/Board";
-import { getCard } from "@/lib/services-server/Card";
-import { getFiles } from "@/lib/services-server/File";
-import { getCheckLists } from "@/lib/services-server/CheckList";
+import { getBoards } from "@/lib/services/Board";
+import { getCard } from "@/lib/services/Card";
+import { getFiles } from "@/lib/services/File";
+import { getCheckLists } from "@/lib/services/CheckList";
 import { CheckList } from "@/lib/types/cardType";
 import { File } from "@/lib/types/cardType"
-import { getUser } from "@/lib/services-server/User"
+import { getUser } from "@/lib/services/User"
 
 interface ClientPageProps {
   params: {

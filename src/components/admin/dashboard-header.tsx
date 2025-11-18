@@ -3,15 +3,20 @@ import { ArrowLeft } from "lucide-react"
 import { CreatePostModal } from "@/components/admin/create-post-modal"
 import Link from "next/link"
 import { Board } from "@/lib/types/boardType"
+import { UserProfile } from "@/lib/types/userType"
 
 interface DashboardHeaderProps {
   onCreatePost: (post: any) => void,
   boards: Board[]
-  userId: string
+  user: UserProfile | null
 }
 
-export function DashboardHeader({ onCreatePost, boards, userId }: DashboardHeaderProps) {
+export function DashboardHeader({ onCreatePost, boards, user }: DashboardHeaderProps) {
 
+  const board = boards.find(b => String(b.customer) === String(user?.id))
+
+  if (!board) return null;
+  
   return (
     <header className="bg-[#1e3a5f] dark:bg-gray-800 border-b text-white border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-4">
@@ -26,7 +31,7 @@ export function DashboardHeader({ onCreatePost, boards, userId }: DashboardHeade
           </div>
 
           <div className="flex items-center gap-4">
-            <CreatePostModal onCreatePost={onCreatePost} boards={boards} userId={userId}/>
+            <CreatePostModal onCreatePost={onCreatePost} board={board} user={user}/>
           </div>
         </div>
       </div>

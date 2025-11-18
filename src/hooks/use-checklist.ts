@@ -1,6 +1,6 @@
 import { useState} from "react";
 import { Card, CheckList as CheckListType } from "@/lib/types/cardType";
-import { deleteCheckList, updateCheckList } from "@/lib/services/CheckList";
+import { actionDeleteCheckList, actionUpdateCheckList } from "@/lib/actions/checklistActions";
 import { useItemLoading } from "@/hooks/use-item-loading"
 
 export default function useChecklist(card: Card) {
@@ -12,7 +12,7 @@ export default function useChecklist(card: Card) {
   const handleToggleChecklist = async (itemId: number, itemData: CheckListType) => {
     startLoading(itemId)
     try {
-      const updated = await updateCheckList(
+      const updated = await actionUpdateCheckList(
         card.id.toString(), 
         itemId.toString(), 
         !itemData.is_check, 
@@ -38,7 +38,7 @@ export default function useChecklist(card: Card) {
       if (!confirm("Deseja realmente excluir este checklist?")) return;
   
       try {
-        await deleteCheckList(card.id.toString(), checklistId);
+        await actionDeleteCheckList(card.id.toString(), checklistId);
         setChecklists((prev) => prev.filter((item) => item.id.toString() !== checklistId));
       } catch (err) {
         console.error("Erro ao excluir checklist:", err);

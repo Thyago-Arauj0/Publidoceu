@@ -1,7 +1,7 @@
 import { ClientDashboard } from "@/components/client/client-dashboard"
-import { getBoards } from "@/lib/services-server/Board"
-import { getCards } from "@/lib/services-server/Card"
-import { getUser } from "@/lib/services-server/User"
+import { getBoards } from "@/lib/services/Board"
+import { getCards } from "@/lib/services/Card"
+import { getUser } from "@/lib/services/User"
 
 import { Card } from "@/lib/types/cardType"
 

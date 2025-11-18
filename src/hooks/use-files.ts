@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Board } from "@/lib/types/boardType";
-import { getFiles, deleteFile, updateFile } from "@/lib/services/File";
+import { actionGetFiles, actionDeleteFile, actionUpdateFile } from "@/lib/actions/fileActions";
 import { Card, File as FileType } from "@/lib/types/cardType";
 import { useItemLoading } from "@/hooks/use-item-loading"
 
@@ -15,7 +15,7 @@ export default function useFiles(board: Board, card: Card) {
     if (!confirm("Deseja realmente excluir este arquivo?")) return;
 
     try {
-      await deleteFile(board.id.toString(), card.id.toString(), fileId);
+      await actionDeleteFile(board.id.toString(), card.id.toString(), fileId);
       setFiles((prev) => prev.filter((file) => file.id.toString() !== fileId));
     } catch (err) {
       console.error("Erro ao excluir arquivo:", err);
@@ -25,7 +25,7 @@ export default function useFiles(board: Board, card: Card) {
   const refreshFiles = async () => {
     if (!card) return;
     try {
-      const filesData = await getFiles(board.id.toString(), card.id.toString());
+      const filesData = await actionGetFiles(board.id.toString(), card.id.toString());
       setFiles(filesData);
     } catch (error) {
       console.error("Erro ao atualizar arquivos:", error);
@@ -38,7 +38,7 @@ export default function useFiles(board: Board, card: Card) {
     startLoading(parseInt(fileId))
     try {
       // Criar FormData para enviar o status de aprovação
-      await updateFile(String(board.id), card.id.toString(), fileId, true);
+      await actionUpdateFile(String(board.id), card.id.toString(), fileId, true);
       
       // Atualizar estado local
       setFiles(prev => prev.map(file => 
@@ -59,7 +59,7 @@ export default function useFiles(board: Board, card: Card) {
     startLoading(parseInt(fileId))
     try {
       // Criar FormData para enviar o status de aprovação
-      await updateFile(String(board.id), card.id.toString(), fileId, false);
+      await actionUpdateFile(String(board.id), card.id.toString(), fileId, false);
       
       // Atualizar estado local
       setFiles(prev => prev.map(file => 

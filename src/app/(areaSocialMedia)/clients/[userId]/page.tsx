@@ -3,8 +3,9 @@
 import React from "react"
 import { Kanban } from "@/components/admin/kanban"
 import Footer from "@/components/footer"
-import { getBoards } from "@/lib/services-server/Board"
-import { getCards } from "@/lib/services-server/Card"
+import { getBoards } from "@/lib/services/Board"
+import { getCards } from "@/lib/services/Card"
+import { getUser } from "@/lib/services/User"
 import { Card } from "@/lib/types/cardType"
 
 
@@ -23,11 +24,12 @@ export default async function ClientsPage({ params }: ClientPageProps) {
     if(board){
       cards = await getCards(String(board.id))
     }
+    const user = await getUser(params.userId)
 
     return (
       <div className="min-h-screen dark:bg-gray-900">
         <main>
-          <Kanban cards={cards} userId={params.userId} boards={boards} error={null} />
+          <Kanban cards={cards} user={user} boards={boards} error={null} />
         </main>
         <Footer/>
       </div>
@@ -37,7 +39,7 @@ export default async function ClientsPage({ params }: ClientPageProps) {
     return (
       <div className="min-h-screen dark:bg-gray-900">
         <main>
-          <Kanban cards={[]} userId={''} boards={[]} error={error}/>
+          <Kanban cards={[]} user={null} boards={[]} error={error}/>
         </main>
         <Footer/>
       </div>

@@ -1,14 +1,63 @@
+'use server'
+
 import { UserProfile } from "../types/userType";
 // import { revalidateTag } from "next/cache";
-import { authFetch } from "@/lib/services/Auth";
+
+import { serverAuthFetch } from "./Auth";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
+
+interface JwtPayload {
+  user_id: string;
+  exp: number;
+  iat: number;
+}
+
+
+export const getUser = async (id?: string | number): Promise<UserProfile> => {
+  let userId = id;
+  const cookiesStore = await cookies()
+  const token = cookiesStore.get("access_token")?.value ?? null;
+
+  // Se não foi passado id, tenta pegar do token
+  if (!userId) {
+
+    
+    if (!token) {
+      console.error("❌ Token não encontrado");
+      throw new Error("Usuário não autenticado");
+    }
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      userId = decoded.user_id;
+    } catch (decodeError) {
+      console.error("❌ Erro ao decodificar token:", decodeError);
+      throw new Error("Token inválido");
+    }
+  }
+
+  try {
+    return serverAuthFetch(
+      `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
+      { method: "GET",
+        cache: 'no-store'
+       }
+    );
+
+  } catch (error) {
+    console.error('❌ Erro na requisição getUser:', error);
+    throw error;
+  }
+};
 
 
 
 export const getUsers = async (): Promise<UserProfile[]> => {
   try {
-    const response = await authFetch<UserProfile[]>(`${API_BASE_URL}/api/v1/auth/account/`, {
+    return serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/`, {
       method: "GET",
       cache: 'no-store'
       // next: { 
@@ -16,13 +65,6 @@ export const getUsers = async (): Promise<UserProfile[]> => {
       //   tags: ['users']
       //  },
     });
-
-
-    if (!response) {
-      throw new Error(`Erro ao buscar usuários`);
-    }
-    return response;
-
   } catch (error) {
     console.error("❌ Erro ao buscar usuários:", error);
     throw error;
@@ -38,7 +80,7 @@ export const createUser = async (
   last_name?: string | null
 ): Promise<UserProfile> => {
   try {
-    const response = await authFetch<UserProfile>(
+    return serverAuthFetch(
       `${API_BASE_URL}/api/v1/auth/register/`,
       {
         method: "POST",
@@ -51,11 +93,6 @@ export const createUser = async (
         }),
       }
     );
-    if (!response) {
-      throw new Error("Falha ao atualizar usuário.");
-    }
-    // revalidateTag('users');
-    return response;
   }catch (err: any) {
      parseApiError(err);
   }
@@ -74,7 +111,7 @@ export const updateUser = async (
   last_name?: string | null,
 ): Promise<UserProfile> => {
    try {
-    let response = await authFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    return serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
       method: "PATCH",
       body: JSON.stringify({
         name,
@@ -86,12 +123,6 @@ export const updateUser = async (
         last_name: last_name ?? null,
       }),
     })
-
-    if (!response) {
-      throw new Error("Falha ao atualizar usuário.");
-    }
-    // revalidateTag('users');
-    return response;
     }catch (err: any) {
      parseApiError(err);
   }
@@ -100,7 +131,7 @@ export const updateUser = async (
 
 export const deleteUser = async (id: number | string): Promise<void> => {
   try{
-    await authFetch<void>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
       method: "DELETE",
     })
     // revalidateTag('users');

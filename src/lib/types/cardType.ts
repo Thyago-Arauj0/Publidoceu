@@ -56,16 +56,4 @@ export interface File {
 }
 
 
-export interface KanbanProps {
-  newPosts: Card[],
-  userId: string
-}
-
-export interface KanbanCardProps {
-  card: Card
-  board: Board
-  onMove: (boardId: number , cardId: number, newStatus: CardStatus) => void
-  onDelete: (boardId: number, cardId: number) => void
-  onUpdateCard?: (updateCard: Card ) => void
-}
 

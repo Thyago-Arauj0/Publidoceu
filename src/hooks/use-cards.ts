@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { updateCardStatus, deleteCard } from "@/lib/services/Card"
+import { actionUpdateCardStatus, actionDeleteCard } from "@/lib/actions/cardActions"
 import { Card as CardType, CardStatus } from "@/lib/types/cardType"
 import { Board } from "@/lib/types/boardType"
 
@@ -24,7 +24,7 @@ export default function useCards(
   const handleDeleteCard = async (boardId: number, cardId: number) => {
     if (!cardId) return
     try {
-      await deleteCard(boardId.toString(), cardId.toString())
+      await actionDeleteCard(boardId.toString(), cardId.toString())
       setCards(prev => prev.filter(c => c.id !== cardId))
       setConfirmModalCard({ isOpen: false }) // Fecha o modal apenas depois da exclusão
     } catch (error) {
@@ -51,7 +51,7 @@ export default function useCards(
     const board = boards.find(b => String(b.customer) === String(userId))
 
     if (!board) return console.error("Erro! BoardId não encontrado.")
-    updateCardStatus(board.id.toString(), cId, newStatus).catch(console.error)
+    actionUpdateCardStatus(board.id.toString(), cId, newStatus).catch(console.error)
   }
   
   

@@ -11,16 +11,17 @@ import { Card } from "@/lib/types/cardType"
 import { useState, useEffect } from "react"
 import { Board } from "@/lib/types/boardType"
 import { DashboardHeader } from "./dashboard-header"
+import { UserProfile } from "@/lib/types/userType"
 
 interface KanbanProps {
   cards: Card[],
-  userId: string | '',
+  user: UserProfile | null,
   boards: Board[],
   error: string | null
 }
 
 
-export function Kanban({ cards, userId, boards, error }: KanbanProps) {
+export function Kanban({ cards, user, boards, error }: KanbanProps) {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
@@ -29,7 +30,7 @@ export function Kanban({ cards, userId, boards, error }: KanbanProps) {
   const {
     setCards, activeStatus, setActiveStatus, statusList, confirmModalCard, 
     openDeleteModal, handleDeleteCard, handleUpdateCard, getCardsByStatus, moveCard, setConfirmModalCard
-  } = useCards(boards, userId)
+  } = useCards(boards, String(user?.id))
 
   useEffect(()=>{
     setCards(cards)
@@ -60,7 +61,7 @@ export function Kanban({ cards, userId, boards, error }: KanbanProps) {
 
   return (
     <>
-      <DashboardHeader onCreatePost={handleCreatePost} boards={boards} userId={userId} />
+      <DashboardHeader onCreatePost={handleCreatePost} boards={boards} user={user} />
       <div className="container mx-auto px-4 py-6 min-h-screen">
         <div className="flex flex-wrap gap-2 mb-4">
           {statusList.map(status => (
@@ -83,7 +84,7 @@ export function Kanban({ cards, userId, boards, error }: KanbanProps) {
           ) : (
           <div className="mt-10 grid md:grid-cols-4 gap-3">
           {getCardsByStatus(activeStatus).map(card => {
-              const board = boards.find(b => String(b.customer) === String(userId))
+              const board = boards.find(b => String(b.customer) === String(user?.id))
 
               if (!board) return <p>Carregando cards...</p>
 
@@ -91,6 +92,7 @@ export function Kanban({ cards, userId, boards, error }: KanbanProps) {
                 <KanbanCard
                   key={card.id}
                   card={card}
+                  user={user}
                   board={board}
                   onMove={(bId, cId, status) => moveCard(cId, status)}
                   onDelete={() => openDeleteModal(card)} 
@@ -113,7 +115,7 @@ export function Kanban({ cards, userId, boards, error }: KanbanProps) {
           action="delete"
           item={{  id: confirmModalCard.card?.id ?? 0, title: confirmModalCard.card?.title }}
           handleDelete={(id) => {
-            const board = boards?.find(b => String(b.customer) === String(userId))
+            const board = boards?.find(b => String(b.customer) === String(user?.id))
             if (!board) return
             handleDeleteCard(Number(board.id), Number(id))
           }}

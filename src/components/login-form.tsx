@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn } from "lucide-react"
-import { loginUser } from "@/lib/services/AuthService"
 import ModalError from "./others/modal-error"
+import { serverLogin } from "@/lib/services/Login"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -34,18 +34,16 @@ export function LoginForm() {
     }
 
     try {
-
-        const result = await loginUser({ email, password })
-
-        if (result.userType === "admin") {
-          router.push("/dashboard")
-          // Cookies.set("isAdmin", "true", { expires: 7 })
-        }else if(result.userType === "client"){
-          const clientId = `${result.user.id}`
-          // Cookies.set("isAdmin", "false", { expires: 7 })
-          // Cookies.set("userId", clientId, { expires: 7 })
-          router.push(`/client/${clientId}`)
-        }
+      const result = await serverLogin({
+        email,
+        password
+      });
+      if (result.userType === "admin") {
+        router.push("/dashboard")
+      }else if(result.userType === "client"){
+        const clientId = `${result.user.id}`
+        router.push(`/client/${clientId}`)
+      }
     } catch (error: unknown) {
         if (error instanceof Error) {
         setError(error.message)

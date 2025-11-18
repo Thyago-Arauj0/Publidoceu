@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/services-server/User";
+import { actionGetUser } from "@/lib/actions/userActions"
 import { Board } from "@/lib/types/boardType";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/lib/types/userType";
@@ -11,13 +11,14 @@ export default function useUser( boards: Board[], userId: string | number) {
 
   
  useEffect(() => {
-  if (boards.length === 0) return; // espera boards carregarem
+  if (!boards || boards.length === 0) return;
 
   const fetchUser = async () => {
     setIsLoadingUser(true); 
     try {
-      const data = await getUser(userId);
-      setUser(data);
+      const user = await actionGetUser(userId);
+      setUser(user);
+      console.log(user)
     } catch (error) {
       setIsErrorModalOpenUser(true);
       setErrorUser("Erro ao carregar usuário");
@@ -28,7 +29,7 @@ export default function useUser( boards: Board[], userId: string | number) {
   };
 
   fetchUser()
-}, [boards, userId])
+}, [userId])
 
   return { user, isErrorModalOpenUser, setIsErrorModalOpenUser, errorUser, isLoadingUser };
 }

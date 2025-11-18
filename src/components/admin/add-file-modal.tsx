@@ -6,7 +6,7 @@ import { FileText, Plus, Upload, X } from "lucide-react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { createFile } from "@/lib/services/File"
+import { actionCreateFile } from "@/lib/actions/fileActions"
 import { uploadToCloudinary } from "@/lib/services/Cloudinary"
 import { compressFile } from "@/lib/helpers/compressFile"
 
@@ -55,7 +55,12 @@ export default function AddFileModal({
         }
         
         const cloudinaryUrl = await uploadToCloudinary(compressedFile)// retorna secure_url
-        await createFile(boardId, cardId, { file: cloudinaryUrl } as any)// salva a URL no backend
+        // await createFile(boardId, cardId, { file: cloudinaryUrl } as any)// salva a URL no backend
+        const res = await actionCreateFile(boardId, cardId, cloudinaryUrl);
+
+        if (!res.success) {
+          throw new Error(res.error);
+        }
       }
 
       // 🔹 2️⃣ Limpa e atualiza a lista
@@ -119,10 +124,10 @@ export default function AddFileModal({
                   {selectedFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded">
                       <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
-                        <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <FileText className="h-4 w-4 text-gray-500" />
                         <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
                           <span className="text-sm truncate block min-w-0 flex-1 max-w-[10vh]">{file.name}</span>
-                          <span className="text-xs text-gray-500 flex-shrink-0 whitespace-nowrap">
+                          <span className="text-xs text-gray-500 whitespace-nowrap">
                             ({(file.size / 1024 / 1024).toFixed(2)} MB)
                           </span>
                         </div>
@@ -132,7 +137,7 @@ export default function AddFileModal({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(index)}
-                        className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                        className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-3 w-3" />
                       </Button>
