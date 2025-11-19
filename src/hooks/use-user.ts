@@ -18,7 +18,6 @@ export default function useUser( boards: Board[], userId: string | number) {
     try {
       const user = await actionGetUser(userId);
       setUser(user);
-      console.log(user)
     } catch (error) {
       setIsErrorModalOpenUser(true);
       setErrorUser("Erro ao carregar usuário");

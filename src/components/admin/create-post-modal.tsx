@@ -98,11 +98,9 @@ export function CreatePostModal({
       try {
         const files = await actionGetFiles(String(board.id), String(editingCard.id));
         setExistingFiles(files);
-        console.log("files: ", files)
 
         const checkLists = await actionGetChecklists(String(editingCard.id));
         setExistingCheckLists(checkLists.success ? checkLists.data ?? [] : []);
-        console.log("checklists: ", checkLists)
       } catch (error) {
         console.error("Erro ao carregar dados existentes:", error);
         setError("Erro ao carregar dados do card");
