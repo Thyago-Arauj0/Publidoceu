@@ -9,7 +9,7 @@ export const getBoards = async (): Promise<Board[]> => {
   try{
     return serverAuthFetch(`${API_BASE_URL}/api/v1/board/`, {
       method: "GET",
-      cache: 'no-store', 
+      cache: 'force-cache', 
       // next: { revalidate: 1800 },
     });
   }catch(error){

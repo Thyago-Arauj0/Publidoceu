@@ -3,19 +3,19 @@
 import { Card, Feedback } from "../types/cardType";
 import { serverAuthFetch } from "./Auth";
 
-// import { revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL as string;
 
 
 export const getCards = async (boardId: string): Promise<Card[]> => {
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
+    return serverAuthFetch<Card[]>(`${API_BASE_URL}/api/v1/board/${boardId}/card/`, {
       method: "GET",
-      // next: { 
-      //   revalidate: 600,
-      //   tags: ['cards']
-      //  },
+      next: { 
+        revalidate: 600,
+        tags: ['cards']
+       },
     });
   }catch(error){
     console.error('❌ Erro na requisição dos cards:', error);
@@ -26,12 +26,12 @@ export const getCards = async (boardId: string): Promise<Card[]> => {
 
 export const getCard = async (boardId: string, cardId: string): Promise<Card> => {
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+    return serverAuthFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
       method: "GET",
-      // next: { 
-      //   revalidate: 600,
-      //   tags: ['cards']
-      //  },
+      next: { 
+        revalidate: 600,
+        tags: ['cards']
+       },
     });
   }catch(error){
     console.error('❌ Erro na requisição do card:', error);
@@ -43,18 +43,20 @@ export const updateCardStatus = async (
   boardId: string,
   cardId: string,
   status: string
-): Promise<void> => {
+): Promise<Card> => {
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+    const result = serverAuthFetch<Card>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
+    revalidateTag('cards');
+
+    return result
+    
   }catch(error){
     console.error('❌ Erro na atualização de status:', error);
     throw error;
   }
-
-  // revalidateTag('cards');
 };
 
 export const addFeedback = async (
@@ -62,13 +64,14 @@ export const addFeedback = async (
   cardId: string,
   feedbackText: string
 ): Promise<Feedback> => {
-
-  // revalidateTag('cards');
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+     const result =  serverAuthFetch<Feedback>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
       method: "PATCH",
       body: JSON.stringify({ feedback: { text: feedbackText } }),
     });
+    revalidateTag('cards');
+
+    return result
   }catch(error){
     console.error('❌ Erro ao adicionar feedback:', error);
     throw error;
@@ -76,12 +79,13 @@ export const addFeedback = async (
 };
 
 export const createCard = async (form: FormData): Promise<Card> => {
-  // revalidateTag('cards');
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
+     const result = serverAuthFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/`, {
       method: "POST",
       body: form, 
     });
+     revalidateTag('cards');
+     return result
   }catch(error){
     console.error('❌ Erro ao criar card:', error);
     throw error;
@@ -90,12 +94,13 @@ export const createCard = async (form: FormData): Promise<Card> => {
 
 
 export const updateCard = async (form: FormData, cardId: string): Promise<Card> => {
-  // revalidateTag('cards');
   try{
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
+     const result =  serverAuthFetch<Card>(`${API_BASE_URL}/api/v1/board/${form.get("board")}/card/${cardId}/`, {
       method: "PATCH",
       body: form, 
     });
+     revalidateTag('cards');
+     return result
   }catch(error){
     console.error('❌ Erro na atualização de card:', error);
     throw error;
@@ -105,16 +110,16 @@ export const updateCard = async (form: FormData, cardId: string): Promise<Card> 
 
 export const deleteCard = async (boardId: string, cardId: string): Promise<string> => {
   try{
-    serverAuthFetch(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
+    await serverAuthFetch<null>(`${API_BASE_URL}/api/v1/board/${boardId}/card/${cardId}/`, {
       method: "DELETE",
     });
 
+    revalidateTag('cards');
     return ({ message: "Card deletado com sucesso." }).message;
   }catch(error){
     console.error('❌ Erro ao deletar card:', error);
     throw error;
   }
-  // revalidateTag('cards');
 }
 
 

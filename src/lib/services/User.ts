@@ -1,7 +1,7 @@
 'use server'
 
-import { UserProfile } from "../types/userType";
-// import { revalidateTag } from "next/cache";
+import { Client, UserProfile } from "../types/userType";
+import { revalidateTag } from "next/cache";
 
 import { serverAuthFetch } from "./Auth";
 import { jwtDecode } from "jwt-decode";
@@ -23,13 +23,10 @@ export const getUser = async (id?: string | number): Promise<UserProfile> => {
 
   // Se não foi passado id, tenta pegar do token
   if (!userId) {
-
-    
     if (!token) {
       console.error("❌ Token não encontrado");
       throw new Error("Usuário não autenticado");
     }
-
     try {
       const decoded = jwtDecode<JwtPayload>(token);
       userId = decoded.user_id;
@@ -43,7 +40,10 @@ export const getUser = async (id?: string | number): Promise<UserProfile> => {
     return serverAuthFetch(
       `${API_BASE_URL}/api/v1/auth/account/${userId}/`,
       { method: "GET",
-        cache: 'no-store'
+        next: {
+          revalidate: 1800,
+          tags: ['users']
+        }
        }
     );
 
@@ -59,11 +59,10 @@ export const getUsers = async (): Promise<UserProfile[]> => {
   try {
     return serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/`, {
       method: "GET",
-      cache: 'no-store'
-      // next: { 
-      //   revalidate: 600,
-      //   tags: ['users']
-      //  },
+      next: { 
+        revalidate: 1800,
+        tags: ['users']
+       },
     });
   } catch (error) {
     console.error("❌ Erro ao buscar usuários:", error);
@@ -80,7 +79,7 @@ export const createUser = async (
   last_name?: string | null
 ): Promise<UserProfile> => {
   try {
-    return serverAuthFetch(
+    const response = serverAuthFetch<UserProfile>(
       `${API_BASE_URL}/api/v1/auth/register/`,
       {
         method: "POST",
@@ -93,6 +92,8 @@ export const createUser = async (
         }),
       }
     );
+    revalidateTag('users');
+    return response
   }catch (err: any) {
      parseApiError(err);
   }
@@ -111,7 +112,7 @@ export const updateUser = async (
   last_name?: string | null,
 ): Promise<UserProfile> => {
    try {
-    return serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    const response = serverAuthFetch<UserProfile>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
       method: "PATCH",
       body: JSON.stringify({
         name,
@@ -123,20 +124,23 @@ export const updateUser = async (
         last_name: last_name ?? null,
       }),
     })
+    revalidateTag('users');
+    return response
     }catch (err: any) {
      parseApiError(err);
   }
 }
 
 
-export const deleteUser = async (id: number | string): Promise<void> => {
+export const deleteUser = async (id: number | string): Promise<string> => {
   try{
-    serverAuthFetch(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
+    await serverAuthFetch<null>(`${API_BASE_URL}/api/v1/auth/account/${id}/`, {
       method: "DELETE",
     })
-    // revalidateTag('users');
+    revalidateTag('users');
+    return "Usuário deletado com sucesso";
   }catch(err:any){
-    throw new Error("Falha ao excluir cliente.");
+     throw new Error(`Falha ao excluir cliente: ${err?.message || err}`);
   }
 }
 

@@ -91,7 +91,7 @@ export default function CardDetails({ user, board, card, checklists, files, erro
       </header>
 
       { isLoading ? (
-          <div className="flex justify-center py-20 min-h-[400px] items-center">
+          <div className="flex justify-center py-20 min-h-[400px] items-center min-h-screen">
             <Loading />
           </div>
           ) : (
@@ -360,14 +360,14 @@ export default function CardDetails({ user, board, card, checklists, files, erro
           </main>  
         )}
 
-      <Footer/>
-
-
      <ModalError
         open={isErrorModalOpen}
         setIsErrorModalOpen={setIsErrorModalOpen}
         error={err}
       />
+
+      <Footer/>
+
     </div>
   )
 }

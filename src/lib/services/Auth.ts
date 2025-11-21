@@ -129,8 +129,8 @@ export const serverAuthFetch = async <R>(
 
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
-    return response.json();
+    return (await response.json()) as R;
   }
 
-  return (await response.text()) as unknown as R;
+  return (await response.text()) as R;
 };
