@@ -97,7 +97,7 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
       <section
         className={style.heroSection} id='hero'
         style={{
-          backgroundImage: "url(/assets/background.webp)",
+          backgroundImage: "url(https://res.cloudinary.com/dxmlji5j9/image/upload/f_auto,q_auto/w_1920/girl_e8xcn4.jpg)",
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
@@ -107,8 +107,8 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
 
           <div className={style.content}>
             <div className={style.logo} >
-              <a href="https://publidoceu.com" aria-label="Ir para o site Publi do Céu">
-                <Image src={'/assets/logo.png'} alt='Logo da Publi do Céu' height="80" width="80" className={style.logoImage} />
+              <a href="https://publidoceu.com.br" aria-label="Ir para o site Publi do Céu">
+                <Image src={'https://res.cloudinary.com/dxmlji5j9/image/upload/v1769560325/logo_e5ycmq.png'} alt='Logo da Publi do Céu' height="80" width="80" className={style.logoImage} />
               </a>
               <span 
                   ref={spanRef} 
@@ -121,8 +121,7 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
             <div className={`${style.start} max-w-5xl`}>
                 <div>
                   <div style={{ position: 'relative', display: 'inline-block' }} className='text-left'>                
-                    <h1 className='text-6xl relative' ref={titleRef}>Do céu:</h1>
-                    <h2 className='text-3xl relative' ref={subTitleRef}>O conteúdo é de outro mundo</h2>
+                    <h1 className='text-3xl md:text-5xl relative ' ref={titleRef}>Marketing com propósito para marcas que querem <b className="text-[#e04b19]">crescer</b> sem perder a essência.</h1>
                     <br />
                     <svg 
                       style={{ position: 'absolute', bottom: '-15px', left: '0' }} 
@@ -133,12 +132,11 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
                   </div>
                   <br />
                   <br />
-                  <p ref={descriptionRef}>Marketing com propósito. Criatividade, fé e estratégia alinhadas com o seu negócio.</p>
+                  <p ref={descriptionRef}>Criatividade, fé e estratégia alinhadas com o seu negócio.</p>
                 </div>
                 <br />
                 <br />
-                <div className="flex flex-col items-center gap-4 w-full max-w-[300px] mx-auto md:mx-0" ref={containerBtnRef}>
-                     {/* Botão de Orçamento - Primário */}
+                <div className="flex flex-col max-w-[400px] items-center gap-4 w-full mx-auto md:mx-0" ref={containerBtnRef}>
                     <Link href="/Questions" className="w-full cursor-pointer">
                       <Button
                         size="lg"
@@ -149,8 +147,6 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
                         <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
                     </Link>
-
-                    {/* Botão do WhatsApp - Laranja */}
                     <Link
                       href="https://wa.me/5575987055340?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20um%20pouco%20mais%20sobre%20seus%20servi%C3%A7os%2C%20vim%20pelo%20site."
                       target="_blank"
@@ -168,8 +164,6 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
                         </span>
                       </Button>
                     </Link>
-
-                    {/* Botão Já sou cliente - Primário */}
                     <Link href="/login" className="w-full cursor-pointer">
                       <Button
                         size="lg"

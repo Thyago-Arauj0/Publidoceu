@@ -8,6 +8,7 @@ import Works from '../layout/Works/Works'
 import Modal from '@/components/landing/Modal'
 import Header from '../layout/Header/Header'
 import About from '../layout/About/About'
+import ForWhom from '../layout/ForWhom/ForWhom'
 import Footer from '../layout/Footer/Footer'
 
 
@@ -22,7 +23,7 @@ export default function Landing(){
     return (
 
     <div className='overflow-hidden relative'>
-        <div className='absolute h-[100%] w-[100%]'>
+        <div className='absolute'>
         <Modal/>
         </div>
         <Header/>
@@ -30,6 +31,7 @@ export default function Landing(){
         <HeroSubMessage/>
         <About/>
         <ServicesSection/>
+        <ForWhom/>
         <Works/>
         <Contact/>
         <Footer/>

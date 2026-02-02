@@ -186,7 +186,7 @@ export default function HeroSubMessage() {
                 <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
                   Vamos elevar sua marca com estratégia, beleza e sentido.
                 </p>
-                <p className="text-2xl md:text-3xl font-extrabold leading-relaxed max-w-3xl mx-auto">
+                <p className="text-2xl md:text-3xl font-bold italic leading-relaxed max-w-3xl mx-auto p-4">
                   "Porque quando você se posiciona com clareza, o faturamento é consequência e o impacto é duradouro."
                 </p>
               </div>
@@ -206,7 +206,7 @@ export default function HeroSubMessage() {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            fill="#d2542b"
+            fill="#1e3a5f"
             fillOpacity="1"
             d="M0,160 C360,240 1080,80 1440,160 L1440,320 L0,320 Z"
           ></path>

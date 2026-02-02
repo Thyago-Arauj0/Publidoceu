@@ -1,22 +1,20 @@
 import { QuoteIcon } from "lucide-react"
 
-export default function About() {
+export default function ForWhon() {
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-[#1e3a5f] relative"
-    >
+    <main className="min-h-screen relative bg-[#901c25]">
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: "url(https://res.cloudinary.com/dxmlji5j9/image/upload/v1769962938/50090_wwlocp.png)",
-          backgroundSize: 'contain',
+          backgroundImage: "url(https://res.cloudinary.com/dxmlji5j9/image/upload/v1769962953/online-networking-handshake-marketing-remixed-media-background_e7kkgi.png)",
+          backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
           opacity: 0.3,
           zIndex: 0,
         }}
       />
-      {/* Seção 1: Quem Somos */}
-      <section className="relative py-24 px-6 md:px-12 lg:px-24 overflow-hidden z-10" id="about">
+      <section className="relative py-24 px-6 md:px-12 lg:px-24 overflow-hidden">
         {/* Paper texture overlay */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-r from-black/30 via-transparent to-transparent transform -skew-x-12"></div>
@@ -31,34 +29,30 @@ export default function About() {
 
         <div className="relative max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">QUEM SOMOS?</h2>
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">PARA QUEM SOMOS?</h2>
             <div className="w-24 h-1 bg-white/80 mx-auto rounded-full"></div>
           </div>
 
           <div className="space-y-8 text-white text-xl leading-relaxed">
             <p className="text-balance text-2xl font-light">
-              Somos a <span className="font-semibold text-white">Publi do Céu</span>, uma agência de marketing que
-              nasceu do desejo de unir criatividade e propósito, ajudando empresas a comunicarem sua mensagem de forma
-              única e verdadeira.
-            </p>
+              A <span className="font-semibold text-white">Publi do Céu</span> é para todos. Embora nossa essência seja
+              marcada por valores cristãos, não somos uma agência exclusiva para a comunidade cristã.
 
-            <p className="text-balance text-2xl font-light">
-              Acreditamos que o marketing pode ser mais do que apenas vender: ele pode inspirar, conectar e transformar.
-              Por isso, buscamos criar estratégias e conteúdos que expressem autenticidade, transmitam valores e gerem
-              impacto real.
-              Somos cristãos e entendemos que tudo o que fazemos deve ser para a glória de Deus. Assim, cada campanha,
-              cada arte e cada ideia são pensadas para refletir profissionalismo, excelência e amor.
-              O nosso objetivo é espalhar mensagens de verdade, através da comunicação. Porque acreditamos que, quando
-              fazemos algo para Deus, a diferença é visível e transformadora.
+              Somos um espaço criativo que tem como missão acolher empresas, marcas e pessoas que desejam comunicar suas
+              ideias com propósito e autenticidade. Aqui, cada cliente é visto de forma única.
+  
+              O nosso <span className="font-semibold text-white">IDE</span> é o mais importante. Mais do que oferecer
+              serviços de marketing, desejamos que cada projeto seja um reflexo da verdade, da esperança e do amor que
+              vêm de Deus.
             </p>
           </div>
 
-
           <div className="mt-12 max-w-[600px] mx-auto text-center">
-            <div className="inline-flex items-start gap-4  rounded-xl py-6 max-w-4xl">
+            <div className="inline-flex items-start gap-4 rounded-xl py-6 max-w-4xl">
               <div>
                 <blockquote className="text-white italic text-xl leading-relaxed">
-                  " Quer comais, quer bebais, ou façais qualquer outra coisa, fazei tudo para a glória de Deus. "
+                  " Sejam sábios no modo de agir com os que são de fora; aproveitem bem o tempo e que a sua conversa seja
+                  sempre agradável e temperada com sal, para que saibam como responder a cada um. "
                 </blockquote>
                 <p className="text-white/80 text-sm mt-3 font-medium">(Colossenses 4:5-6)</p>
               </div>
@@ -66,8 +60,7 @@ export default function About() {
           </div>
         </div>
       </section>
- 
-      <div className="relative w-full -mt-18 md:-mt-24 lg:-mt-32 overflow-hidden">
+      <div className="relative w-full overflow-hidden">
         <svg
           className="w-full h-32 md:h-40 lg:h-48"
           viewBox="0 0 1440 320"
@@ -75,7 +68,7 @@ export default function About() {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            fill="white" // cor da sessão abaixo
+            fill="#d2542b"
             fillOpacity="1"
             d="M0,160 C360,240 1080,80 1440,160 L1440,320 L0,320 Z"
           ></path>

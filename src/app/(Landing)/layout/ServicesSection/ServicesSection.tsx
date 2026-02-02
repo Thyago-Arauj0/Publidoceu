@@ -27,10 +27,9 @@ export default function ServicesSection() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Seção de Serviços Original */}
-          <div className="md:text-center text-left px-4 md:p-0 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              O que oferecemos?
-            </h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">O QUE NÓS OFERECEMOS?</h2>
+            <div className="w-24 h-1 bg-black/80 mx-auto rounded-full"></div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
@@ -323,7 +322,8 @@ export default function ServicesSection() {
           </div>
         </div>
       </div>
-      <div className="relative w-full overflow-hidden">
+
+      <div className="relative w-full -mt-18 md:-mt-24 lg:-mt-32 overflow-hidden">
         <svg
           className="w-full h-32 md:h-40 lg:h-48"
           viewBox="0 0 1440 320"
@@ -331,7 +331,7 @@ export default function ServicesSection() {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            fill="#1e3a5f"
+            fill="#901c25" // cor da sessão abaixo
             fillOpacity="1"
             d="M0,160 C360,240 1080,80 1440,160 L1440,320 L0,320 Z"
           ></path>

@@ -20,13 +20,13 @@ const AnimatedBackground: React.FC = () => {
   useEffect(() => {
     const initialItems: FloatingItem[] = [];
     const types: ('cloud' | 'balloon' | 'instagram' | 'idea')[] = [
-      'cloud', 'cloud', 'cloud', 'cloud', 
+      'cloud', 'cloud', 
       'balloon', 'balloon',
       'instagram', 'instagram',
       'idea', 'idea'
     ];
 
-    for (let i = 0; i < 30; i++) { 
+    for (let i = 0; i < 10; i++) { 
       const type = types[Math.floor(Math.random() * types.length)];
       initialItems.push({
         id: i,

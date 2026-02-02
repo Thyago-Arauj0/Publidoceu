@@ -38,7 +38,7 @@ export default function Footer() {
               className="mb-6 transition-transform hover:scale-105 duration-300"
             >
               <Image 
-                src={'/assets/logo.png'} 
+                src={'https://res.cloudinary.com/dxmlji5j9/image/upload/v1769560325/logo_e5ycmq.png'} 
                 alt='Logo da Publi do Céu' 
                 height="60" 
                 width="60" 
