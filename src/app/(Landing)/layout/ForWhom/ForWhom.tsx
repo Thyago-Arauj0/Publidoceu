@@ -2,7 +2,7 @@ import { QuoteIcon } from "lucide-react"
 
 export default function ForWhon() {
   return (
-    <main className="min-h-screen relative bg-[#901c25]">
+    <main className="min-h-screen flex flex-col justify-between relative bg-[#901c25]">
       <div
         className="absolute inset-0"
         style={{
