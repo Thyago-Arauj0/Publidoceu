@@ -21,6 +21,8 @@ export async function serverLogin(credentials: { email: string; password: string
       }),
     });
 
+    console.log('Resposta do login:', loginResponse.status);
+
     if (!loginResponse.ok) {
       throw new Error('Credenciais inválidas');
     }
