@@ -97,7 +97,7 @@ const containerBtnRef = useRef<HTMLDivElement | null>(null)
       <section
         className={style.heroSection} id='hero'
         style={{
-          backgroundImage: "url(https://res.cloudinary.com/dxmlji5j9/image/upload/v1770163841/fluffy-little-clouds_yfbava.png)",
+          backgroundImage: "url(https://res.cloudinary.com/dxmlji5j9/image/upload/v1771460773/fluffy-little-clouds_yfbava_1_jvng7u.png)",
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',

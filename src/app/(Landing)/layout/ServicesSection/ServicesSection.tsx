@@ -10,8 +10,7 @@ export default function ServicesSection() {
   return (
     <section
       id="services"
-      className="w-full pt-16 md:pt-5 relative overflow-hidden"
-   
+      className="w-full pt-16 md:pt-5 relative overflow-hidden bg-white"
     >
       <div className="absolute inset-0 pointer-events-none">
         <div

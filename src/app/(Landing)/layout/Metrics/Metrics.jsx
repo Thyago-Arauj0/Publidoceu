@@ -74,7 +74,7 @@ export default function HeroSubMessage() {
 
   return (
     <div>
-      <section className="w-full pt-0 md:pt-5 relative ">
+      <section className="w-full pt-0 md:pt-5 relative bg-white">
         <div className=" mx-auto">
           <div className=" mx-auto ">
             <div className="space-y-16 py-5">
