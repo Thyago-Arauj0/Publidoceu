@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Publi do Céu | Agência de Marketing Digital Criativa e Estratégica",
-  description: "A Publi do Céu é uma agência de marketing digital especializada em campanhas criativas, tráfego pago, social media e branding. Conteúdo de outro mundo!",
+  description: "A Publi do Céu é uma agência de marketing digital especializada em campanhas criativas, tráfego pago, social media e branding, atuando em Serrinha, BA. Conteúdo de outro mundo!",
   keywords: [
     "marketing digital",
     "agência criativa",
@@ -13,9 +13,12 @@ export const metadata: Metadata = {
     "conteúdo",
     "publi do céu",
     "estratégias digitais",
-    "agência de publicidade"
+    "agência de publicidade",
+    "agencia marketing serrinha",
+    'agencia de marketing digital serrinha',
+    'social media serrinha',
   ],
-  authors: [{ name: "Publi do Céu" }],
+  authors: [{ name: "Marketilize", url: "https://www.marketilize.com.br/" }],
   creator: "Publi do Céu",
   robots: "index, follow",
   icons: {
@@ -26,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://www.publidoceu.com.br/",
     title: "Publi do Céu | Agência de Marketing Digital Criativa e Estratégica",
-    description: "Transformamos ideias em campanhas de sucesso com criatividade, estratégia e inovação.",
+    description: "Transformamos ideias em campanhas de sucesso com criatividade, estratégia e inovação. Atuamos em Serrinha, BA.",
     siteName: "Publi do Céu",
     locale: "pt_BR",
     images: [
@@ -41,7 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Publi do Céu | Marketing Digital Criativo",
-    description: "Do Céu: o conteúdo é de outro mundo. Estratégias digitais que elevam sua marca.",
+    description: "Do Céu: o conteúdo é de outro mundo. Estratégias digitais que elevam sua marca. Atuamos em Serrinha, BA.",
     images: ["https://res.cloudinary.com/dxmlji5j9/image/upload/v1769560325/logo_e5ycmq.png"]
   }
 };
